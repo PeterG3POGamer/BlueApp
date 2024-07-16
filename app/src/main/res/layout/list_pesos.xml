@@ -1,0 +1,42 @@
+<!-- item_recycler_view.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/id_jabas"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="#" />
+
+    <TextView
+        android:id="@+id/numero_jabas"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="N° Jabas" />
+
+    <TextView
+        android:id="@+id/numero_pollos"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="N° Pollos" />
+
+    <TextView
+        android:id="@+id/peso_kg"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Peso" />
+
+    <TextView
+        android:id="@+id/con_pollos"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Estado" />
+</LinearLayout>

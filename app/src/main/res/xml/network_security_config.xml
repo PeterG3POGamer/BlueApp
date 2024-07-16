@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Permitir tráfico HTTP claro para dominios específicos -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Añade tu dominio o IP aquí -->
+        <domain includeSubdomains="false">192.168.100.47</domain>
+    </domain-config>
+
+    <!-- Permitir tráfico HTTPS para cualquier dominio -->
+    <domain-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+        <domain includeSubdomains="true">emprender.guru</domain>
+    </domain-config>
+
+    <!-- Permitir tráfico HTTP claro en general (opcional) -->
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

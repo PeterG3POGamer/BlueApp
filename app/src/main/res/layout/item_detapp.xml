@@ -1,0 +1,45 @@
+<!-- item_reporte.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/textViewId"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:text="ID: " />
+
+    <TextView
+        android:id="@+id/textViewjabas"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Jabas: " />
+
+    <TextView
+        android:id="@+id/textViewPollos"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Pollos: " />
+
+    <TextView
+        android:id="@+id/textViewPeso"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Peso: " />
+
+    <TextView
+        android:id="@+id/textViewTipo"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Tipo: " />
+
+</LinearLayout>

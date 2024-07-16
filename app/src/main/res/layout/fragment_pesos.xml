@@ -1,0 +1,563 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:id="@+id/fragment_pesos"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp"
+        tools:context=".ui.Jabas.JabasFragment">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end">
+
+
+                <TextView
+                    android:id="@+id/divice_connected"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CONECTADO A: "
+                    android:tooltipText="Información del dispositivo conectado a bluetooth"/>
+
+                <Spinner
+                    android:id="@+id/select_listpesos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:entries="@array/galpones_array"
+                    android:padding="12dp"
+                    android:prompt="@string/select_pesos_prompt"
+                    android:tooltipText="Datos de lista de pesos disponibles"/>
+
+            </LinearLayout>
+        <TextView
+            android:id="@+id/seccion_nucelo"
+            style="@style/Titulo_Diseño"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="DATOS DEL NUCLEO" />
+        <!-- Sección 1: Selector y Datos del Cliente -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Parte izquierda con botones -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="start">
+
+                    <!-- Selector -->
+                    <Spinner
+                        android:id="@+id/select_establecimiento"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="12dp"
+                        android:entries="@array/galpones_array"
+                        android:prompt="@string/select_galpon_prompt"
+                        android:tooltipText="Datos de Nucleos disponibles"/>
+
+                </LinearLayout>
+
+                <!-- Parte central con botones -->
+
+                <!-- Parte derecha con botones -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="end">
+
+                    <!-- Selector -->
+                    <Spinner
+                        android:id="@+id/select_galpon"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="12dp"
+                        android:entries="@array/galpones_array"
+                        android:prompt="@string/select_galpon_prompt"
+                        android:tooltipText="Datos de galpones disponibles"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Título Datos del Cliente -->
+            <TextView
+                style="@style/Titulo_Diseño"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="DATOS DEL CLIENTE"/>
+
+            <!-- Datos del cliente en fila con ImageButton al costado -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <!-- Datos del cliente -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <!-- Fila 1: Número de Documento -->
+                    <LinearLayout
+                        android:layout_width="306dp"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="N° Documento: "
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/textDocCli"
+                            android:layout_width="693dp"
+                            android:layout_height="wrap_content"
+                            android:text=""
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <!-- Fila 2: Razón Social -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="8dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Razón Social: "
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/textNomCli"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text=""
+                            android:textSize="16sp"
+                            android:textStyle="bold"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- ImageButton al costado -->
+                <ImageButton
+                    android:id="@+id/boton_Cliente"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:elevation="8dp"
+                    android:padding="12dp"
+                    app:backgroundTint="@color/your_blue"
+                    app:srcCompat="@drawable/baseline_supervised_user_circle_24"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="16dp"
+                    android:tooltipText="Ingresar datos del cliente"/>
+
+            </LinearLayout>
+
+
+        </LinearLayout>
+
+        <!-- Sección 2: Datos del Pesaje -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/Titulo_Diseño"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="-4dp"
+                android:text="DATOS DEL PESAJE"/>
+
+            <!-- Sección 2: Inputs en una fila -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- EditText "N° Jabas" con margen inferior ajustado -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/border_shape"
+                    android:orientation="vertical"
+                    android:padding="8dp"
+                    android:layout_margin="0dp">
+
+                    <!-- Primer LinearLayout para el título y los iconos de jabas -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="0dp"
+                            android:text="Jabas Registradas"
+                            android:textSize="16sp" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="10dp"
+                            android:gravity="center_vertical">
+
+                            <ImageView
+                                android:id="@+id/imagen_paquete"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:src="@drawable/jabadepollo"
+                                android:layout_marginEnd="0dp"
+                                android:tooltipText="N° de Jabas totales disponibles"/>
+
+                            <TextView
+                                android:id="@+id/contador_jabas"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="= 0"
+                                android:textColor="@color/design_default_color_primary_dark"
+                                android:textSize="18sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Segundo LinearLayout para el input de número de jabas -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginTop="0dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="N° Jabas"
+                            android:textSize="16sp" />
+
+                        <EditText
+                            android:id="@+id/input_numero_jabas"
+                            android:layout_width="match_parent"
+                            android:layout_height="40dp"
+                            android:hint=""
+                            android:inputType="number"
+                            android:maxLength="4"
+                            android:tooltipText="Valor para la cantidad de jabas"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- LinearLayout para CheckBox y EditText "N° Pollos" -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/border_shape"
+                    android:orientation="vertical"
+                    android:padding="8dp"
+                    android:layout_marginLeft="-4dp">
+
+                    <!-- Primer LinearLayout para el CheckBox -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="18dp">
+
+                        <CheckBox
+                            android:id="@+id/checkbox_con_pollos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:checked="false"
+                            android:text="JABAS CON POLLOS"
+                            android:tooltipText="Valor para pesar con pollos o sin pollos"/>
+                    </LinearLayout>
+
+                    <!-- Segundo LinearLayout para el input de número de pollos -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="5dp"
+                            android:text="N° Pollos"
+                            android:textSize="16sp" />
+
+                        <EditText
+                            android:id="@+id/input_cant_pollos"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:hint=""
+                            android:inputType="number"
+                            android:maxLength="4"
+                            android:tooltipText="Valor para la cantidad de pollos"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- LinearLayout para EditText "Precio x Kilo" y "Peso Kg" -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/border_shape"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:padding="8dp"
+                    android:layout_marginLeft="-4dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="0dp"
+                        android:text="Precio x Kilo"
+                        android:textSize="16sp" />
+                    <!-- EditText "Precio x Kilo" -->
+                    <EditText
+                        android:id="@+id/PrecioKilo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="15dp"
+                        android:hint=""
+                        android:inputType="numberDecimal"
+                        android:tooltipText="Valor para el Precio por Kilo"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="5dp"
+                        android:text="Peso Kg"
+                        android:textSize="16sp" />
+                    <!-- EditText "Peso Kg" -->
+                    <EditText
+                        android:id="@+id/input_peso_kg"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:hint=""
+                        android:inputType="numberDecimal"
+                        android:tooltipText="Valor para el Peso obtenido"/>
+                </LinearLayout>
+
+                <!-- ImageButton -->
+                <ImageButton
+                    android:id="@+id/boton_guardar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="121dp"
+                    android:elevation="8dp"
+                    android:padding="12dp"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginRight="20dp"
+                    app:backgroundTint="@color/teal_200"
+                    app:srcCompat="@drawable/baseline_add_24"
+                    android:tooltipText="Guardar Jabas y/o Pollos pesados a la tabla"/>
+
+            </LinearLayout>
+
+
+
+        </LinearLayout>
+
+        <!-- Sección 3: Botones con íconos divididos en tres partes -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Parte izquierda con botones -->
+            <LinearLayout
+                android:layout_width="30dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="start">
+
+                <ImageButton
+                    android:id="@+id/boton_Limpiar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:elevation="8dp"
+                    android:padding="12dp"
+                    app:backgroundTint="@color/your_color"
+                    app:srcCompat="@drawable/baseline_cleaning_services_24"
+                    android:tooltipText="Limpiar"/>
+                <ImageButton
+                    android:id="@+id/boton_guardar_peso"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:elevation="8dp"
+                    android:padding="12dp"
+                    app:backgroundTint="@color/purple_500"
+                    app:srcCompat="@drawable/baseline_add_24"
+                    android:tooltipText="Guardar Peso" />
+                <ImageButton
+                    android:id="@+id/boton_delete_peso"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:elevation="8dp"
+                    android:padding="12dp"
+                    app:backgroundTint="@color/purple_200"
+                    app:srcCompat="@drawable/null_24"
+                    android:visibility="visible"/>
+
+
+                <TextView
+                    android:id="@+id/idListPeso"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="40dp"
+                    android:inputType="number"
+                    android:visibility="visible"/>
+
+            </LinearLayout>
+
+            <!-- Parte central con botones -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <ImageButton
+                    android:id="@+id/boton_preCarga"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:elevation="8dp"
+                    android:padding="12dp"
+                    android:visibility="gone"
+                    app:backgroundTint="@color/purple_500"
+                    app:srcCompat="@drawable/outline_directory_sync_24" />
+
+            </LinearLayout>
+
+            <!-- Parte derecha con botones -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="end">
+
+                <ImageButton
+                    android:id="@+id/boton_Enviar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:elevation="8dp"
+                    android:padding="12dp"
+                    app:backgroundTint="@color/your_greed"
+                    app:srcCompat="@drawable/baseline_content_paste_go_24" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Encabezados del RecyclerView -->
+        <LinearLayout
+            android:id="@+id/header_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <TextView
+                android:id="@+id/id_jabas"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.2"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="#"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/numero_jabas"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.8"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="N° Jabas"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/numero_pollos"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.8"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="N° Pollos"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/peso_kg"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.8"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="Peso Kg."
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/con_pollos"
+                android:layout_width="1dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="Estado"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- RecyclerView -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewJabas"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="8dp"
+            android:padding="5dp" />
+
+    </LinearLayout>
+</ScrollView>

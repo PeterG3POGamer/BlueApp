@@ -1,0 +1,21 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Color de fondo para estado enfocado -->
+    <solid android:color="#E6F3FF" /> <!-- Color de fondo enfocado -->
+
+    <!-- Esquinas redondeadas -->
+    <corners android:radius="0dp" />
+
+    <!-- Borde con sombra -->
+    <stroke
+        android:width="2dp"
+        android:color="#4D90FE" /> <!-- Color del borde enfocado -->
+
+    <!-- Efecto de sombra -->
+    <padding
+        android:left="0dp"
+        android:top="0dp"
+        android:right="0dp"
+        android:bottom="1dp" />
+</shape>
