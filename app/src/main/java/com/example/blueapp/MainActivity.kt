@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
 
 //        opcion 2 : actualizar aplicacion desde git
         lifecycleScope.launch {
-            checkForUpdates()
+            updateChecker.checkAndDownloadUpdate()
         }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -81,29 +81,6 @@ class MainActivity : AppCompatActivity() {
 
 
     }
-    private suspend fun checkForUpdates() {
-        val update = updateChecker.checkForUpdate()
-        update?.let { showUpdateDialog(it) }
-    }
-
-    private fun showUpdateDialog(versionInfo: VersionInfo) {
-        AlertDialog.Builder(this)
-            .setTitle("Nueva actualización disponible")
-            .setMessage("Version: v${versionInfo.version_name} está disponible. ¿Deseas actualizar?")
-            .setPositiveButton("Sí") { _, _ ->
-                // Iniciar la descarga
-                startDownload(versionInfo.download_url)
-            }
-            .setNegativeButton("No", null)
-            .show()
-    }
-
-    private fun startDownload(downloadUrl: String) {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl))
-        startActivity(intent)
-    }
-
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.main, menu)

@@ -10,8 +10,8 @@ android {
         applicationId = "com.serlanventas.blueapp"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.7"
+        versionCode = 3
+        versionName = "1.8"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         namespace = "com.example.blueapp"
     }
