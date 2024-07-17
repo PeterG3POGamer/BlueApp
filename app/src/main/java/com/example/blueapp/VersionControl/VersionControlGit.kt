@@ -1,15 +1,10 @@
 package com.example.blueapp.VersionControl
 
 import android.content.Context
-import android.util.Base64
 import android.util.Log
-import com.google.gson.Gson
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
-import retrofit2.http.Url
 
 data class VersionInfo(
     val version_code: Int,
@@ -17,35 +12,14 @@ data class VersionInfo(
     val download_url: String
 )
 
-data class GithubContent(
-    val content: String,
-    val encoding: String,
-    val download_url: String
-)
-
 interface GithubApi {
-    @GET("repos/PeterG3POGamer/BlueApp/contents/version.json")
-    suspend fun getLatestVersion(): GithubContent
-
-    @GET
-    suspend fun getRawContent(@Url url: String): VersionInfo
+    @GET("PeterG3POGamer/BlueApp/main/version.json")
+    suspend fun getLatestVersion(): VersionInfo
 }
 
 class UpdateChecker(private val context: Context) {
-    private val token = "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"
-
-    private val okHttpClient = OkHttpClient.Builder()
-        .addInterceptor { chain ->
-            val newRequest: Request = chain.request().newBuilder()
-                .addHeader("Authorization", "token $token")
-                .build()
-            chain.proceed(newRequest)
-        }
-        .build()
-
     private val retrofit = Retrofit.Builder()
-        .baseUrl("https://api.github.com/")
-        .client(okHttpClient)
+        .baseUrl("https://raw.githubusercontent.com/")
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
@@ -53,15 +27,12 @@ class UpdateChecker(private val context: Context) {
 
     suspend fun checkForUpdate(): VersionInfo? {
         return try {
-            val content = githubApi.getLatestVersion()
-            val decodedContent = Base64.decode(content.content, Base64.DEFAULT).toString(Charsets.UTF_8)
-            val versionInfo = Gson().fromJson(decodedContent, VersionInfo::class.java)
-
+            val latestVersion = githubApi.getLatestVersion()
             val currentVersionCode = context.packageManager
                 .getPackageInfo(context.packageName, 0).versionCode
 
-            if (versionInfo.version_code > currentVersionCode) {
-                versionInfo
+            if (latestVersion.version_code > currentVersionCode) {
+                latestVersion
             } else {
                 null
             }
