@@ -1,23 +1,20 @@
 package com.example.blueapp
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
-import androidx.drawerlayout.widget.DrawerLayout
-import androidx.lifecycle.lifecycleScope
+import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.navigation.NavigationView
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.navigateUp
+import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import com.example.blueapp.VersionControl.UpdateChecker
-import com.example.blueapp.VersionControl.VersionInfo
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.appcompat.app.AppCompatActivity
 import com.example.blueapp.databinding.ActivityMainBinding
 import com.google.android.material.navigation.NavigationView
-import kotlinx.coroutines.launch
 
 //import com.github.javiersantos.appupdater.AppUpdater
 //import com.github.javiersantos.appupdater.enums.UpdateFrom
@@ -43,9 +40,9 @@ class MainActivity : AppCompatActivity() {
 //            .start()
 
 //        opcion 2 : actualizar aplicacion desde git
-        lifecycleScope.launch {
-            checkForUpdates()
-        }
+//        lifecycleScope.launch {
+//            updateChecker.checkAndDownloadUpdate()
+//        }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -81,29 +78,6 @@ class MainActivity : AppCompatActivity() {
 
 
     }
-    private suspend fun checkForUpdates() {
-        val update = updateChecker.checkForUpdate()
-        update?.let { showUpdateDialog(it) }
-    }
-
-    private fun showUpdateDialog(versionInfo: VersionInfo) {
-        AlertDialog.Builder(this)
-            .setTitle("Nueva actualización disponible")
-            .setMessage("Version: v${versionInfo.version_name} está disponible. ¿Deseas actualizar?")
-            .setPositiveButton("Sí") { _, _ ->
-                // Iniciar la descarga
-                startDownload(versionInfo.download_url)
-            }
-            .setNegativeButton("No", null)
-            .show()
-    }
-
-    private fun startDownload(downloadUrl: String) {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl))
-        startActivity(intent)
-    }
-
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.main, menu)

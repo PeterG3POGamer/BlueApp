@@ -1,67 +1,51 @@
 package com.example.blueapp.VersionControl
 
+import android.app.AlertDialog
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
 import android.content.Context
-import android.util.Base64
+import android.content.Intent
+import android.content.IntentFilter
+import android.net.Uri
+import android.os.Environment
 import android.util.Log
-import com.google.gson.Gson
-import okhttp3.OkHttpClient
-import okhttp3.Request
+import androidx.core.content.FileProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
-import retrofit2.http.Url
+import java.io.File
 
 data class VersionInfo(
     val version_code: Int,
     val version_name: String,
-    val download_url: String
-)
-
-data class GithubContent(
-    val content: String,
-    val encoding: String,
-    val download_url: String
+    val download_url: String,
+    val file_size: Long
 )
 
 interface GithubApi {
-    @GET("repos/PeterG3POGamer/BlueApp/contents/version.json")
-    suspend fun getLatestVersion(): GithubContent
-
-    @GET
-    suspend fun getRawContent(@Url url: String): VersionInfo
+    @GET("PeterG3POGamer/BlueApp/master/app/src/main/java/com/example/blueapp/VersionControl/version.json")
+    suspend fun getLatestVersion(): VersionInfo
 }
 
 class UpdateChecker(private val context: Context) {
-    private val token = "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"
-
-    private val okHttpClient = OkHttpClient.Builder()
-        .addInterceptor { chain ->
-            val newRequest: Request = chain.request().newBuilder()
-                .addHeader("Authorization", "token $token")
-                .build()
-            chain.proceed(newRequest)
-        }
-        .build()
-
     private val retrofit = Retrofit.Builder()
-        .baseUrl("https://api.github.com/")
-        .client(okHttpClient)
+        .baseUrl("https://raw.githubusercontent.com/")
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
     private val githubApi = retrofit.create(GithubApi::class.java)
+    private val updateManager = UpdateManager(context)
 
     suspend fun checkForUpdate(): VersionInfo? {
         return try {
-            val content = githubApi.getLatestVersion()
-            val decodedContent = Base64.decode(content.content, Base64.DEFAULT).toString(Charsets.UTF_8)
-            val versionInfo = Gson().fromJson(decodedContent, VersionInfo::class.java)
-
+            val latestVersion = githubApi.getLatestVersion()
             val currentVersionCode = context.packageManager
                 .getPackageInfo(context.packageName, 0).versionCode
 
-            if (versionInfo.version_code > currentVersionCode) {
-                versionInfo
+            if (latestVersion.version_code > currentVersionCode) {
+                latestVersion
             } else {
                 null
             }
@@ -69,5 +53,69 @@ class UpdateChecker(private val context: Context) {
             Log.e("UpdateChecker", "Error checking for updates", e)
             null
         }
+    }
+
+    suspend fun checkAndPromptForUpdate() {
+        val update = checkForUpdate()
+        update?.let {
+            withContext(Dispatchers.Main) {
+                showUpdateDialog(it)
+            }
+        }
+    }
+
+    private fun showUpdateDialog(versionInfo: VersionInfo) {
+        AlertDialog.Builder(context)
+            .setTitle("Nueva actualización disponible")
+            .setMessage("La versión ${versionInfo.version_name} está disponible. ¿Deseas descargarla e instalarla?")
+            .setPositiveButton("Sí") { _, _ ->
+                updateManager.downloadUpdate(versionInfo)
+            }
+            .setNegativeButton("No", null)
+            .show()
+    }
+}
+
+class UpdateManager(private val context: Context) {
+    private var downloadId: Long = 0
+
+    fun downloadUpdate(versionInfo: VersionInfo) {
+        val request = DownloadManager.Request(Uri.parse(versionInfo.download_url))
+            .setTitle("Actualización de BlueApp")
+            .setDescription("Descargando versión ${versionInfo.version_name}")
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "blueapp_update.apk")
+            .setAllowedOverMetered(true)
+            .setAllowedOverRoaming(true)
+
+        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        downloadId = downloadManager.enqueue(request)
+
+        context.registerReceiver(
+            onDownloadComplete,
+            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        )
+    }
+
+    private val onDownloadComplete = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            if (downloadId == id) {
+                val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "blueapp_update.apk")
+                installUpdate(file)
+            }
+        }
+    }
+
+    private fun installUpdate(file: File) {
+        val intent = Intent(Intent.ACTION_VIEW)
+        val downloadedApk = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+        intent.setDataAndType(downloadedApk, "application/vnd.android.package-archive")
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+        context.startActivity(intent)
     }
 }

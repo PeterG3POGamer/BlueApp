@@ -4,4 +4,6 @@
     <external-files-path
         name="pdfs"
         path="." />
+    <external-path name="external_files" path="." />
+
 </paths>
