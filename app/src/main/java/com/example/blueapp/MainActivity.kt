@@ -1,28 +1,51 @@
 package com.example.blueapp
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.ActionBarDrawerToggle
-import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.navigation.NavigationView
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import androidx.drawerlayout.widget.DrawerLayout
-import androidx.appcompat.app.AppCompatActivity
+import com.example.blueapp.VersionControl.UpdateChecker
+import com.example.blueapp.VersionControl.VersionInfo
 import com.example.blueapp.databinding.ActivityMainBinding
+import com.google.android.material.navigation.NavigationView
+import kotlinx.coroutines.launch
+
+//import com.github.javiersantos.appupdater.AppUpdater
+//import com.github.javiersantos.appupdater.enums.UpdateFrom
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     private lateinit var drawerToggle: ActionBarDrawerToggle
-
+    private val updateChecker by lazy { UpdateChecker(this) }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // opcion 1 : Actualizar aplicacion desde git
+//        AppUpdater(this)
+//            .setUpdateFrom(UpdateFrom.GITHUB)
+//            .setGitHubUserAndRepo("PeterG3POGamer", "BlueApp")
+//            .setTitleOnUpdateAvailable("Actualización disponible")
+//            .setContentOnUpdateAvailable("Una nueva versión está disponible. ¿Deseas actualizar?")
+//            .setButtonUpdate("Actualizar")
+//            .setButtonDismiss("Más tarde")
+//            .showAppUpdated(true)
+//            .start()
+
+//        opcion 2 : actualizar aplicacion desde git
+        lifecycleScope.launch {
+            checkForUpdates()
+        }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -55,7 +78,31 @@ class MainActivity : AppCompatActivity() {
 
         drawerLayout.addDrawerListener(drawerToggle)
         drawerToggle.syncState()
+
+
     }
+    private suspend fun checkForUpdates() {
+        val update = updateChecker.checkForUpdate()
+        update?.let { showUpdateDialog(it) }
+    }
+
+    private fun showUpdateDialog(versionInfo: VersionInfo) {
+        AlertDialog.Builder(this)
+            .setTitle("Nueva actualización disponible")
+            .setMessage("Version: v${versionInfo.version_name} está disponible. ¿Deseas actualizar?")
+            .setPositiveButton("Sí") { _, _ ->
+                // Iniciar la descarga
+                startDownload(versionInfo.download_url)
+            }
+            .setNegativeButton("No", null)
+            .show()
+    }
+
+    private fun startDownload(downloadUrl: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl))
+        startActivity(intent)
+    }
+
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
