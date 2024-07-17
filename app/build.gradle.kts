@@ -7,11 +7,11 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.blueapp"
+        applicationId = "com.serlanventas.blueapp"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.5"
+        versionCode = 2
+        versionName = "1.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         namespace = "com.example.blueapp"
     }
@@ -50,6 +50,9 @@ dependencies {
     implementation("com.google.code.gson:gson:2.8.8")
     implementation("com.google.android.material:material:1.4.0")
     implementation("com.itextpdf:itext7-core:7.1.13")
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+//    implementation("com.github.javiersantos:AppUpdater:2.7")
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.androidx.room.common)
     implementation(libs.androidx.room.common.jvm)
