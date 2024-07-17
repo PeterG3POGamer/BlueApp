@@ -23,7 +23,7 @@ data class VersionInfo(
 )
 
 interface GithubApi {
-    @GET("PeterG3POGamer/BlueApp/main/version.json")
+    @GET("PeterG3POGamer/BlueApp/master/app/src/main/java/com/example/blueapp/VersionControl/version.json")
     suspend fun getLatestVersion(): VersionInfo
 }
 

@@ -1,23 +1,17 @@
 package com.example.blueapp
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.example.blueapp.VersionControl.UpdateChecker
-import com.example.blueapp.VersionControl.VersionInfo
 import com.example.blueapp.databinding.ActivityMainBinding
 import com.google.android.material.navigation.NavigationView
-import kotlinx.coroutines.launch
 
 //import com.github.javiersantos.appupdater.AppUpdater
 //import com.github.javiersantos.appupdater.enums.UpdateFrom
@@ -43,9 +37,9 @@ class MainActivity : AppCompatActivity() {
 //            .start()
 
 //        opcion 2 : actualizar aplicacion desde git
-        lifecycleScope.launch {
-            updateChecker.checkAndDownloadUpdate()
-        }
+//        lifecycleScope.launch {
+//            updateChecker.checkAndDownloadUpdate()
+//        }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
