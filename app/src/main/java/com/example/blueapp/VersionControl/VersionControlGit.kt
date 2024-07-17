@@ -17,7 +17,6 @@ interface GithubApi {
     suspend fun getLatestVersion(): VersionInfo
 }
 
-@Suppress("DEPRECATION")
 class UpdateChecker(private val context: Context) {
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://raw.githubusercontent.com/")
