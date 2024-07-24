@@ -40,7 +40,8 @@
                     android:entries="@array/galpones_array"
                     android:padding="12dp"
                     android:prompt="@string/select_pesos_prompt"
-                    android:tooltipText="Datos de lista de pesos disponibles" />
+                    android:tooltipText="Datos de lista de pesos disponibles"
+                    class="com.example.blueapp.ui.Jabas.CustomSpinner"/>
 
                 <ImageButton
                     android:id="@+id/boton_reload_peso"
@@ -49,7 +50,9 @@
                     android:elevation="8dp"
                     android:padding="20dp"
                     app:backgroundTint="@color/gray"
-                    app:srcCompat="@drawable/baseline_refresh_24" />
+                    android:tooltipText="Recargar lista de pesos"
+                    app:srcCompat="@drawable/baseline_refresh_24"
+                    android:visibility="gone"/>
 
             </LinearLayout>
             <TextView
@@ -446,7 +449,7 @@
 
                         app:backgroundTint="@color/purple_500"
                         app:srcCompat="@drawable/baseline_add_24"
-                        android:tooltipText="Guardar Peso" />
+                        android:tooltipText="Guardar Peso / Editar Peso" />
                     <ImageButton
                         android:id="@+id/boton_delete_peso"
                         android:layout_width="wrap_content"
@@ -495,7 +498,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="8dp"
+                android:padding="2dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent">
 
@@ -503,7 +506,7 @@
                     android:id="@+id/id_jabas"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="0.2"
+                    android:layout_weight="0.3"
                     android:gravity="center"
                     android:padding="8dp"
                     android:text="#"
@@ -556,8 +559,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:layout_marginTop="8dp"
-                android:padding="5dp" />
+                android:layout_marginTop="0dp"
+                android:padding="2dp" />
         </LinearLayout>
     </ScrollView>
     <!-- Fondo semitransparente -->
