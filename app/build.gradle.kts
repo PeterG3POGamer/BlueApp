@@ -11,7 +11,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 3
-        versionName = "1.8.1"
+        versionName = "1.8.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         namespace = "com.example.blueapp"
     }
@@ -31,6 +31,28 @@ android {
     }
     buildFeatures {
         viewBinding = true
+    }
+
+    packagingOptions {
+        resources {
+            excludes += listOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/ASL2.0",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt"
+            )
+        }
+    }
+    configurations {
+        all {
+            // Excluir las versiones conflictivas de Bouncy Castle
+            exclude(group = "org.bouncycastle", module = "bcpkix-jdk15on")
+            exclude(group = "org.bouncycastle", module = "bcprov-jdk15on")
+            exclude(group = "org.bouncycastle", module = "bcprov-jdk15to18")
+            exclude(group = "org.bouncycastle", module = "bcpkix-jdk15to18")
+        }
     }
 }
 
@@ -52,12 +74,14 @@ dependencies {
     implementation("com.itextpdf:itext7-core:7.1.13")
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
-//    implementation("com.github.javiersantos:AppUpdater:2.7")
+    implementation ("com.tom-roush:pdfbox-android:2.0.25.0")
+    //    implementation("com.github.javiersantos:AppUpdater:2.7")
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.androidx.room.common)
     implementation(libs.androidx.room.common.jvm)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.foundation.android)
+    implementation(libs.androidx.swiperefreshlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

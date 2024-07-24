@@ -310,43 +310,6 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <!-- Parte izquierda con botones -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:gravity="start">
-
-                <!--            <ImageButton-->
-                <!--                android:id="@+id/boton_preCarga2"-->
-                <!--                android:layout_width="wrap_content"-->
-                <!--                android:layout_height="wrap_content"-->
-                <!--                android:elevation="8dp"-->
-                <!--                android:padding="12dp"-->
-                <!--                app:backgroundTint="@color/purple_500"-->
-                <!--                app:srcCompat="@drawable/outline_directory_sync_24" />-->
-            </LinearLayout>
-
-            <!-- Parte central con botones -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:gravity="center">
-
-    <!--            <ImageButton-->
-    <!--                android:id="@+id/boton_preCarga"-->
-    <!--                android:layout_width="wrap_content"-->
-    <!--                android:layout_height="wrap_content"-->
-    <!--                android:elevation="8dp"-->
-    <!--                android:padding="12dp"-->
-    <!--                app:backgroundTint="@color/purple_500"-->
-    <!--                app:srcCompat="@drawable/outline_directory_sync_24" />-->
-
-            </LinearLayout>
-
             <!-- Parte derecha con botones -->
             <LinearLayout
                 android:layout_width="0dp"
@@ -360,7 +323,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:elevation="8dp"
-                    android:padding="12dp"
+                    android:padding="20dp"
                     app:backgroundTint="#F44336"
                     app:srcCompat="@drawable/baseline_assignment_return_24"
                     android:layout_marginEnd="16dp" />
@@ -371,7 +334,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:elevation="8dp"
-                    android:padding="12dp"
+                    android:padding="20dp"
                     app:backgroundTint="@color/your_greed"
                     app:srcCompat="@drawable/baseline_assignment_turned_in_24" />
             </LinearLayout>

@@ -8,6 +8,8 @@ import com.example.blueapp.ui.DataBase.Entities.ClienteEntity
 import com.example.blueapp.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import com.example.blueapp.ui.DataBase.Entities.DataPesoPollosEntity
 import com.example.blueapp.ui.DataBase.Entities.PesosEntity
+import com.example.blueapp.ui.DataBase.Entities.impresoraEntity
+import com.example.blueapp.ui.DataBase.Entities.pesoUsedEntity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -16,13 +18,15 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
 
     companion object {
         private const val DATABASE_NAME = "blueapp2.db"
-        private const val DATABASE_VERSION = 4  // Incrementamos la versión de la base de datos para reflejar el cambio
+        private const val DATABASE_VERSION = 7  // Incrementamos la versión de la base de datos para reflejar el cambio
 
         // Table names
         private const val TABLE_DETA_PESO_POLLOS = "DataDetaPesoPollos"
         private const val TABLE_PESO_POLLOS = "DataPesoPollos"
         private const val TABLE_CLIENTE = "Cliente"
         private const val TABLE_PESOS = "ListPesos"
+        private const val TABLE_IMPRESORA = "ImpresoraConfig"
+        private const val TABLE_USED_PESOS = "PesoUsado"
 
         // Common column names
         private const val KEY_ID = "id"
@@ -56,6 +60,12 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         // ListPesos Table - column names
         private const val KEY_DATA_PESO_JSON = "dataJsonPeso"
         private const val KEY_DATA_DETAPESO_JSON = "dataJsonDetaPeso"
+
+        private const val KEY_IMPRESORA_IP = "ip"
+        private const val KEY_IMPRESORA_PUERTO = "puerto"
+
+        private const val KEY_DEVICE_NAME = "deviceName"
+
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -77,6 +87,7 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
                 + "$KEY_TOTAL_POLLOS TEXT, "
                 + "$KEY_TOTAL_PESO TEXT, "
                 + "$KEY_TIPO INTEGER, "
+                + "$KEY_PRECIO_K_POLLO TEXT, "
                 + "$KEY_NUMERO_DOC_CLIENTE TEXT, "
                 + "$KEY_ID_GALPON TEXT, "
                 + "$KEY_NOMBRE_COMPLETO TEXT)")
@@ -98,6 +109,20 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
                 + "$KEY_FECHA_REGISTRO TEXT)")
         db.execSQL(CREATE_TABLE_PESOS)
 
+        val CREATE_TABLE_IMPRESORA_CONFIG = ("CREATE TABLE $TABLE_IMPRESORA("
+                + "$KEY_ID INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "$KEY_IMPRESORA_IP TEXT, "
+                + "$KEY_IMPRESORA_PUERTO TEXT)")
+        db.execSQL(CREATE_TABLE_IMPRESORA_CONFIG)
+
+        val CREATE_TABLE_USED_PESOS = ("CREATE TABLE $TABLE_USED_PESOS("
+                + "$KEY_ID INTEGER PRIMARY KEY, "
+                + "$KEY_DEVICE_NAME TEXT, "
+                + "$KEY_DATA_PESO_JSON TEXT, "
+                + "$KEY_DATA_DETAPESO_JSON TEXT, "
+                + "$KEY_FECHA_REGISTRO TEXT)")
+        db.execSQL(CREATE_TABLE_USED_PESOS)
+
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -107,6 +132,8 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
             db.execSQL("DROP TABLE IF EXISTS $TABLE_PESO_POLLOS")
             db.execSQL("DROP TABLE IF EXISTS $TABLE_CLIENTE")
             db.execSQL("DROP TABLE IF EXISTS $TABLE_PESOS")
+            db.execSQL("DROP TABLE IF EXISTS $TABLE_IMPRESORA")
+            db.execSQL("DROP TABLE IF EXISTS $TABLE_USED_PESOS")
             onCreate(db)
         }
     }
@@ -173,6 +200,36 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         return db.insert(TABLE_PESOS, null, values)
     }
 
+    fun addImpresora(impresora: impresoraEntity): Long {
+        val db = this.writableDatabase
+
+        val values = ContentValues().apply {
+            put(KEY_ID, impresora.idImpresora)
+            put(KEY_IMPRESORA_IP, impresora.ip)
+            put(KEY_IMPRESORA_PUERTO, impresora.puerto)
+        }
+        return db.insert(TABLE_IMPRESORA, null, values)
+    }
+
+    fun addPesoUsed(pesoUsed: pesoUsedEntity): Long {
+        val db = this.writableDatabase
+        val currentDate = getCurrentDateTime()
+
+        val values = ContentValues().apply {
+            put(KEY_ID, pesoUsed.idPesoUsed)
+            put(KEY_DEVICE_NAME, pesoUsed.devicedName)
+            put(KEY_DATA_PESO_JSON, pesoUsed.dataPesoPollosJson)
+            put(KEY_DATA_DETAPESO_JSON, pesoUsed.dataDetaPesoPollosJson)
+            put(KEY_FECHA_REGISTRO, currentDate)
+
+        }
+        return db.insert(TABLE_USED_PESOS, null, values)
+    }
+
+    // =========================================================
+    // GET DATE TIME
+    // =========================================================
+
     private fun getCurrentDateTime(): String {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val date = Date()
@@ -204,7 +261,6 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         cursor.close()
         return dataList
     }
-
     fun getAllDataPesoPollos(): List<DataPesoPollosEntity> {
         val dataList = mutableListOf<DataPesoPollosEntity>()
         val db = this.readableDatabase
@@ -236,25 +292,6 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         cursor.close()
         return dataList
     }
-
-    fun getClienteById(numeroDocCliente: String): ClienteEntity? {
-        val db = this.readableDatabase
-        val selectQuery = "SELECT * FROM $TABLE_CLIENTE WHERE $KEY_NUMERO_DOC_CLIENTE = ?"
-        val cursor = db.rawQuery(selectQuery, arrayOf(numeroDocCliente))
-
-        var cliente: ClienteEntity? = null
-        if (cursor.moveToFirst()) {
-            cliente = ClienteEntity(
-                id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
-                numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)),
-                nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)),
-                fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
-            )
-        }
-        cursor.close()
-        return cliente
-    }
-
     fun getAllClientes(): List<ClienteEntity> {
         val clienteList = mutableListOf<ClienteEntity>()
         val db = this.readableDatabase
@@ -275,7 +312,6 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         cursor.close()
         return clienteList
     }
-
     fun getPesosAll(): List<PesosEntity> {
         val pesosList = mutableListOf<PesosEntity>()
         val db = this.readableDatabase
@@ -299,6 +335,80 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         }
         cursor.close()
         return pesosList
+    }
+
+    fun getPesosUsedAll(): List<pesoUsedEntity> {
+        val pesosUsedList = mutableListOf<pesoUsedEntity>()
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_USED_PESOS"
+        val cursor = db.rawQuery(selectQuery, null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                val pesos = pesoUsedEntity(
+                    idPesoUsed = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)),
+                    dataPesoPollosJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)),
+                    dataDetaPesoPollosJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)),
+                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
+                )
+                pesosUsedList.add(pesos)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return pesosUsedList
+    }
+
+    fun getClienteById(numeroDocCliente: String): ClienteEntity? {
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_CLIENTE WHERE $KEY_NUMERO_DOC_CLIENTE = ?"
+        val cursor = db.rawQuery(selectQuery, arrayOf(numeroDocCliente))
+
+        var cliente: ClienteEntity? = null
+        if (cursor.moveToFirst()) {
+            cliente = ClienteEntity(
+                id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)),
+                nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)),
+                fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
+            )
+        }
+        cursor.close()
+        return cliente
+    }
+    fun getImpresoraById(id: String): impresoraEntity? {
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_IMPRESORA WHERE $KEY_ID = ?"
+        val cursor = db.rawQuery(selectQuery, arrayOf(id))
+
+        var impresora: impresoraEntity? = null
+        if (cursor.moveToFirst()) {
+            impresora = impresoraEntity(
+                idImpresora = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                ip = cursor.getString(cursor.getColumnIndexOrThrow(KEY_IMPRESORA_IP)),
+                puerto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_IMPRESORA_PUERTO))
+            )
+        }
+        cursor.close()
+        return impresora
+    }
+
+    // =========================================================
+    // UPDATE
+    // =========================================================
+
+    fun updateImpresora(impresora: impresoraEntity): Int {
+        val db = this.writableDatabase
+        val contentValues = ContentValues().apply {
+            put(KEY_IMPRESORA_IP, impresora.ip)
+            put(KEY_IMPRESORA_PUERTO, impresora.puerto)
+        }
+        return db.update(
+            TABLE_IMPRESORA,
+            contentValues,
+            "$KEY_ID = ?",
+            arrayOf(impresora.idImpresora.toString())
+        )
     }
 
     // =========================================================
@@ -326,6 +436,29 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         db.delete(AppDatabase.TABLE_DETA_PESO_POLLOS, null, null)
         db.delete(AppDatabase.TABLE_PESO_POLLOS, null, null)
         db.delete(AppDatabase.TABLE_CLIENTE, null, null)
+        db.close()
+    }
+
+    fun deleteAllPesoUsed() {
+//        val db = this.writableDatabase
+//        try {
+//            db.beginTransaction()
+//            db.execSQL("DELETE FROM ${AppDatabase.TABLE_USED_PESOS}")
+//
+//            // Reiniciar los IDs auto-incrementales
+////            db.execSQL("DELETE FROM sqlite_sequence WHERE name='${AppDatabase.TABLE_USED_PESOS}'")
+//
+//            db.execSQL("VACUUM")
+//            db.setTransactionSuccessful()
+//        } catch (e: Exception) {
+//            // Manejar la excepción si es necesario
+//            e.printStackTrace()
+//        } finally {
+//            db.endTransaction()
+//            db.close()
+//        }
+        val db = this.writableDatabase
+        db.delete(AppDatabase.TABLE_USED_PESOS, null, null)
         db.close()
     }
 }

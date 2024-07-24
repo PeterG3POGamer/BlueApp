@@ -165,21 +165,27 @@ object ManagerPost {
 
         when (type) {
             "success" -> {
-                toastIcon.setImageResource(R.drawable.outline_data_check_24)
+                toastIcon.setImageResource(R.drawable.ic_info)
                 toastType.text = "ÉXITO"
                 toastHeader.background = ContextCompat.getDrawable(context, R.drawable.toast_h_background_success)
                 toastFooter.background = ContextCompat.getDrawable(context, R.drawable.toast_f_background)
             }
             "info" -> {
-                toastIcon.setImageResource(R.drawable.sharp_data_info_alert_24)
+                toastIcon.setImageResource(R.drawable.ic_info)
                 toastType.text = "INFO"
                 toastHeader.background = ContextCompat.getDrawable(context, R.drawable.toast_h_background_info)
                 toastFooter.background = ContextCompat.getDrawable(context, R.drawable.toast_f_background)
             }
             "error" -> {
-                toastIcon.setImageResource(R.drawable.outline_data_alert_24)
+                toastIcon.setImageResource(R.drawable.ic_info)
                 toastType.text = "ERROR"
                 toastHeader.background = ContextCompat.getDrawable(context, R.drawable.toast_h_background_error)
+                toastFooter.background = ContextCompat.getDrawable(context, R.drawable.toast_f_background)
+            }
+            "warning" -> {
+                toastIcon.setImageResource(R.drawable.ic_info)
+                toastType.text = "ADVERTENCIA"
+                toastHeader.background = ContextCompat.getDrawable(context, R.drawable.toast_h_background_warning)
                 toastFooter.background = ContextCompat.getDrawable(context, R.drawable.toast_f_background)
             }
             else -> {
@@ -214,7 +220,7 @@ object ManagerPost {
         } else {
             // No hay conexión de red, almacenar datos localmente
             // saveLocally(context, fragment, dataDetaPesoPollos, dataPesoPollos)
-        showCustomToast(context, "No se detecto conexión a Internet, por favor conectece a internet para enviar los datos", "info")
+        showCustomToast(context, "No se detecto conexión a Internet, por favor conectece a internet para enviar los datos", "warning")
         }
     }
 

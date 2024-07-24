@@ -11,6 +11,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.blueapp.databinding.FragmentGuiasWebBinding
 import com.example.blueapp.ui.Utilidades.Constants
 import com.example.blueapp.ui.ViewModel.GuiasWebViewModel
@@ -28,6 +29,7 @@ class GuiasWebFragment : Fragment() {
 
     private lateinit var binding: FragmentGuiasWebBinding
     private lateinit var viewModel: GuiasWebViewModel
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var webView: WebView
     private var webViewStateRestored = false
 
@@ -38,6 +40,7 @@ class GuiasWebFragment : Fragment() {
         binding = FragmentGuiasWebBinding.inflate(inflater, container, false)
         viewModel = ViewModelProvider(requireActivity()).get(GuiasWebViewModel::class.java)
         webView = binding.webView
+        swipeRefreshLayout = binding.swipeRefreshLayout
 
         setupWebView()
 
@@ -55,6 +58,10 @@ class GuiasWebFragment : Fragment() {
             webViewStateRestored = true
         }
 
+        swipeRefreshLayout.setOnRefreshListener {
+            webView.reload()
+        }
+
         return binding.root
     }
 
@@ -69,6 +76,22 @@ class GuiasWebFragment : Fragment() {
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
+
+                view?.evaluateJavascript("""
+                    (function() {
+                        // Ocultar la barra lateral
+                        var sidebar = document.getElementById('accordionSidebar');
+                        if (sidebar) {
+                            sidebar.style.display = 'none';
+                        }
+                        
+                        var boton = document.getElementById('sidebarToggleTop');
+                        if (boton) {
+                            boton.style.display = 'none';
+                        }
+                    })()
+                """.trimIndent(), null)
+
                 Log.d(TAG, "onPageFinished: $url")
 
                 when (url) {
@@ -92,6 +115,8 @@ class GuiasWebFragment : Fragment() {
                         webView.loadUrl(Constants.LOGIN_URL)
                     }
                 }
+                swipeRefreshLayout.isRefreshing = false
+
             }
 
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
@@ -186,6 +211,6 @@ class GuiasWebFragment : Fragment() {
     }
 
     companion object {
-        private const val TAG = "VentaPollosFragment"
+        private const val TAG = "GuiasWebFragment"
     }
 }

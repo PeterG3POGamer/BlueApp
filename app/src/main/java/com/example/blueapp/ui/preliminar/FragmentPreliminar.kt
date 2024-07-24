@@ -19,23 +19,22 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.blueapp.R
-import com.example.blueapp.data.DatabaseHelper
+import com.example.blueapp.ui.DataBase.AppDatabase
 import com.example.blueapp.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import com.example.blueapp.ui.DataBase.Entities.DataPesoPollosEntity
+import com.example.blueapp.ui.DataBase.Entities.pesoUsedEntity
 import com.example.blueapp.ui.Jabas.JabasFragment
 import com.example.blueapp.ui.Jabas.ManagerPost
 import com.example.blueapp.ui.Jabas.ManagerPost.removeListPesosId
 import com.example.blueapp.ui.Jabas.ManagerPost.sendDataToServer
 import com.example.blueapp.ui.Services.getAddressMacDivice
 import com.example.blueapp.ui.ViewModel.SharedViewModel
-import com.example.blueapp.ui.reports.ReportesAdapter
 import org.json.JSONArray
 import org.json.JSONObject
 
 class FragmentPreliminar : Fragment() {
 
     private lateinit var sharedViewModel: SharedViewModel
-    private lateinit var databaseHelper: DatabaseHelper
     private lateinit var reportesAdapter: ReportesAdapter
     private val editTextIds = listOf(
         R.id.inputDniCliente,
@@ -58,8 +57,6 @@ class FragmentPreliminar : Fragment() {
         val view = inflater.inflate(R.layout.fragment_peso_preliminar, container, false)
         val boton_Volver = view.findViewById<ImageButton>(R.id.boton_Volver)
         val boton_Procesar = view.findViewById<ImageButton>(R.id.boton_Procesar)
-
-        databaseHelper = DatabaseHelper(requireContext())
         reportesAdapter = ReportesAdapter()
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerViewReportes)
@@ -85,15 +82,15 @@ class FragmentPreliminar : Fragment() {
 
                 dataPesoPollos.put("_PP_totalJabas", totalJabas)
                 dataPesoPollos.put("_PP_totalPollos", totalPollos)
-                dataPesoPollos.put("_PP_totalPeso", totalPesoPollos)
-                dataPesoPollos.put("_PP_totalNeto", neto)
-                dataPesoPollos.put("_PP_totalPesoJabas", totalPesoJabas)
-                dataPesoPollos.put("_PP_PKPollo", pesoKPollo)
-                dataPesoPollos.put("_PP_TotalPagar", TotalPagar)
-
-                distribuirDatosEnInputs(dataPesoPollos, view)
+                dataPesoPollos.put("_PP_totalPeso", formatDecimal(totalPesoPollos))
+                dataPesoPollos.put("_PP_totalNeto", formatDecimal(neto))
+                dataPesoPollos.put("_PP_totalPesoJabas", formatDecimal(totalPesoJabas))
+                dataPesoPollos.put("_PP_PKPollo", formatDecimal(pesoKPollo))
+                dataPesoPollos.put("_PP_TotalPagar", formatDecimal(TotalPagar))
 
                 sharedViewModel.setDataPesoPollosJson(dataPesoPollos.toString())
+
+                distribuirDatosEnInputs(dataPesoPollos, view)
 
 //                val idPesoText = view.findViewById<EditText>(R.id.idListPesos2)
 
@@ -114,12 +111,14 @@ class FragmentPreliminar : Fragment() {
         }
 
         boton_Procesar.setOnClickListener {
+            val db = AppDatabase(requireContext())
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                 requestStoragePermission()
                 procesarDatos()
             } else {
                 procesarDatos()
             }
+            db.deleteAllPesoUsed()
         }
 
 
@@ -144,7 +143,7 @@ class FragmentPreliminar : Fragment() {
         val dataDetaPesoPollosJson = sharedViewModel.getDataDetaPesoPollosJson()
 
         Log.d("Preliminar dataPesoPollosJson", dataPesoPollosJson.toString());
-            Log.d("Preliminar dataDetaPesoPollosJson", dataDetaPesoPollosJson.toString());
+        Log.d("Preliminar dataDetaPesoPollosJson", dataDetaPesoPollosJson.toString());
 
         if (!dataDetaPesoPollosJson.isNullOrEmpty() && !dataPesoPollosJson.isNullOrEmpty()) {
             val dataPesoPollos = JSONObject(dataPesoPollosJson)
@@ -197,8 +196,6 @@ class FragmentPreliminar : Fragment() {
                 JSONObject()
             }
 
-            // Creas un nuevo objeto JSONObject para los datos nuevos
-            val jsonNuevo = dataPesoPollosEntity.toJson()
 
             // Creas un nuevo objeto JSONObject combinando los datos antiguos y nuevos
             val nuevoJson = JSONObject()
@@ -210,12 +207,14 @@ class FragmentPreliminar : Fragment() {
             // Actualizas el JSON en tu ViewModel
             sharedViewModel.setDataPesoPollosJson(nuevoJson.toString())
             sharedViewModel.setDataDetaPesoPollosJson("")
+            val db = AppDatabase(requireContext())
+            db.deleteAllPesoUsed()
+
             findNavController().navigate(R.id.action_nav_initPreliminar_to_nav_initReportePeso)
         } else {
             Toast.makeText(requireContext(), "Datos incompletos", Toast.LENGTH_SHORT).show()
         }
     }
-
     private fun checkStoragePermission(): Boolean {
         return ContextCompat.checkSelfPermission(
             requireContext(),
@@ -394,8 +393,29 @@ class FragmentPreliminar : Fragment() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        var idPesoTemp = sharedViewModel.getIdListPesos()?: 0
+        var dataPesoPollosJsonTemp = sharedViewModel.getDataPesoPollosJson()?: ""
+        var dataDetaPesoPollosJsonTemp = sharedViewModel.getDataDetaPesoPollosJson()?: ""
+        val db = AppDatabase(requireContext())
+        val device = getAddressMacDivice.getDeviceId(requireContext())
+
+        if (idPesoTemp != 0){
+            if (!dataPesoPollosJsonTemp.isNullOrBlank() && !dataDetaPesoPollosJsonTemp.isNullOrBlank()){
+                val pesoUsed = pesoUsedEntity(
+                    idPesoUsed = idPesoTemp,
+                    devicedName = device,
+                    dataPesoPollosJson = dataPesoPollosJsonTemp,
+                    dataDetaPesoPollosJson = dataDetaPesoPollosJsonTemp,
+                    fechaRegistro = ""
+                )
+                db.addPesoUsed(pesoUsed)
+            }
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
-        databaseHelper.close()
     }
 }
