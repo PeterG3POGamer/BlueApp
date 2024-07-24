@@ -1,14 +1,10 @@
-package com.example.blueapp.ui.reports
-
-import android.telecom.Call.Details
+package com.example.blueapp.ui.preliminar
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.blueapp.R
-import com.example.blueapp.data.detapp
-import com.example.blueapp.data.pesopollos
 import com.example.blueapp.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import com.example.blueapp.ui.DataBase.Entities.DataPesoPollosEntity
 

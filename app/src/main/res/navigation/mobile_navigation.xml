@@ -30,17 +30,16 @@
         tools:layout="@layout/fragment_ventas_web" />
 
     <fragment
-        android:id="@+id/nav_initReporteReportes"
-        android:name="com.example.blueapp.ui.reports.ReportsFragment"
-        android:label="@string/menu_bt_balanza"
-        tools:layout="@layout/fragment_reportes" />
-
-    <fragment
         android:id="@+id/nav_initPreliminar"
         android:name="com.example.blueapp.ui.preliminar.FragmentPreliminar"
         android:label="@string/menu_bt_balanza"
         tools:layout="@layout/fragment_peso_preliminar" />
 
+    <fragment
+        android:id="@+id/nav_impresoraConfig"
+        android:name="com.example.blueapp.ui.ImpresoraSettings.ImpresoraSettingsFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_impresora_settings" />
     <!-- Acciones de navegación -->
     <action
         android:id="@+id/action_nav_initPreliminar_to_nav_initReportePeso"

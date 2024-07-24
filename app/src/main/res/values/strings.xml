@@ -15,11 +15,11 @@
     <string name="select_galpon_prompt">Seleccione Galpón</string>
     <string name="select_pesos_prompt">Seleccione Peso</string>
 
-    <string name="menu_bt_balanza">Balanza BT</string>
+    <string name="menu_bt_balanza">Balanza</string>
     <string name="menu_pesos">Pesos</string>
-    <string name="menu_GuiasWeb">Guias Web</string>
+    <string name="menu_GuiasWeb">Guias</string>
     <string name="menu_VentasAppWeb">Ventas</string>
-    <string name="menu_reports">Reportes</string>
+    <string name="menu_impresora">Impresora Settings</string>
     <string name="menu_Preliminar">Preliminar</string>
 
 </resources>

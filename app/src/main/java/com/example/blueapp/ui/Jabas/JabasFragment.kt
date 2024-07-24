@@ -24,6 +24,7 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -42,6 +43,7 @@ import com.example.blueapp.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import com.example.blueapp.ui.DataBase.Entities.DataPesoPollosEntity
 import com.example.blueapp.ui.DataBase.Entities.GalponEntity
 import com.example.blueapp.ui.DataBase.Entities.PesosEntity
+import com.example.blueapp.ui.DataBase.Entities.pesoUsedEntity
 import com.example.blueapp.ui.Interfaces.OnItemClickListener
 import com.example.blueapp.ui.Jabas.ManagerPost.addListPesos
 import com.example.blueapp.ui.Jabas.ManagerPost.getNucleos
@@ -70,11 +72,18 @@ class JabasFragment : Fragment(), OnItemClickListener {
     private val handler = Handler(Looper.getMainLooper())
     private val checkInterval = 3000L
     private var checkSendData: Boolean = false
+    private var navegationTrue: Boolean = false
+    private var isReload: Boolean = false
     private var idGalpoListaPesos = ""
     private var pesosList: List<PesosEntity> = emptyList()
+    private var detallesList: List<DataDetaPesoPollosEntity> = emptyList()
     private var galponesList: List<GalponEntity> = listOf()
     private var galponIdMap = mutableMapOf<Int, String>()
     private var idPesoShared: Int = 0
+    private var dataPesoPollosJson: String? = ""
+    private var dataDetaPesoPollosJson: String? = ""
+    private var currentToast: Toast? = null
+    private lateinit var progressBar: ProgressBar
 
     private val checkInternetRunnable = object : Runnable {
         override fun run() {
@@ -131,13 +140,14 @@ class JabasFragment : Fragment(), OnItemClickListener {
     ): View? {
         _binding = FragmentPesosBinding.inflate(inflater, container, false)
         val root: View = binding.root
+        progressBar = binding.progressBar.findViewById(R.id.progressBar)
         val db = AppDatabase(requireContext())
 
         sharedViewModel.pesoValue.observe(viewLifecycleOwner) { peso ->
             val pesoFormatted = String.format("%.2f", peso.toDoubleOrNull() ?: 0.0)
             binding.inputPesoKg.setText(pesoFormatted)
         }
-
+        showLoading()
         sharedViewModel.connectedDeviceName.observe(viewLifecycleOwner) { deviceName ->
             binding.diviceConnected.text = if (!deviceName.isNullOrEmpty()) {
                 "Conectado a: $deviceName"
@@ -145,11 +155,9 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 "No Conectado"
             }
         }
-
-
         // Regreso de datos de la preliminar
-        val dataDetaPesoPollosJson = sharedViewModel.getDataDetaPesoPollosJson()
-        val dataPesoPollosJson = sharedViewModel.getDataPesoPollosJson()
+        dataDetaPesoPollosJson = sharedViewModel.getDataDetaPesoPollosJson()
+        dataPesoPollosJson = sharedViewModel.getDataPesoPollosJson()
         idPesoShared = sharedViewModel.getIdListPesos()?: 0
 
 
@@ -159,14 +167,27 @@ class JabasFragment : Fragment(), OnItemClickListener {
             adapter = jabasAdapter
         }
 
+
+        val pesoUsedExisted = db.getPesosUsedAll()
+        if (!pesoUsedExisted.isNullOrEmpty()){
+            val peso = pesoUsedExisted.first() // Asumiendo que quieres el primer registro
+            idPesoShared = peso.idPesoUsed
+            sharedViewModel.setIdListPesos(idPesoShared)
+
+            dataPesoPollosJson = peso.dataPesoPollosJson
+            dataDetaPesoPollosJson = peso.dataDetaPesoPollosJson
+            sharedViewModel.setDataPesoPollosJson(dataPesoPollosJson.toString())
+            sharedViewModel.setDataDetaPesoPollosJson(dataDetaPesoPollosJson.toString())
+            db.deleteAllPesoUsed()
+        }
         if (!dataDetaPesoPollosJson.isNullOrEmpty()) {
+
             val dataDetaPesoPollos = JSONArray(dataDetaPesoPollosJson)
-            val detallesList = procesarDataDetaPesoPollos(dataDetaPesoPollos)
+            detallesList = procesarDataDetaPesoPollos(dataDetaPesoPollos)
             Log.d("JabasFragment detallesList","${detallesList}")
 
-            val dataPesoPollos = JSONObject(dataPesoPollosJson)
+            val dataPesoPollos = JSONObject(dataPesoPollosJson.toString())
             distribuirDatosEnInputs(dataPesoPollos)
-
             detallesList.forEach { detalle ->
                 val newItem = JabasItem(
                     id = detalle.idDetaPP,
@@ -187,9 +208,11 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
 
 
+
         // Obtener los nombres de los nucleos y llenar el spinner
         getNucleos { nucleos ->
             nucleos?.let {
+                showLoading()
                 // Preparar nombres de los nucleos con elemento por defecto
                 val nombresNucleos = mutableListOf("Seleccione Establecimiento")
                 nombresNucleos.addAll(it.map { nucleo -> nucleo.nombre })
@@ -246,12 +269,12 @@ class JabasFragment : Fragment(), OnItemClickListener {
                                     binding.selectGalpon.setSelection(0)
                                 }
                                 idGalpoListaPesos = ""
-
                             } else {
                                 Log.w("SelectGalpon", "La lista de galpones está vacía para el nucleo $idNucleo")
                                 val emptyAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, listOf("Seleccione Galpon"))
                                 emptyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                                 binding.selectGalpon.adapter = emptyAdapter
+
                             }
                         } ?: run {
                             Log.e("SelectGalpon", "Error al obtener los galpones desde el servidor para el nucleo $idNucleo")
@@ -297,11 +320,12 @@ class JabasFragment : Fragment(), OnItemClickListener {
                         // Manejar caso cuando no se selecciona nada
                     }
                 }
+
             } ?: run {
                 Log.e("JabasFragment", "Error al obtener los nucleos desde el servidor.")
             }
         }
-
+        fetchData()
 
         binding.selectGalpon.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -313,8 +337,16 @@ class JabasFragment : Fragment(), OnItemClickListener {
                         val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
                         val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
                         val idNucleo = binding.selectEstablecimiento.selectedItemPosition
-                        if (dataPesoPollosJson.isNullOrBlank()) {
-                            limpiarCampos()
+                        if (jabasList.isEmpty()){
+                            if (idPesoShared != 0) {
+                                limpiarCampos()
+                            }else if (dataPesoPollosJson.isNullOrBlank()){
+                                limpiarCampos()
+                            }
+                        }else if (idPesoShared != 0){
+                            if (dataPesoPollosJson.isNullOrBlank()){
+                                limpiarCampos()
+                            }
                         }
                         updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
                     }
@@ -325,18 +357,37 @@ class JabasFragment : Fragment(), OnItemClickListener {
             }
         }
 
+        binding.botonReloadPeso.setOnClickListener{
+            val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
+            val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+            val idNucleo = binding.selectEstablecimiento.selectedItemPosition
+
+            updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
+
+            // Cancelar el Toast actual si está visible
+            currentToast?.cancel()
+
+            // Mostrar un nuevo Toast
+            currentToast = Toast.makeText(requireContext(), "Se actualizó la lista de pesos", Toast.LENGTH_SHORT)
+            currentToast?.show()
+
+            // Aplicar animación al botón
+//            val rotateAnimation = AnimationUtils.loadAnimation(requireContext(), R.animator.rotate)
+//            binding.botonReloadPeso.startAnimation(rotateAnimation)
+        }
+
         binding.selectListpesos.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 Log.d("JabasFragment", "Posición seleccionada en selectListpesos: $position")
-                updateSpinnerPesosIdPeso()
                 when (position) {
                     0 -> {
                         // "Seleccione Pesos" seleccionado
                         Log.d("JabasFragment", "Opción 'Seleccione Pesos' seleccionada")
                         // Limpiar los campos o realizar alguna acción por defecto
-                        if (idPesoShared == 0){
-                            if (dataPesoPollosJson.isNullOrBlank()){
+                        if (idPesoShared == 0) {
+                            if (jabasList.isEmpty() || dataPesoPollosJson.isNullOrBlank()) {
                                 limpiarCampos()
+                            } else {
                             }
                             sharedViewModel.setIdListPesos(0)
                         }
@@ -344,7 +395,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
 //                        binding.selectGalpon.setSelection(0)
                     }
                     else -> {
-                        limpiarTablaJabas()
+                        showLoading()
                         if (pesosList.isNotEmpty()) {
                             val selectedPesos = pesosList[position - 1]
                             Log.d("JabasFragment", "Peso seleccionado: ${selectedPesos.numeroDocCliente}/${selectedPesos.nombreCompleto}")
@@ -368,12 +419,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
                                                 idPesoShared = idPeso
                                                 sharedViewModel.setIdListPesos(idPeso)
 
-                                                val idDevice = getDeviceId(requireContext())
-                                                setStatusUsed(requireContext(), idPeso, "Used", idDevice) { success ->
-                                                    if (!success) {
-                                                        Log.d("StatusLog", "Error al cambiar el estado del peso")
-                                                    }
-                                                }
+                                                updatePesoStatus(idPeso, "Used")
 
                                                 // Resto del código para procesar datos (sin cambios)
                                                 val dataPesoPollos = JSONObject(selectedPesos.dataPesoJson)
@@ -381,6 +427,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
                                                 val idNucleo = dataPesoPollos.optString("_PP_idNucleo", "0")
                                                 val idGalpon = dataPesoPollos.optString("_PP_IdGalpon", "0")
+
                                                 idGalpoListaPesos = idGalpon
                                                 Log.d("JabasFragment", "ID Núcleo en JSON: $idNucleo, ID Galpón en JSON: $idGalpon")
 
@@ -395,20 +442,24 @@ class JabasFragment : Fragment(), OnItemClickListener {
                                                 actualizarSpinnerGalpon(idGalpon)
 
                                                 // Resto del código para procesar datos (sin cambios)
-                                                val detallesList = procesarDataDetaPesoPollos(dataDetaPesoPollos)
-                                                distribuirDatosEnInputs(dataPesoPollos)
+//                                                if (dataDetaPesoPollosJson.isNullOrBlank()){
+                                                    limpiarTablaJabas()
+                                                    detallesList = procesarDataDetaPesoPollos(dataDetaPesoPollos)
+                                                    distribuirDatosEnInputs(dataPesoPollos)
 
-                                                detallesList.forEach { detalle ->
-                                                    val newItem = JabasItem(
-                                                        id = detalle.idDetaPP,
-                                                        numeroJabas = detalle.cantJabas,
-                                                        numeroPollos = detalle.cantPollos,
-                                                        pesoKg = detalle.peso,
-                                                        conPollos = detalle.tipo
-                                                    )
+                                                    detallesList.forEach { detalle ->
+                                                        val newItem = JabasItem(
+                                                            id = detalle.idDetaPP,
+                                                            numeroJabas = detalle.cantJabas,
+                                                            numeroPollos = detalle.cantPollos,
+                                                            pesoKg = detalle.peso,
+                                                            conPollos = detalle.tipo
+                                                        )
 
-                                                    jabasAdapter.addItem(newItem)
-                                                }
+                                                        jabasAdapter.addItem(newItem)
+                                                    }
+//                                                }
+
                                                 binding.botonDeletePeso.visibility = View.VISIBLE
                                                 binding.botonGuardarPeso.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.yellow)
                                                 binding.botonGuardarPeso.setImageResource(R.drawable.baseline_backup_24)
@@ -423,12 +474,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
                                                 idPesoShared = idPeso
                                                 sharedViewModel.setIdListPesos(idPeso)
 
-                                                val idDevice = getDeviceId(requireContext())
-                                                setStatusUsed(requireContext(), idPeso, "Used", idDevice) { success ->
-                                                    if (!success) {
-                                                        Log.d("StatusLog", "Error al cambiar el estado del peso")
-                                                    }
-                                                }
+                                                updatePesoStatus(idPeso, "Used")
 
                                                 // Resto del código para procesar datos (sin cambios)
                                                 val dataPesoPollos = JSONObject(selectedPesos.dataPesoJson)
@@ -449,8 +495,10 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
                                                 actualizarSpinnerGalpon(idGalpon)
 
-                                                // Resto del código para procesar datos (sin cambios)
-                                                val detallesList = procesarDataDetaPesoPollos(dataDetaPesoPollos)
+                                                  // Resto del código para procesar datos (sin cambios)
+//                                                if (dataDetaPesoPollosJson.isNullOrBlank()){
+                                                limpiarTablaJabas()
+                                                detallesList = procesarDataDetaPesoPollos(dataDetaPesoPollos)
                                                 distribuirDatosEnInputs(dataPesoPollos)
 
                                                 detallesList.forEach { detalle ->
@@ -464,6 +512,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
                                                     jabasAdapter.addItem(newItem)
                                                 }
+//                                                }
+
                                                 binding.botonDeletePeso.visibility = View.VISIBLE
                                                 binding.botonGuardarPeso.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.yellow)
                                                 binding.botonGuardarPeso.setImageResource(R.drawable.baseline_backup_24)
@@ -471,19 +521,23 @@ class JabasFragment : Fragment(), OnItemClickListener {
                                             else -> {
                                                 showCustomToast(requireContext(), "Error: Este peso está siendo usado por otro dispositivo", "error")
                                                 limpiarCampos()
+                                                fetchData()
                                             }
                                         }
+
                                     } else {
                                         showCustomToast(requireContext(), "Error al obtener el estado del peso", "error")
+                                        fetchData()
                                     }
                                 }
                             }
-
+                        fetchData()
                         } else {
                             Log.d("JabasFragment", "La lista de pesos está vacía")
                             binding.botonDeletePeso.visibility = View.INVISIBLE
                             binding.botonGuardarPeso.backgroundTintList  = ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
                             binding.botonGuardarPeso.setImageResource(R.drawable.baseline_add_24)
+                            fetchData()
                         }
                     }
                 }
@@ -520,8 +574,9 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
         binding.botonGuardarPeso.setOnClickListener{
             CoroutineScope(Dispatchers.Main).launch {
-                var idEstablecimiento = binding.selectEstablecimiento.selectedItemPosition
+                showLoading()
                 val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
+                val idNucleo = binding.selectEstablecimiento.selectedItemPosition
                 val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
                 var numDoc = binding.textDocCli.text.toString()
                 var nombres = binding.textNomCli.text.toString()
@@ -530,18 +585,19 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     showCustomToast(requireContext(),"¡La tabla esta vacía, por favor registre datos antes de enviar!","info")
                 } else if (numDoc.isNullOrBlank() && nombres.isNullOrBlank()){
                     showCustomToast(requireContext(),"¡Ingrese un Cliente","info")
+                    fetchData()
                 } else if (binding.PrecioKilo.text.isNullOrBlank()){
                     showCustomToast(requireContext(),"¡Ingrese un precio","info")
                     binding.PrecioKilo.error = "Ingrese un precio"
-                } else if (idEstablecimiento == 0){
-                    showCustomToast(requireContext(), "¡Seleccione un establecimiento!", "info")
+                    fetchData()
+                } else if (idNucleo == 0){
+                    showCustomToast(requireContext(), "¡Seleccione un nucleo!", "info")
+                    fetchData()
                 } else if (idGalpon == 0){
                     showCustomToast(requireContext(), "¡Seleccione un galpón!", "info")
+                    fetchData()
                 } else {
                     val dataDetaPesoPollos = ManagerPost.captureData(jabasList)
-                    val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
-                    val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
-                    val idNucleo = binding.selectEstablecimiento.selectedItemPosition
                     val dataPesoPollos = ManagerPost.captureDataPesoPollos(
                         id = 1,
                         serie = "",
@@ -560,8 +616,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
                         totalPagar = ""
                     )
 
-                    val dataPesoPollosJson = dataPesoPollos.toJson().toString()
-                    val dataDetaPesoPollosJson = JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
+                    dataPesoPollosJson = dataPesoPollos.toJson().toString()
+                    dataDetaPesoPollosJson = JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
 
                     val pesosEntity = PesosEntity(
                         id = 0,
@@ -569,8 +625,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
                         idGalpon = idGalpon.toInt(),
                         numeroDocCliente = dataPesoPollos.numeroDocCliente,
                         nombreCompleto = dataPesoPollos.nombreCompleto,
-                        dataPesoJson = dataPesoPollosJson,
-                        dataDetaPesoJson = dataDetaPesoPollosJson,
+                        dataPesoJson = dataPesoPollosJson!!,
+                        dataDetaPesoJson = dataDetaPesoPollosJson!!,
                         fechaRegistro = ""
                     )
                     if (idPesoShared == 0){
@@ -582,13 +638,13 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     }else{
                         val success = updateListPesos(requireContext(), this@JabasFragment, pesosEntity, idPesoShared)
                         if (success) {
-//                            limpiarCampos()
+                            limpiarCampos()
                             sharedViewModel.setContadorJabas(0)
                             _binding?.contadorJabas?.text = "= 0"
                             updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
                         }
                     }
-
+                    fetchData()
                 }
             }
         }
@@ -714,75 +770,89 @@ class JabasFragment : Fragment(), OnItemClickListener {
             modalCliente()
         }
 
-        binding.botonPreCarga.setOnClickListener {
-            context?.let { it1 -> showPreCarga(it1) }
-        }
-
-
         binding.botonEnviar.setOnClickListener {
-            val preLoading = PreLoading(requireContext())
+            CoroutineScope(Dispatchers.Main).launch {
+                showLoading()
 
-            preLoading.showPreCarga()
+                val dataDetaPesoPollos = ManagerPost.captureData(jabasList)
+                val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
+                val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+                val idNucleo = binding.selectEstablecimiento.selectedItemPosition
+                val dataPesoPollos = ManagerPost.captureDataPesoPollos(
+                    id = 1,
+                    serie = "",
+                    fecha = "",
+                    totalJabas = "",
+                    totalPollos = "",
+                    totalPeso = "",
+                    tipo = "",
+                    numeroDocCliente = binding.textDocCli.text.toString(),
+                    nombreCompleto = binding.textNomCli.text.toString(),
+                    idGalpon = idGalpon.toString(),
+                    idNucleo = idNucleo.toString(),
+                    PKPollo = binding.PrecioKilo.text.toString(),
+                    totalPesoJabas = "",
+                    totalNeto = "",
+                    totalPagar = ""
+                )
+                var idEstablecimiento = binding.selectEstablecimiento.selectedItemPosition
+                var precio =  dataPesoPollos.PKPollo.toDouble()
+                if (idEstablecimiento == 0){
+                    showCustomToast(requireContext(), "¡Seleccione un establecimiento!", "info")
+                    fetchData()
 
-            val dataDetaPesoPollos = ManagerPost.captureData(jabasList)
-            val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
-            val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
-            val idNucleo = binding.selectEstablecimiento.selectedItemPosition
-            val dataPesoPollos = ManagerPost.captureDataPesoPollos(
-                id = 1,
-                serie = "",
-                fecha = "",
-                totalJabas = "",
-                totalPollos = "",
-                totalPeso = "",
-                tipo = "",
-                numeroDocCliente = binding.textDocCli.text.toString(),
-                nombreCompleto = binding.textNomCli.text.toString(),
-                idGalpon = idGalpon.toString(),
-                idNucleo = idNucleo.toString(),
-                PKPollo = binding.PrecioKilo.text.toString(),
-                totalPesoJabas = "",
-                totalNeto = "",
-                totalPagar = ""
-            )
-            var idEstablecimiento = binding.selectEstablecimiento.selectedItemPosition
-            if (idEstablecimiento == 0){
-                showCustomToast(requireContext(), "¡Seleccione un establecimiento!", "info")
-                preLoading.hidePreCarga()
+                }else if (dataPesoPollos.idGalpon == "0" || dataPesoPollos.idGalpon.isBlank()){
+                    showCustomToast(requireContext(), "¡Seleccione un galpón!", "info")
+                    fetchData()
 
-            }else if (dataPesoPollos.idGalpon == "0" || dataPesoPollos.idGalpon.isBlank()){
-                showCustomToast(requireContext(), "¡Seleccione un galpón!", "info")
-                preLoading.hidePreCarga()
+                }else if (dataPesoPollos.numeroDocCliente == "" && dataPesoPollos.nombreCompleto == ""){
+                    showCustomToast(requireContext(), "¡Registre un cliente!", "info")
+                    fetchData()
 
-            }else if (dataPesoPollos.numeroDocCliente == "" && dataPesoPollos.nombreCompleto == ""){
-                showCustomToast(requireContext(), "¡Registre un cliente!", "info")
-                preLoading.hidePreCarga()
+                }else if (dataDetaPesoPollos.isEmpty()) {
+                    showCustomToast(requireContext(), "¡La tabla esta vacía, por favor registre datos antes de enviar!", "info")
+                    fetchData()
 
-            }else if (dataDetaPesoPollos.isEmpty()) {
-                showCustomToast(requireContext(), "¡La tabla esta vacía, por favor registre datos antes de enviar!", "info")
-                preLoading.hidePreCarga()
+                }else if (dataPesoPollos.PKPollo.isBlank()) {
+                    binding.PrecioKilo.error = "¡Para calcular el Total a Pagar necesitamos saber el precio por kilo!"
+                    fetchData()
 
-            }else if (dataPesoPollos.PKPollo.isBlank()) {
-                binding.PrecioKilo.error = "¡Para calcular el Total a Pagar necesitamos saber el precio por kilo!"
-                preLoading.hidePreCarga()
+                }else if (precio <= 0) {
+                    binding.PrecioKilo.error = "¡Para calcular el Total a Pagar necesitamos saber el precio por kilo!"
+                    fetchData()
 
-            }else{
-                Log.d("JabasFragment", "$dataDetaPesoPollos")
-                Log.d("JabasFragment", "$dataPesoPollos")
+                }else{
+                    Log.d("JabasFragment", "$dataDetaPesoPollos")
+                    Log.d("JabasFragment", "$dataPesoPollos")
 
-                val dataPesoPollosJson = dataPesoPollos.toJson().toString()
-                val dataDetaPesoPollosJson = JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
+                    dataPesoPollosJson = dataPesoPollos.toJson().toString()
+                    dataDetaPesoPollosJson = JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
 
-                sharedViewModel.setDataPesoPollosJson(dataPesoPollosJson)
-                sharedViewModel.setDataDetaPesoPollosJson(dataDetaPesoPollosJson)
+                    sharedViewModel.setDataPesoPollosJson(dataPesoPollosJson!!)
+                    sharedViewModel.setDataDetaPesoPollosJson(dataDetaPesoPollosJson!!)
 
-                preLoading.hidePreCarga()
-//                ManagerPost.sendDataToServer(requireContext(), this@JabasFragment, dataDetaPesoPollos, dataPesoPollos)
-                findNavController().navigate(R.id.nav_initPreliminar)
+                    navegationTrue = true
+                    val pesosEntity = PesosEntity(
+                        id = 0,
+                        idNucleo = idNucleo,
+                        idGalpon = idGalpon,
+                        numeroDocCliente = dataPesoPollos.numeroDocCliente,
+                        nombreCompleto = dataPesoPollos.nombreCompleto,
+                        dataPesoJson = dataPesoPollosJson!!,
+                        dataDetaPesoJson = dataDetaPesoPollosJson!!,
+                        fechaRegistro = ""
+                    )
 
+                    if (idPesoShared != 0){
+                        val success = updateListPesos(requireContext(), this@JabasFragment, pesosEntity, idPesoShared)
+                        if (success) {
+                            sharedViewModel.setContadorJabas(0)
+                        }
+                    }
+                    findNavController().navigate(R.id.nav_initPreliminar)
+                }
             }
         }
-
         return root
     }
 
@@ -812,8 +882,25 @@ class JabasFragment : Fragment(), OnItemClickListener {
         Log.d("idGalponSelect", "Galpón seleccionado: posición $positionToSelect, idGalpon: $idGalpon")
     }
 
-    private fun updateSpinnerPesosIdGalpon(idNucleo : Int, idGalpon: Int) {
+    private fun reloadListPesos() {
+        val idDevice = getDeviceId(requireContext())
+        val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
+        val idNucleo = binding.selectEstablecimiento.selectedItemPosition
+        val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+        // Obtener los pesos guardados en la base de datos
+        ManagerPost.getListPesosByIdGalpon(idGalpon, idNucleo, idDevice) { fetchedPesosList ->
+            CoroutineScope(Dispatchers.Main).launch {
+                if (fetchedPesosList != null && fetchedPesosList.isNotEmpty()) {
+                    // Actualizar la lista global
+                    pesosList = fetchedPesosList
+                    val spinnerItems = mutableListOf("Seleccione Pesos")
+                    spinnerItems.addAll(pesosList.map { "${it.id}: ${it.numeroDocCliente}/${it.nombreCompleto}" })
+                }
+            }
+        }
+    }
 
+    private fun updateSpinnerPesosIdGalpon(idNucleo : Int, idGalpon: Int) {
         val idDevice = getDeviceId(requireContext())
         // Obtener los pesos guardados en la base de datos
         ManagerPost.getListPesosByIdGalpon(idGalpon, idNucleo, idDevice) { fetchedPesosList ->
@@ -857,31 +944,29 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 // Actualizar el spinner en el hilo principal
                 CoroutineScope(Dispatchers.Main).launch {
                     val spinnerItems = listOf("Seleccione Pesos", "No hay datos guardados")
-                    val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, spinnerItems)
+                    val adapter = object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_item, spinnerItems) {
+                        override fun isEnabled(position: Int): Boolean {
+                            // Deshabilitar el segundo ítem (posición 1)
+                            return position != 1
+                        }
+
+                        @SuppressLint("ResourceAsColor")
+                        override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
+                            val view = super.getDropDownView(position, convertView, parent)
+                            val textView = view as TextView
+                            // Deshabilitar el segundo ítem (posición 1)
+                            if (position == 1) {
+                                textView.setTextColor(R.color.gray) // Opcional: cambiar el color del texto para indicar que está deshabilitado
+                            } else {
+                                textView.setTextColor(R.color.black)
+                            }
+                            return view
+                        }
+                    }
                     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                     binding.selectListpesos.adapter = adapter
 
                     Log.d("SpinnerData", "No hay datos disponibles")
-                }
-            }
-        }
-    }
-
-    private fun updateSpinnerPesosIdPeso() {
-        val idPeso = binding.selectListpesos.selectedItemPosition
-        ManagerPost.getListPesosId(idPeso) { pesosList, dataDetaPesoList ->
-            dataDetaPesoList?.let { detaPesoList ->
-                // Convertir DataDetaPesoPollosEntity a JabasItem
-                detaPesoList.forEach { detalle ->
-                    val newItem = JabasItem(
-                        id = detalle.idDetaPP,
-                        numeroJabas = detalle.cantJabas,
-                        numeroPollos = detalle.cantPollos,
-                        pesoKg = detalle.peso,
-                        conPollos = detalle.tipo
-                    )
-
-                    jabasAdapter.addItem(newItem)
                 }
             }
         }
@@ -943,14 +1028,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
     }
 
     fun limpiarCampos() {
-        if (idPesoShared != 0){
-            val idDevice = getDeviceId(requireContext())
-            setStatusUsed(requireContext(), idPesoShared, "NotUsed", idDevice) { success ->
-                if (!success) {
-                    Log.d("StatusLog", "Error al cambiar el estado del peso")
-                }
-            }
-        }
+        updatePesoStatus(idPesoShared, "NotUsed")
         idPesoShared = 0
         binding.selectListpesos.setSelection(0)
         binding.idListPeso.text = ""
@@ -967,6 +1045,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
         sharedViewModel.setDataPesoPollosJson("")
         sharedViewModel.setDataDetaPesoPollosJson("")
+        dataPesoPollosJson = ""
+        dataDetaPesoPollosJson = ""
 
         // LIMPIAR LOS ERRORES DE INPUTS
         binding.inputNumeroJabas.error = null
@@ -986,10 +1066,16 @@ class JabasFragment : Fragment(), OnItemClickListener {
         _binding?.contadorJabas?.text = "= 0"
     }
 
-    private  fun limpiarTablaJabas(){
+    private fun limpiarTablaJabas(){
         // Limpiar Tabla
+        sharedViewModel.setDataPesoPollosJson("")
+        sharedViewModel.setDataDetaPesoPollosJson("")
+        dataPesoPollosJson = ""
+        dataDetaPesoPollosJson = ""
         jabasList.clear()
         jabasAdapter.notifyDataSetChanged()
+        sharedViewModel.setContadorJabas(0)
+        binding.contadorJabas.text = "= 0"
     }
 
     private fun mostrarConfirmacionLimpiar() {
@@ -1338,23 +1424,118 @@ class JabasFragment : Fragment(), OnItemClickListener {
         }
     }
 
+    var idPesoTemp = 0
+    var dataPesoPollosJsonTemp = ""
+    var dataDetaPesoPollosJsonTemp = ""
     override fun onResume() {
         super.onResume()
         // Registra el receptor para cambios en la conectividad
         val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         requireContext().registerReceiver(networkChangeReceiver, filter)
 
+        binding.botonDeletePeso.visibility = View.INVISIBLE
+
+        if (idPesoShared == 0){
+            sharedViewModel.setIdListPesos(idPesoTemp)
+            idPesoShared = sharedViewModel.getIdListPesos()?: 0
+        }
+        val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
+        val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+        val idNucleo = binding.selectEstablecimiento.selectedItemPosition
+        updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
+
         // Inicia la verificación periódica de la conexión a Internet
 //        handler.post(checkInternetRunnable)
+    }
+    override fun onStop() {
+        super.onStop()
+
+        idPesoTemp = sharedViewModel.getIdListPesos()?: 0
+        dataPesoPollosJsonTemp = sharedViewModel.getDataPesoPollosJson()?: ""
+        dataDetaPesoPollosJsonTemp = sharedViewModel.getDataDetaPesoPollosJson()?: ""
+        sharedViewModel.setDataPesoPollosJson(dataPesoPollosJsonTemp)
+        sharedViewModel.setDataDetaPesoPollosJson(dataDetaPesoPollosJsonTemp)
+        sharedViewModel.setIdListPesos(idPesoTemp)
+
     }
 
     override fun onPause() {
         super.onPause()
         // Desregistra el receptor para evitar fugas de memoria
         requireContext().unregisterReceiver(networkChangeReceiver)
+        val db = AppDatabase(requireContext())
+        val device = getDeviceId(requireContext())
 
+        idPesoTemp = sharedViewModel.getIdListPesos()?: 0
+        dataPesoPollosJsonTemp = sharedViewModel.getDataPesoPollosJson()?: ""
+        dataDetaPesoPollosJsonTemp = sharedViewModel.getDataDetaPesoPollosJson()?: ""
+
+        updatePesoStatus(idPesoTemp, "Used")
+        if (!navegationTrue){
+            if (idPesoTemp != 0){
+                if (!dataPesoPollosJsonTemp.isNullOrBlank() && !dataDetaPesoPollosJsonTemp.isNullOrBlank()){
+                    val pesoUsed = pesoUsedEntity(
+                        idPesoUsed = idPesoTemp,
+                        devicedName = device,
+                        dataPesoPollosJson = dataPesoPollosJsonTemp,
+                        dataDetaPesoPollosJson = dataDetaPesoPollosJsonTemp,
+                        fechaRegistro = ""
+                    )
+                    db.addPesoUsed(pesoUsed)
+                }else{
+                    val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
+                    val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+                    val idNucleo = binding.selectEstablecimiento.selectedItemPosition
+                    val dataDetaPesoPollos = ManagerPost.captureData(jabasList)
+                    val dataPesoPollos = ManagerPost.captureDataPesoPollos(
+                        id = idPesoTemp,
+                        serie = "",
+                        fecha = "",
+                        totalJabas = "",
+                        totalPollos = "",
+                        totalPeso = "",
+                        tipo = "",
+                        numeroDocCliente = binding.textDocCli.text.toString(),
+                        nombreCompleto = binding.textNomCli.text.toString(),
+                        idGalpon = idGalpon.toString(),
+                        idNucleo = idNucleo.toString(),
+                        PKPollo = binding.PrecioKilo.text.toString(),
+                        totalPesoJabas = "",
+                        totalNeto = "",
+                        totalPagar = ""
+                    )
+
+                    dataPesoPollosJson = dataPesoPollos.toJson().toString()
+                    dataDetaPesoPollosJson = JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
+
+                    val pesoUsed = pesoUsedEntity(
+                        idPesoUsed = idPesoTemp,
+                        devicedName = device,
+                        dataPesoPollosJson = dataPesoPollosJson.toString(),
+                        dataDetaPesoPollosJson = dataDetaPesoPollosJson.toString(),
+                        fechaRegistro = ""
+                    )
+                    db.addPesoUsed(pesoUsed)
+                }
+            }
+        }
+
+        sharedViewModel.setDataPesoPollosJson(dataPesoPollosJsonTemp)
+        sharedViewModel.setDataDetaPesoPollosJson(dataDetaPesoPollosJsonTemp)
+        sharedViewModel.setIdListPesos(idPesoTemp)
         // Detiene la verificación periódica
 //        handler.removeCallbacks(checkInternetRunnable)
+    }
+
+    fun updatePesoStatus(id: Int, status: String){
+        if (id != 0){
+            val idDevice = getDeviceId(requireContext())
+            setStatusUsed(requireContext(), id, "$status", idDevice) { success ->
+                if (!success) {
+                    Log.d("StatusLog", "Error al cambiar el estado del peso")
+                }
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -1461,5 +1642,29 @@ class JabasFragment : Fragment(), OnItemClickListener {
             // Mover el cursor al final del texto
             view.setSelection(view.text.length)
         }
+    }
+
+    // Para mostrar el ProgressBar y el fondo bloqueado
+    fun showLoading() {
+        val overlay = binding.overlay.findViewById<View>(R.id.overlay)
+        val progressBar = binding.progressBar.findViewById<ProgressBar>(R.id.progressBar)
+        overlay.visibility = View.VISIBLE
+        progressBar.visibility = View.VISIBLE
+    }
+
+    // Para ocultar el ProgressBar y el fondo bloqueado
+    fun hideLoading() {
+        val overlay = binding.overlay.findViewById<View>(R.id.overlay)
+        val progressBar = binding.progressBar.findViewById<ProgressBar>(R.id.progressBar)
+        overlay.visibility = View.GONE
+        progressBar.visibility = View.GONE
+    }
+
+    private fun fetchData() {
+        // Simulando una operación de red o carga de datos
+        Handler(Looper.getMainLooper()).postDelayed({
+            // Ocultar el ProgressBar después de la carga de datos
+            hideLoading()
+        }, 2000) // Simulando 2 segundos de carga
     }
 }
