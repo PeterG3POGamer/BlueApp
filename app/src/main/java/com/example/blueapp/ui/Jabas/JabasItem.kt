@@ -3,6 +3,7 @@ package com.example.blueapp.ui.Jabas
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.blueapp.R
@@ -23,6 +24,8 @@ class JabasAdapter(private val itemList: MutableList<JabasItem>, private val lis
         val numeroPollos: TextView = itemView.findViewById(R.id.numero_pollos)
         val pesoKg: TextView = itemView.findViewById(R.id.peso_kg)
         val conPollos: TextView = itemView.findViewById(R.id.con_pollos)
+        val estadoIcon: ImageView = itemView.findViewById(R.id.estado_icon)
+
 
         // Método para enlazar los datos del item con las vistas
         fun bind(item: JabasItem) {
@@ -31,6 +34,19 @@ class JabasAdapter(private val itemList: MutableList<JabasItem>, private val lis
             numeroPollos.text = item.numeroPollos.toString()
             pesoKg.text = item.pesoKg.toString()
             conPollos.text = item.conPollos
+
+//            val context = itemView.context
+//            when (item.conPollos) {
+//                "JABAS SIN POLLOS" -> conPollos.setBackgroundColor(ContextCompat.getColor(context, R.color.orange))
+//                "JABAS CON POLLOS" -> conPollos.setBackgroundColor(ContextCompat.getColor(context, R.color.your_greed))
+//                else -> conPollos.setBackgroundColor(ContextCompat.getColor(context, android.R.color.darker_gray))
+//            }
+            val iconRes = if (item.conPollos == "JABAS CON POLLOS") {
+                R.drawable.cabezapollo
+            } else {
+                R.drawable.jabadepollo
+            }
+            estadoIcon.setImageResource(iconRes)
         }
     }
 

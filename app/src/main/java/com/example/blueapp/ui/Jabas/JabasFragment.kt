@@ -181,7 +181,6 @@ class JabasFragment : Fragment(), OnItemClickListener {
             db.deleteAllPesoUsed()
         }
         if (!dataDetaPesoPollosJson.isNullOrEmpty()) {
-
             val dataDetaPesoPollos = JSONArray(dataDetaPesoPollosJson)
             detallesList = procesarDataDetaPesoPollos(dataDetaPesoPollos)
             Log.d("JabasFragment detallesList","${detallesList}")
@@ -846,23 +845,6 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     sharedViewModel.setDataDetaPesoPollosJson(dataDetaPesoPollosJson!!)
 
                     navegationTrue = true
-                    val pesosEntity = PesosEntity(
-                        id = 0,
-                        idNucleo = idNucleo,
-                        idGalpon = idGalpon,
-                        numeroDocCliente = dataPesoPollos.numeroDocCliente,
-                        nombreCompleto = dataPesoPollos.nombreCompleto,
-                        dataPesoJson = dataPesoPollosJson!!,
-                        dataDetaPesoJson = dataDetaPesoPollosJson!!,
-                        fechaRegistro = ""
-                    )
-
-                    if (idPesoShared != 0){
-                        val success = updateListPesos(requireContext(), this@JabasFragment, pesosEntity, idPesoShared)
-                        if (success) {
-                            sharedViewModel.setContadorJabas(0)
-                        }
-                    }
                     findNavController().navigate(R.id.nav_initPreliminar)
                 }
             }
@@ -1484,11 +1466,12 @@ class JabasFragment : Fragment(), OnItemClickListener {
         if (idPesoShared == 0){
             sharedViewModel.setIdListPesos(idPesoTemp)
             idPesoShared = sharedViewModel.getIdListPesos()?: 0
+        }else{
+            val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
+            val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+            val idNucleo = binding.selectEstablecimiento.selectedItemPosition
+            updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
         }
-        val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
-        val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
-        val idNucleo = binding.selectEstablecimiento.selectedItemPosition
-        updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
 
         // Inicia la verificación periódica de la conexión a Internet
 //        handler.post(checkInternetRunnable)
@@ -1575,8 +1558,58 @@ class JabasFragment : Fragment(), OnItemClickListener {
                             fechaRegistro = ""
                         )
                         updateListPesos(requireContext(), this@JabasFragment, pesosEntity, idPesoTemp)
+                        updatePesoStatus(idPesoTemp, "Used")
                     }
                 }
+            }
+        }else{
+            val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
+            val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+            val idNucleo = binding.selectEstablecimiento.selectedItemPosition
+            val dataDetaPesoPollos = ManagerPost.captureData(jabasList)
+            val dataPesoPollos = ManagerPost.captureDataPesoPollos(
+                id = idPesoTemp,
+                serie = "",
+                fecha = "",
+                totalJabas = "",
+                totalPollos = "",
+                totalPeso = "",
+                tipo = "",
+                numeroDocCliente = binding.textDocCli.text.toString(),
+                nombreCompleto = binding.textNomCli.text.toString(),
+                idGalpon = idGalpon.toString(),
+                idNucleo = idNucleo.toString(),
+                PKPollo = binding.PrecioKilo.text.toString(),
+                totalPesoJabas = "",
+                totalNeto = "",
+                totalPagar = ""
+            )
+
+            dataPesoPollosJson = dataPesoPollos.toJson().toString()
+            dataDetaPesoPollosJson = JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
+
+            val pesoUsed = pesoUsedEntity(
+                idPesoUsed = idPesoTemp,
+                devicedName = device,
+                dataPesoPollosJson = dataPesoPollosJson.toString(),
+                dataDetaPesoPollosJson = dataDetaPesoPollosJson.toString(),
+                fechaRegistro = ""
+            )
+            db.addPesoUsed(pesoUsed)
+
+            CoroutineScope(Dispatchers.Main).launch {
+                val pesosEntity = PesosEntity(
+                    id = 0,
+                    idNucleo = idNucleo,
+                    idGalpon = idGalpon,
+                    numeroDocCliente = dataPesoPollos.numeroDocCliente,
+                    nombreCompleto = dataPesoPollos.nombreCompleto,
+                    dataPesoJson = dataPesoPollosJson!!,
+                    dataDetaPesoJson = dataDetaPesoPollosJson!!,
+                    fechaRegistro = ""
+                )
+                updateListPesos(requireContext(), this@JabasFragment, pesosEntity, idPesoTemp)
+                updatePesoStatus(idPesoTemp, "Used")
             }
         }
 

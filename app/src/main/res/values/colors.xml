@@ -19,5 +19,7 @@
     <color name="colorRowBackground2">#F0F0F0</color>
     <color name="colorHighlight">#FF4081</color>
     <color name="colorSelectedRow">#FFFF00</color>
+    <color name="orange">#FFA500</color>
+    <color name="green">#008000</color>
 
 </resources>

@@ -94,8 +94,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:orientation="horizontal">
 
             <!-- Columna izquierda: Sección de datos de cálculo -->
             <LinearLayout
@@ -353,59 +352,83 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="8dp"
+            android:padding="4dp"
+            android:background="?attr/colorPrimary"
+            android:elevation="4dp"
+            android:layout_margin="2dp"
+            android:gravity="center"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
             <TextView
                 android:id="@+id/id_jabas"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.6"
+                android:layout_weight="0.3"
                 android:gravity="center"
                 android:padding="8dp"
                 android:text="#"
-                android:textStyle="bold" />
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:background="?attr/colorPrimary"
+                android:layout_marginEnd="2dp" />
 
             <TextView
                 android:id="@+id/numero_jabas"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.7"
+                android:layout_weight="0.8"
                 android:gravity="center"
                 android:padding="8dp"
-                android:text="Jabas"
-                android:textStyle="bold" />
+                android:text="N° Jabas"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:background="?attr/colorPrimary"
+                android:layout_marginEnd="2dp" />
 
             <TextView
                 android:id="@+id/numero_pollos"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.7"
+                android:layout_weight="0.8"
                 android:gravity="center"
                 android:padding="8dp"
-                android:text="Pollos"
-                android:textStyle="bold" />
+                android:text="N° Pollos"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:background="?attr/colorPrimary"
+                android:layout_marginEnd="2dp" />
 
             <TextView
                 android:id="@+id/peso_kg"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.7"
+                android:layout_weight="0.8"
                 android:gravity="center"
                 android:padding="8dp"
-                android:text="Peso"
-                android:textStyle="bold" />
+                android:text="Peso Kg."
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:background="?attr/colorPrimary"
+                android:layout_marginEnd="2dp" />
 
             <TextView
                 android:id="@+id/con_pollos"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
                 android:padding="8dp"
-                android:text="Con Pollos"
-                android:textStyle="bold" />
+                android:text="Estado"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:background="?attr/colorPrimary" />
         </LinearLayout>
         <!-- RecyclerView para mostrar reportes -->
         <androidx.recyclerview.widget.RecyclerView

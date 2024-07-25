@@ -3,40 +3,66 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp">
+    android:gravity="center"
+    android:padding="3dp"
+    android:background="@drawable/row_background">
 
     <TextView
         android:id="@+id/id_jabas"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="#" />
+        android:layout_weight="0.1"
+        android:text="#"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:textColor="@android:color/black" />
 
     <TextView
         android:id="@+id/numero_jabas"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="N° Jabas" />
+        android:layout_weight="0.5"
+        android:text="N° Jabas"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:textColor="@android:color/black" />
 
     <TextView
         android:id="@+id/numero_pollos"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="N° Pollos" />
+        android:layout_weight="0.4"
+        android:text="N° Pollos"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:textColor="@android:color/black" />
 
     <TextView
         android:id="@+id/peso_kg"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Peso" />
+        android:layout_weight="0.4"
+        android:text="Peso"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:textColor="@android:color/black" />
 
     <TextView
         android:id="@+id/con_pollos"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Estado" />
+        android:layout_weight="0.4"
+        android:text="Estado"
+        android:textSize="14sp"
+        android:textColor="@android:color/black"
+        android:gravity="center"
+        android:visibility="gone"/>
+
+    <ImageView
+        android:id="@+id/estado_icon"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_weight="0.3"
+        android:gravity="center"
+        android:elevation="8dp"/>
 </LinearLayout>
