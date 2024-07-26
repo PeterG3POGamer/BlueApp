@@ -275,8 +275,10 @@ class JabasFragment : Fragment(), OnItemClickListener {
                                 binding.selectGalpon.adapter = emptyAdapter
 
                             }
+                            fetchData(2000)
                         } ?: run {
                             Log.e("SelectGalpon", "Error al obtener los galpones desde el servidor para el nucleo $idNucleo")
+                            fetchData(2000)
                         }
                     }
                 }
@@ -299,7 +301,17 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                         updateSpinnerPesosIdGalpon(0, 0)
                         if (position == 0) {
-                            limpiarCampos()
+                            if (jabasList.isEmpty()){
+                                if (idPesoShared != 0) {
+                                    limpiarCampos()
+                                }else if (dataPesoPollosJson.isNullOrBlank()){
+                                    limpiarCampos()
+                                }
+                            }else if (idPesoShared != 0){
+                                if (dataPesoPollosJson.isNullOrBlank()){
+                                    limpiarCampos()
+                                }
+                            }
                             val emptyAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, listOf("Seleccione Galpon"))
                             emptyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                             binding.selectGalpon.adapter = emptyAdapter
@@ -319,12 +331,13 @@ class JabasFragment : Fragment(), OnItemClickListener {
                         // Manejar caso cuando no se selecciona nada
                     }
                 }
-
+                fetchData(2000)
             } ?: run {
                 Log.e("JabasFragment", "Error al obtener los nucleos desde el servidor.")
+                fetchData(2000)
+
             }
         }
-        fetchData(2000)
 
         binding.selectGalpon.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -390,13 +403,18 @@ class JabasFragment : Fragment(), OnItemClickListener {
                         // "Seleccione Pesos" seleccionado
                         Log.d("JabasFragment", "Opción 'Seleccione Pesos' seleccionada")
                         // Limpiar los campos o realizar alguna acción por defecto
-                        if (idPesoShared == 0) {
-                            if (jabasList.isEmpty() || dataPesoPollosJson.isNullOrBlank() || binding.textDocCli.text.isNullOrBlank()) {
+                        if (jabasList.isEmpty()){
+                            if (idPesoShared != 0) {
                                 limpiarCampos()
-                            } else {
+                            }else if (dataPesoPollosJson.isNullOrBlank()){
+                                limpiarCampos()
                             }
-                            sharedViewModel.setIdListPesos(0)
+                        }else if (idPesoShared != 0){
+                            if (dataPesoPollosJson.isNullOrBlank()){
+                                limpiarCampos()
+                            }
                         }
+                        sharedViewModel.setIdListPesos(0)
                     }
                     else -> {
                         if (binding.idListPeso.text.isNullOrBlank()){
@@ -1012,6 +1030,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
                     val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
                     val idNucleo = binding.selectEstablecimiento.selectedItemPosition
+                    limpiarCampos()
                     updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
                 } else {
                     Toast.makeText(requireContext(), "Error al eliminar el peso", Toast.LENGTH_SHORT).show()
@@ -1558,7 +1577,6 @@ class JabasFragment : Fragment(), OnItemClickListener {
                             fechaRegistro = ""
                         )
                         updateListPesos(requireContext(), this@JabasFragment, pesosEntity, idPesoTemp)
-                        updatePesoStatus(idPesoTemp, "Used")
                     }
                 }
             }
@@ -1609,7 +1627,6 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     fechaRegistro = ""
                 )
                 updateListPesos(requireContext(), this@JabasFragment, pesosEntity, idPesoTemp)
-                updatePesoStatus(idPesoTemp, "Used")
             }
         }
 
@@ -1739,18 +1756,22 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
     // Para mostrar el ProgressBar y el fondo bloqueado
     fun showLoading() {
-        val overlay = binding.overlay.findViewById<View>(R.id.overlay)
-        val progressBar = binding.progressBar.findViewById<ProgressBar>(R.id.progressBar)
-        overlay.visibility = View.VISIBLE
-        progressBar.visibility = View.VISIBLE
+        _binding?.let { binding ->
+            val overlay = binding.overlay.findViewById<View>(R.id.overlay)
+            val progressBar = binding.progressBar.findViewById<ProgressBar>(R.id.progressBar)
+            overlay.visibility = View.VISIBLE
+            progressBar.visibility = View.VISIBLE
+        }
     }
 
     // Para ocultar el ProgressBar y el fondo bloqueado
     fun hideLoading() {
-        val overlay = binding.overlay.findViewById<View>(R.id.overlay)
-        val progressBar = binding.progressBar.findViewById<ProgressBar>(R.id.progressBar)
-        overlay.visibility = View.GONE
-        progressBar.visibility = View.GONE
+        _binding?.let { binding ->
+            val overlay = binding.overlay.findViewById<View>(R.id.overlay)
+            val progressBar = binding.progressBar.findViewById<ProgressBar>(R.id.progressBar)
+            overlay.visibility = View.GONE
+            progressBar.visibility = View.GONE
+        }
     }
 
     private fun fetchData(time: Long) {

@@ -1,14 +1,25 @@
 package com.example.blueapp.ui.Web
 
+import android.annotation.SuppressLint
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.MimeTypeMap
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -21,6 +32,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
@@ -32,7 +44,9 @@ class GuiasWebFragment : Fragment() {
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var webView: WebView
     private var webViewStateRestored = false
+    private var downloadID: Long = 0
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -59,14 +73,44 @@ class GuiasWebFragment : Fragment() {
         }
 
         swipeRefreshLayout.setOnRefreshListener {
-            webView.reload()
+            reloadWithoutCache()
         }
+
+        requireActivity().registerReceiver(
+            onDownloadComplete,
+            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        )
 
         return binding.root
     }
 
+    private fun reloadWithoutCache() {
+        webView.clearCache(true)
+        webView.settings.cacheMode = WebSettings.LOAD_NO_CACHE
+        webView.reload()
+    }
+
     private fun setupWebView() {
-        webView.settings.javaScriptEnabled = true
+        webView.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            allowFileAccess = true
+            allowContentAccess = true
+        }
+
+        webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
+            val request = DownloadManager.Request(Uri.parse(url))
+            request.allowScanningByMediaScanner()
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+
+            // Extraer el nombre del archivo de la URL
+            val fileName = url.substringAfterLast("/")
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+
+            val dm = activity?.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            downloadID = dm.enqueue(request)
+        }
+
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url.toString()
@@ -116,7 +160,6 @@ class GuiasWebFragment : Fragment() {
                     }
                 }
                 swipeRefreshLayout.isRefreshing = false
-
             }
 
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
@@ -127,6 +170,37 @@ class GuiasWebFragment : Fragment() {
                 binding.progressBar.visibility = View.GONE
             }
         }
+    }
+
+    private val onDownloadComplete: BroadcastReceiver = object : BroadcastReceiver() {
+        @SuppressLint("Range")
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val id = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            if (id == downloadID) {
+                val downloadManager = context?.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                val query = DownloadManager.Query()
+                query.setFilterById(id)
+                val cursor = downloadManager.query(query)
+                if (cursor.moveToFirst()) {
+                    val fileUri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
+                    val file = File(Uri.parse(fileUri).path!!)
+                    val fileUriForOpening = FileProvider.getUriForFile(
+                        context!!,
+                        context.applicationContext.packageName + ".fileprovider",
+                        file
+                    )
+                    val openIntent = Intent(Intent.ACTION_VIEW)
+                    openIntent.setDataAndType(fileUriForOpening, getMimeType(file.toString()))
+                    openIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    startActivity(openIntent)
+                }
+            }
+        }
+    }
+
+    private fun getMimeType(url: String): String {
+        val extension = MimeTypeMap.getFileExtensionFromUrl(url)
+        return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "application/octet-stream"
     }
 
     private fun iniciarSesion() {
@@ -208,6 +282,7 @@ class GuiasWebFragment : Fragment() {
         super.onDestroyView()
         viewModel.webViewState = Bundle().also { webView.saveState(it) }
         webViewStateRestored = false
+        requireActivity().unregisterReceiver(onDownloadComplete)
     }
 
     companion object {

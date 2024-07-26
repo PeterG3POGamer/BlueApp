@@ -19,6 +19,7 @@ import android.webkit.JavascriptInterface
 import android.webkit.MimeTypeMap
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.core.content.FileProvider
@@ -49,6 +50,7 @@ class VentasWebFragment : Fragment() {
 
     private var downloadID: Long = 0
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -76,7 +78,7 @@ class VentasWebFragment : Fragment() {
 
         // Configurar SwipeRefreshLayout
         swipeRefreshLayout.setOnRefreshListener {
-            webView.reload()
+            reloadWithoutCache()
         }
 
         requireActivity().registerReceiver(
@@ -85,6 +87,12 @@ class VentasWebFragment : Fragment() {
         )
 
         return binding.root
+    }
+
+    private fun reloadWithoutCache() {
+        webView.clearCache(true)
+        webView.settings.cacheMode = WebSettings.LOAD_NO_CACHE
+        webView.reload()
     }
 
     private fun setupWebView() {
