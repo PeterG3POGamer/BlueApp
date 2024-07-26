@@ -43,16 +43,16 @@
                     android:tooltipText="Datos de lista de pesos disponibles"
                     class="com.example.blueapp.ui.Jabas.CustomSpinner"/>
 
-                <ImageButton
-                    android:id="@+id/boton_reload_peso"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:elevation="8dp"
-                    android:padding="20dp"
-                    app:backgroundTint="@color/gray"
-                    android:tooltipText="Recargar lista de pesos"
-                    app:srcCompat="@drawable/baseline_refresh_24"
-                    android:visibility="gone"/>
+<!--                <ImageButton-->
+<!--                    android:id="@+id/boton_reload_peso"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:elevation="8dp"-->
+<!--                    android:padding="20dp"-->
+<!--                    app:backgroundTint="@color/gray"-->
+<!--                    android:tooltipText="Recargar lista de pesos"-->
+<!--                    app:srcCompat="@drawable/baseline_refresh_24"-->
+<!--                    android:visibility="gone"/>-->
 
             </LinearLayout>
             <TextView
