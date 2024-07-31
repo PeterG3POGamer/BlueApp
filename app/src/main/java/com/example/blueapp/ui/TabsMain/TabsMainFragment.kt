@@ -12,11 +12,11 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.example.blueapp.R
 import com.example.blueapp.databinding.FragmentMainTabsBinding
+import com.example.blueapp.ui.BluetoothView.BluetoothFragment
 import com.example.blueapp.ui.Interfaces.TabNavigationListener
 import com.example.blueapp.ui.Jabas.JabasFragment
 import com.example.blueapp.ui.ViewModel.TabViewModel
 import com.example.blueapp.ui.preliminar.FragmentPreliminar
-import com.example.blueapp.ui.slideshow.SlideshowFragment
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 
@@ -67,7 +67,7 @@ class MainPagerAdapter(fragmentActivity: FragmentActivity) : FragmentStateAdapte
     override fun getItemCount(): Int = 3
     override fun createFragment(position: Int): Fragment {
         return when (position) {
-            0 -> SlideshowFragment()
+            0 -> BluetoothFragment()
             1 -> JabasFragment()
             2 -> FragmentPreliminar()
             else -> throw IllegalArgumentException("Invalid position")

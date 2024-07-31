@@ -15,6 +15,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.blueapp.R
@@ -109,8 +110,8 @@ class FragmentPreliminar : Fragment() {
 
         boton_Volver.setOnClickListener {
             limpiarCampos()
-//            findNavController().navigate(R.id.action_nav_initPreliminar_to_nav_initReportePeso)
-            tabViewModel.setNavigateToTab(1)
+            findNavController().navigate(R.id.action_nav_initPreliminar_to_nav_initReportePeso)
+//            tabViewModel.setNavigateToTab(1)
 
         }
 
@@ -214,8 +215,8 @@ class FragmentPreliminar : Fragment() {
             val db = AppDatabase(requireContext())
             db.deleteAllPesoUsed()
 
-//            findNavController().navigate(R.id.action_nav_initPreliminar_to_nav_initReportePeso)
-            tabViewModel.setNavigateToTab(1)
+            findNavController().navigate(R.id.action_nav_initPreliminar_to_nav_initReportePeso)
+//            tabViewModel.setNavigateToTab(1)
         } else {
             Toast.makeText(requireContext(), "Datos incompletos", Toast.LENGTH_SHORT).show()
         }
