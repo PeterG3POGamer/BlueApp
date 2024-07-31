@@ -3,6 +3,8 @@ package com.example.blueapp.ui.BluetoothView
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothServerSocket
+import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -23,6 +25,10 @@ import me.aflak.bluetooth.Bluetooth
 import me.aflak.bluetooth.interfaces.BluetoothCallback
 import me.aflak.bluetooth.interfaces.DeviceCallback
 import me.aflak.bluetooth.interfaces.DiscoveryCallback
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+import java.util.UUID
 
 class BluetoothFragment : Fragment() {
     private var bluetooth: Bluetooth? = null
@@ -35,12 +41,16 @@ class BluetoothFragment : Fragment() {
     private val TAG = "BluetoothFragment"
     private val REQUEST_ENABLE_BT = 1
     private val PAIRING_TIMEOUT = 30000L // 30 segundos
+    private val APP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB") // Standard SerialPortService ID
 
     private var isConnecting = false
     private var isPairing = false
     private var connectedDevice: BluetoothDevice? = null
     private var pairingDevice: BluetoothDevice? = null
-
+    private var persistentSocket: BluetoothSocket? = null
+    private var serverSocket: BluetoothServerSocket? = null
+    private var communicationThread: CommunicationThread? = null
+    private var connectedThread: ConnectedThread? = null
 
     private val pairingReceiver = object : BroadcastReceiver() {
         @SuppressLint("MissingPermission")
@@ -91,7 +101,7 @@ class BluetoothFragment : Fragment() {
         return binding.root
     }
 
-    @SuppressLint("MissingPermission")
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -101,12 +111,39 @@ class BluetoothFragment : Fragment() {
         setupBluetoothCallbacks()
         setupUI()
 
-        // Registrar el receptor de broadcast para los eventos de vinculación
+        // Start listening for incoming connections
+        startServer()
+
+        // Register the receiver for pairing events
         val filter = IntentFilter().apply {
             addAction(BluetoothDevice.ACTION_PAIRING_REQUEST)
             addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
         }
         requireActivity().registerReceiver(pairingReceiver, filter)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun startServer() {
+        try {
+            serverSocket = bluetooth?.bluetoothAdapter?.listenUsingInsecureRfcommWithServiceRecord("BluetoothApp", APP_UUID)
+            Thread {
+                while (true) {
+                    try {
+                        val socket = serverSocket?.accept()
+                        socket?.let {
+                            manageConnectedSocket(it)
+                            serverSocket?.close()
+                            return@Thread
+                        }
+                    } catch (e: IOException) {
+                        Log.e(TAG, "Socket's accept() method failed", e)
+                        break
+                    }
+                }
+            }.start()
+        } catch (e: IOException) {
+            Log.e(TAG, "Socket's listen() method failed", e)
+        }
     }
 
     private fun setupBluetoothCallbacks() {
@@ -193,6 +230,11 @@ class BluetoothFragment : Fragment() {
                 isConnecting = false
                 connectedDevice = device
                 updateUIForConnectedState()
+
+                // Start the ConnectedThread to handle data reception
+                val socket = bluetooth!!.getSocket()
+                connectedThread = ConnectedThread(socket)
+                connectedThread?.start()
             }
 
             @SuppressLint("MissingPermission")
@@ -227,6 +269,115 @@ class BluetoothFragment : Fragment() {
         })
     }
 
+
+
+    private inner class ConnectedThread(private val socket: BluetoothSocket) : Thread() {
+        private val inputStream: InputStream = socket.inputStream
+        private val outputStream: OutputStream = socket.outputStream
+
+        private var buffer = ByteArray(1024)
+        private var bufferPosition = 0
+        private var dataAccumulator = StringBuilder()
+
+        override fun run() {
+            try {
+                while (true) {
+                    val bytes = inputStream.read(buffer, bufferPosition, buffer.size - bufferPosition)
+                    if (bytes == -1) {
+                        Log.w(TAG, "Conexión Bluetooth cerrada")
+                        break
+                    }
+
+                    bufferPosition += bytes
+
+                    processReceivedData()
+                }
+            } catch (e: IOException) {
+                Log.e(TAG, "Error al leer", e)
+            } finally {
+                cancel()
+            }
+        }
+
+        private fun processReceivedData() {
+            val data = String(buffer, 0, bufferPosition)
+            Log.d(TAG, "Datos crudos recibidos: $data")
+
+            for (char in data) {
+                if (char == '\n') {
+                    // Fin de un mensaje, procesar el dato acumulado
+                    val message = dataAccumulator.toString().trim()
+                    if (message.isNotEmpty()) {
+                        Log.d(TAG, "Mensaje completo recibido: $message")
+                        if (isValidDecimalNumber(message)) {
+                            onMessageReceived(message)
+                        } else {
+                            Log.d(TAG, "Mensaje no es un número decimal válido: $message")
+                        }
+                    }
+                    dataAccumulator.clear()
+                } else {
+                    // Acumular el carácter
+                    dataAccumulator.append(char)
+                }
+            }
+
+            // Limpiar el buffer
+            bufferPosition = 0
+        }
+
+        private fun isValidDecimalNumber(message: String): Boolean {
+            return message.matches("^-?\\d+(\\.\\d+)?\$".toRegex())
+        }
+
+        fun write(bytes: ByteArray) {
+            try {
+                val message = String(bytes)
+
+                // Filtrar y enviar solo datos decimales válidos
+                if (message.matches("-?\\d+(\\.\\d+)?".toRegex())) {
+                    outputStream.write(bytes)
+                    Log.d(TAG, "Datos enviados: ${String(bytes)}")
+                } else {
+                    Log.d(TAG, "Datos no válidos: ${String(bytes)}, no se enviaron")
+                }
+            } catch (e: IOException) {
+                Log.e(TAG, "Error al escribir en el BluetoothSocket", e)
+            }
+        }
+
+        fun cancel() {
+            try {
+                socket.close()
+                Log.d(TAG, "Socket cerrado")
+            } catch (e: IOException) {
+                Log.e(TAG, "No se pudo cerrar el socket", e)
+            }
+        }
+    }
+
+
+    private fun onMessageReceived(message: String) {
+        // Implement this method to handle the received message
+        // For example, update UI or process the data
+        activity?.runOnUiThread {
+            showToast("Mensaje recibido: $message")
+            // Add your logic here to handle the received message
+        }
+    }
+
+
+
+
+
+
+
+
+
+//    ===========================================================================================
+//    ===========================================================================================
+//    ===========================================================================================
+//    ===========================================================================================
     private fun setupUI() {
         adapter = DeviceListAdapter(context, deviceList)
         binding.listDevices.adapter = adapter
@@ -308,7 +459,126 @@ class BluetoothFragment : Fragment() {
             isConnecting = true
             showToast("Intentando conectar a ${device.name}...")
             Log.d(TAG, "Attempting to connect to ${device.name}")
-            bluetooth!!.connectToDevice(device)
+            Thread {
+                try {
+                    val socket = device.createRfcommSocketToServiceRecord(APP_UUID)
+                    socket.connect()
+                    manageConnectedSocket(socket)
+                } catch (e: IOException) {
+                    Log.e(TAG, "Could not connect to device", e)
+                    activity?.runOnUiThread {
+                        isConnecting = false
+                        showToast("No se pudo conectar al dispositivo")
+                        updateUIForDisconnectedState()
+                    }
+                }
+            }.start()
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun manageConnectedSocket(socket: BluetoothSocket) {
+        persistentSocket = socket
+        communicationThread = CommunicationThread(socket)
+        communicationThread?.start()
+
+        // Update UI and state
+        activity?.runOnUiThread {
+            isConnecting = false
+            connectedDevice = socket.remoteDevice
+            updateUIForConnectedState()
+            showToast("Conectado a ${socket.remoteDevice.name}")
+        }
+    }
+
+    private inner class CommunicationThread(private val socket: BluetoothSocket) : Thread() {
+        private val inputStream: InputStream = socket.inputStream
+        private val outputStream: OutputStream = socket.outputStream
+
+        private var buffer = ByteArray(1024)
+        private var bufferPosition = 0
+        private var dataAccumulator = StringBuilder()
+
+        override fun run() {
+            while (true) {
+                try {
+                    val bytes = inputStream.read(buffer, bufferPosition, buffer.size - bufferPosition)
+                    if (bytes == -1) {
+                        Log.w(TAG, "Conexión Bluetooth cerrada")
+                        break
+                    }
+
+                    bufferPosition += bytes
+
+                    processReceivedData()
+                } catch (e: IOException) {
+                    Log.e(TAG, "Error al leer", e)
+                    break
+                }
+            }
+            // Connection lost, try to reconnect
+            reconnect()
+        }
+
+        private fun processReceivedData() {
+            val data = String(buffer, 0, bufferPosition)
+            Log.d(TAG, "Datos crudos recibidos: $data")
+
+            for (char in data) {
+                if (char == '\n') {
+                    // Fin de un mensaje, procesar el dato acumulado
+                    val message = dataAccumulator.toString().trim()
+                    if (message.isNotEmpty()) {
+                        Log.d(TAG, "Mensaje completo recibido: $message")
+                        if (isValidDecimalNumber(message)) {
+                            onMessageReceived(message)
+                        } else {
+                            Log.d(TAG, "Mensaje no es un número decimal válido: $message")
+                        }
+                    }
+                    dataAccumulator.clear()
+                } else {
+                    // Acumular el carácter
+                    dataAccumulator.append(char)
+                }
+            }
+
+            // Limpiar el buffer
+            bufferPosition = 0
+        }
+
+        private fun isValidDecimalNumber(message: String): Boolean {
+            return message.matches("^-?\\d+(\\.\\d+)?\$".toRegex())
+        }
+
+        fun write(bytes: ByteArray) {
+            try {
+                val message = String(bytes)
+
+                // Filtrar y enviar solo datos decimales válidos
+                if (message.matches("-?\\d+(\\.\\d+)?".toRegex())) {
+                    outputStream.write(bytes)
+                    Log.d(TAG, "Datos enviados: ${String(bytes)}")
+                } else {
+                    Log.d(TAG, "Datos no válidos: ${String(bytes)}, no se enviaron")
+                }
+            } catch (e: IOException) {
+                Log.e(TAG, "Error al escribir en el BluetoothSocket", e)
+                reconnect()
+            }
+        }
+    }
+
+    private fun reconnect() {
+        activity?.runOnUiThread {
+            showToast("Conexión perdida. Intentando reconectar...")
+            updateUIForDisconnectedState()
+        }
+
+        connectedDevice?.let { device ->
+            Handler(Looper.getMainLooper()).postDelayed({
+                connectToDevice(device)
+            }, 5000) // Wait 5 seconds before attempting to reconnect
         }
     }
 
@@ -379,9 +649,21 @@ class BluetoothFragment : Fragment() {
         Log.d(TAG, "Bluetooth stopped")
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        requireActivity().unregisterReceiver(pairingReceiver)
+//    override fun onDestroy() {
+//        super.onDestroy()
+//        requireActivity().unregisterReceiver(pairingReceiver)
+//    }
+
+    fun sendData(data: String) {
+        if (isValidDecimalNumber(data)) {
+            communicationThread?.write(data.toByteArray())
+        } else {
+            showToast("Datos no válidos. Solo se permiten números decimales.")
+        }
+    }
+
+    private fun isValidDecimalNumber(message: String): Boolean {
+        return message.matches("^-?\\d+(\\.\\d+)?\$".toRegex())
     }
 
     private fun showToast(message: String) {

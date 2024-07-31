@@ -11,7 +11,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.UUID
 
-//BluetoothConnectionService.kj
+// BluetoothConnectionService.kt
 class BluetoothConnectionService(
     private val bluetoothAdapter: BluetoothAdapter,
     private val onMessageReceived: (String) -> Unit // Callback para manejar datos recibidos
@@ -22,82 +22,100 @@ class BluetoothConnectionService(
     private var connectedThread: ConnectedThread? = null
     private var acceptThread: AcceptThread? = null
     private val openSockets = mutableListOf<BluetoothSocket>()
+    private var serverSocket: BluetoothServerSocket? = null
 
+    // Inicia un hilo para conectar con un dispositivo Bluetooth específico.
     fun connect(device: BluetoothDevice) {
-//        closeConnection(device)
         connectThread = ConnectThread(device)
         connectThread?.start()
     }
 
+    // Inicia un hilo que escucha conexiones entrantes desde otros dispositivos Bluetooth.
+    @SuppressLint("MissingPermission")
     fun startServer() {
+        if (serverSocket == null) {
+            serverSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord("AppName", uuid)
+        }
         acceptThread = AcceptThread()
         acceptThread?.start()
     }
 
-    fun write(out: ByteArray) {
-        connectedThread?.write(out)
+    // Maneja una conexión establecida, iniciando un hilo para manejar la comunicación.
+    private fun connected(socket: BluetoothSocket) {
+        connectedThread = ConnectedThread(socket)
+        connectedThread?.start()
+        openSockets.add(socket)
     }
 
+    // Cierra la conexión Bluetooth con un dispositivo específico y limpia recursos.
     fun closeConnection(device: BluetoothDevice): Boolean {
         try {
             connectThread?.cancelAndJoin()
         } catch (e: Exception) {
-            Log.e("Bluetooth", "Error al cerrar connectThread", e)
+            Log.e("BluetoothServices", "Error al cerrar connectThread", e)
         }
 
         try {
             connectedThread?.cancelAndJoin()
         } catch (e: Exception) {
-            Log.e("Bluetooth", "Error al cerrar connectedThread", e)
+            Log.e("BluetoothServices", "Error al cerrar connectedThread", e)
         }
 
-//        try {
-//            acceptThread?.cancelAndJoin()
-//        } catch (e: Exception) {
-//            Log.e("Bluetooth", "Error al cerrar acceptThread", e)
-//        }
+        try {
+            acceptThread?.cancelAndJoin()
+        } catch (e: Exception) {
+            Log.e("BluetoothServices", "Error al cerrar acceptThread", e)
+        }
 
         connectThread = null
         connectedThread = null
-//        acceptThread = null
-
-        // Cerrar todos los sockets abiertos
-        closeAllSockets()
 
         var result = false
         device.let {
             try {
                 val method = device.javaClass.getMethod("removeBond")
                 result = method.invoke(device) as Boolean
-                Log.d("Bluetooth", "Dispositivo desvinculado: ${device.address}")
+                Log.d("BluetoothServices", "Dispositivo desvinculado: ${device.address}")
             } catch (e: Exception) {
-                Log.e("Bluetooth", "Error al desvincular el dispositivo", e)
+                Log.e("BluetoothServices", "Error al desvincular el dispositivo", e)
             }
         }
+
+        restartService()
         return result
     }
 
+    fun restartService() {
+        closeAllSockets()
+        acceptThread?.cancel()
+        acceptThread = null
+        startServer()
+    }
+
+    // Cierra todos los sockets abiertos y limpia la lista.
     private fun closeAllSockets() {
         for (socket in openSockets) {
             try {
                 socket.close()
             } catch (e: IOException) {
-                Log.e("Bluetooth", "Error al cerrar el socket", e)
+                Log.e("BluetoothServices", "Error al cerrar el socket", e)
             }
         }
         openSockets.clear()
     }
 
+    // Extensión para cancelar un hilo y esperar a que termine.
     private fun Thread.cancelAndJoin() {
         try {
             interrupt()
             join(500)  // Espera hasta 500 ms para que el thread termine
         } catch (e: InterruptedException) {
-            Log.e("Bluetooth", "Error al esperar a que el thread termine", e)
+            Log.e("BluetoothServices", "Error al esperar a que el thread termine", e)
         }
     }
 
     @SuppressLint("MissingPermission")
+    // Hilo que maneja la conexión con un dispositivo Bluetooth.
     private inner class ConnectThread(private val device: BluetoothDevice) : Thread() {
         private val socket: BluetoothSocket? by lazy(LazyThreadSafetyMode.NONE) {
             device.createRfcommSocketToServiceRecord(uuid)
@@ -110,7 +128,7 @@ class BluetoothConnectionService(
 
             // Asegurar que el dispositivo esté emparejado antes de intentar conectar
             if (device.bondState != BluetoothDevice.BOND_BONDED) {
-                Log.e("Bluetooth", "El dispositivo no está emparejado. No se puede conectar.")
+                Log.e("BluetoothServices", "El dispositivo no está emparejado. No se puede conectar.")
                 return
             }
 
@@ -119,33 +137,29 @@ class BluetoothConnectionService(
                     it.connect()
                     connected(it)
                 } catch (e: IOException) {
-                    Log.e("Bluetooth", "No se pudo conectar", e)
+                    Log.e("BluetoothServices", "No se pudo conectar", e)
                     // Intentar cerrar el socket
                     try {
                         it.close()
                     } catch (closeException: IOException) {
-                        Log.e("Bluetooth", "No se pudo cerrar el socket después de un fallo de conexión", closeException)
+                        Log.e("BluetoothServices", "No se pudo cerrar el socket después de un fallo de conexión", closeException)
                     }
                     return
                 }
             }
         }
 
+        // Cierra el socket Bluetooth y cancela la conexión.
         fun cancel() {
             try {
                 socket?.close()
             } catch (e: IOException) {
-                Log.e("Bluetooth", "No se pudo cerrar el socket en cancel", e)
+                Log.e("BluetoothServices", "No se pudo cerrar el socket en cancel", e)
             }
         }
     }
 
-    private fun connected(socket: BluetoothSocket) {
-        connectedThread = ConnectedThread(socket)
-        connectedThread?.start()
-        openSockets.add(socket)
-    }
-
+    // Hilo que maneja la comunicación con un dispositivo conectado.
     private inner class ConnectedThread(private val socket: BluetoothSocket) : Thread() {
         private val inputStream: InputStream = socket.inputStream
         private val outputStream: OutputStream = socket.outputStream
@@ -159,7 +173,7 @@ class BluetoothConnectionService(
                 while (true) {
                     val bytes = inputStream.read(buffer, bufferPosition, buffer.size - bufferPosition)
                     if (bytes == -1) {
-                        Log.w("Bluetooth", "Conexión Bluetooth cerrada")
+                        Log.w("BluetoothServices", "Conexión Bluetooth cerrada")
                         break
                     }
 
@@ -168,26 +182,27 @@ class BluetoothConnectionService(
                     processReceivedData()
                 }
             } catch (e: IOException) {
-                Log.e("Bluetooth", "Error al leer", e)
+                Log.e("BluetoothServices", "Error al leer", e)
             } finally {
                 cancel()
             }
         }
 
+        // Procesa los datos recibidos, acumulando hasta encontrar un mensaje completo.
         private fun processReceivedData() {
             val data = String(buffer, 0, bufferPosition)
-            Log.d("Bluetooth", "Datos crudos recibidos: $data")
+            Log.d("BluetoothServices", "Datos crudos recibidos: $data")
 
             for (char in data) {
                 if (char == '\n') {
                     // Fin de un mensaje, procesar el dato acumulado
                     val message = dataAccumulator.toString().trim()
                     if (message.isNotEmpty()) {
-                        Log.d("Bluetooth", "Mensaje completo recibido: $message")
+                        Log.d("BluetoothServices", "Mensaje completo recibido: $message")
                         if (isValidDecimalNumber(message)) {
                             onMessageReceived(message)
                         } else {
-                            Log.d("Bluetooth", "Mensaje no es un número decimal válido: $message")
+                            Log.d("BluetoothServices", "Mensaje no es un número decimal válido: $message")
                         }
                     }
                     dataAccumulator.clear()
@@ -201,11 +216,12 @@ class BluetoothConnectionService(
             bufferPosition = 0
         }
 
+        // Verifica si un mensaje es un número decimal válido.
         private fun isValidDecimalNumber(message: String): Boolean {
             return message.matches("^-?\\d+(\\.\\d+)?\$".toRegex())
         }
 
-
+        // Escribe datos en el socket Bluetooth.
         fun write(bytes: ByteArray) {
             try {
                 val message = String(bytes)
@@ -213,56 +229,49 @@ class BluetoothConnectionService(
                 // Filtrar y enviar solo datos decimales válidos
                 if (message.matches("-?\\d+(\\.\\d+)?".toRegex())) {
                     outputStream.write(bytes)
-                    Log.d("Bluetooth", "Datos enviados: ${String(bytes)}")
+                    Log.d("BluetoothServices", "Datos enviados: ${String(bytes)}")
                 } else {
-                    Log.d("Bluetooth", "Datos no válidos: ${String(bytes)}, no se enviaron")
+                    Log.d("BluetoothServices", "Datos no válidos: ${String(bytes)}, no se enviaron")
                 }
             } catch (e: IOException) {
-                Log.e("Bluetooth", "Error al escribir en el BluetoothSocket", e)
+                Log.e("BluetoothServices", "Error al escribir en el BluetoothSocket", e)
             }
         }
 
+        // Cierra el socket y cancela la conexión.
         fun cancel() {
             try {
                 socket.close()
-                Log.d("Bluetooth", "Socket cerrado")
+                Log.d("BluetoothServices", "Socket cerrado")
             } catch (e: IOException) {
-                Log.e("Bluetooth", "No se pudo cerrar el socket", e)
+                Log.e("BluetoothServices", "No se pudo cerrar el socket", e)
             }
         }
     }
 
-
     @SuppressLint("MissingPermission")
+    // Hilo que escucha conexiones entrantes y las acepta.
     private inner class AcceptThread : Thread() {
-        private val serverSocket: BluetoothServerSocket? by lazy(LazyThreadSafetyMode.NONE) {
-            bluetoothAdapter.listenUsingRfcommWithServiceRecord("AppName", uuid)
-        }
-
         override fun run() {
-            var socket: BluetoothSocket? = null
+            var socket: BluetoothSocket?
 
-            while (true) {
+            while (!isInterrupted) {
                 try {
                     socket = serverSocket?.accept()
+                    Log.d("BluetoothServices", "Nueva conexión aceptada: $socket")
+                    socket?.let {
+                        connected(it)
+                    }
                 } catch (e: IOException) {
-                    Log.e("Bluetooth", "Error al aceptar conexión", e)
+                    Log.e("BluetoothServices", "Error al aceptar conexión", e)
                     break
-                }
-
-                socket?.let {
-                    connected(it)
-                    return@run  // Salir del método run después de haber aceptado y conectado un socket
                 }
             }
         }
 
         fun cancel() {
-            try {
-                serverSocket?.close()
-            } catch (e: IOException) {
-                Log.e("Bluetooth", "No se pudo cerrar el socket en AcceptThread", e)
-            }
+            interrupt()
+            // No cerramos el serverSocket aquí
         }
     }
 }

@@ -884,8 +884,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     sharedViewModel.setDataDetaPesoPollosJson(dataDetaPesoPollosJson!!)
 
                     navegationTrue = true
-//                    findNavController().navigate(R.id.nav_initPreliminar)
-                    sharedTabViewModel.setNavigateToTab(2)
+                    findNavController().navigate(R.id.nav_initPreliminar)
+//                    sharedTabViewModel.setNavigateToTab(2)
                 }
             }
         }
@@ -962,34 +962,10 @@ class JabasFragment : Fragment(), OnItemClickListener {
                         android.R.layout.simple_spinner_item,
                         spinnerItems
                     )
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                binding.selectListpesos.adapter = adapter
-
-//                CoroutineScope(Dispatchers.Main).launch {
-//                    val adapter = ArrayAdapter(
-//                        requireContext(),
-//                        android.R.layout.simple_spinner_item,
-//                        spinnerItems
-//                    )
-//                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-//                    binding.selectListpesos.adapter = adapter
-//
-//                    if (idPesoShared != 0){
-//                        // Establecer el elemento seleccionado en el Spinner
-//                        val positionToSelect = if (idPesoShared > 0) {
-//                            spinnerItems.indexOfFirst { it.startsWith("$idPesoShared:") }
-//                        } else {
-//                            -1
-//                        }
-//
-//                        if (positionToSelect != -1) {
-//                            binding.selectListpesos.setSelection(positionToSelect)
-//                        } else {
-//                            // Si no se encuentra el ID, seleccionar "Seleccione Pesos"
-//                            binding.selectListpesos.setSelection(0)
-//                        }
-//                    }
-//                }
+                _binding?.let { binding ->
+                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                    binding.selectListpesos.adapter = adapter
+                }
             }
         }
     }
