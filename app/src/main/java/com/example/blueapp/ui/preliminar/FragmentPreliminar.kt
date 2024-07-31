@@ -15,7 +15,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.blueapp.R
@@ -29,12 +28,14 @@ import com.example.blueapp.ui.Jabas.ManagerPost.removeListPesosId
 import com.example.blueapp.ui.Jabas.ManagerPost.sendDataToServer
 import com.example.blueapp.ui.Services.getAddressMacDivice
 import com.example.blueapp.ui.ViewModel.SharedViewModel
+import com.example.blueapp.ui.ViewModel.TabViewModel
 import org.json.JSONArray
 import org.json.JSONObject
 
 class FragmentPreliminar : Fragment() {
 
     private lateinit var sharedViewModel: SharedViewModel
+    private lateinit var tabViewModel: TabViewModel
     private lateinit var reportesAdapter: ReportesAdapter
     private val editTextIds = listOf(
         R.id.inputDniCliente,
@@ -63,6 +64,7 @@ class FragmentPreliminar : Fragment() {
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = reportesAdapter
 
+        tabViewModel = ViewModelProvider(requireActivity()).get(TabViewModel::class.java)
         sharedViewModel = ViewModelProvider(requireActivity()).get(SharedViewModel::class.java)
 
         // Observar los datos del ViewModel y actualizar los inputs
@@ -107,7 +109,9 @@ class FragmentPreliminar : Fragment() {
 
         boton_Volver.setOnClickListener {
             limpiarCampos()
-            findNavController().navigate(R.id.action_nav_initPreliminar_to_nav_initReportePeso)
+//            findNavController().navigate(R.id.action_nav_initPreliminar_to_nav_initReportePeso)
+            tabViewModel.setNavigateToTab(1)
+
         }
 
         boton_Procesar.setOnClickListener {
@@ -210,7 +214,8 @@ class FragmentPreliminar : Fragment() {
             val db = AppDatabase(requireContext())
             db.deleteAllPesoUsed()
 
-            findNavController().navigate(R.id.action_nav_initPreliminar_to_nav_initReportePeso)
+//            findNavController().navigate(R.id.action_nav_initPreliminar_to_nav_initReportePeso)
+            tabViewModel.setNavigateToTab(1)
         } else {
             Toast.makeText(requireContext(), "Datos incompletos", Toast.LENGTH_SHORT).show()
         }

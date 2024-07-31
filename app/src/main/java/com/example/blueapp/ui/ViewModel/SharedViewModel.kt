@@ -24,12 +24,17 @@ class SharedViewModel : ViewModel() {
     private val _connectedDeviceName = MutableLiveData<String>()
     val connectedDeviceName: LiveData<String> = _connectedDeviceName
 
+    var _connectedDeviceAddress: String? = null
+
     fun updatePesoValue(message: String) {
         _pesoValue.value = message
     }
 
     fun updateConnectedDeviceName(name: String) {
         _connectedDeviceName.value = name
+    }
+    fun updateConnectedDeviceAddress(address: String) {
+        _connectedDeviceAddress = address
     }
 
     fun setDataPesoPollosJson(data: String) {
@@ -39,7 +44,9 @@ class SharedViewModel : ViewModel() {
     fun setDataDetaPesoPollosJson(data: String) {
         _dataDetaPesoPollosJson = data
     }
-
+    fun getConnectedDeviceAddress(): String? {
+        return _connectedDeviceAddress
+    }
     fun getDataPesoPollosJson(): String? {
         return _dataPesoPollosJson
     }

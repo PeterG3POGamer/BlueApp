@@ -8,18 +8,26 @@
             android:id="@+id/nav_slideshow"
             android:icon="@drawable/ic_menu_bluetooth"
             android:title="@string/menu_bt_balanza" />
+<!--        <item-->
+<!--            android:id="@+id/nav_initTabs"-->
+<!--            android:icon="@drawable/ic_menu_slideshow"-->
+<!--            android:title="@string/menu_pesos" />-->
+
         <item
             android:id="@+id/nav_initReportePeso"
             android:icon="@drawable/ic_menu_slideshow"
             android:title="@string/menu_pesos" />
+
         <item
             android:id="@+id/nav_initReporteGuias"
             android:icon="@drawable/baseline_travel_explore_24"
             android:title="@string/menu_GuiasWeb" />
+
         <item
             android:id="@+id/nav_initReporteVentasApp"
             android:icon="@drawable/baseline_diamond_24"
             android:title="@string/menu_VentasAppWeb" />
+
         <item
             android:id="@+id/nav_impresoraConfig"
             android:icon="@drawable/baseline_adf_scanner_24"

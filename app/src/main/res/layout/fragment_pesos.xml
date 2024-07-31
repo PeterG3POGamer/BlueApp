@@ -19,6 +19,11 @@
             android:padding="16dp"
             tools:context=".ui.Jabas.JabasFragment">
 
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"/>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -26,7 +31,7 @@
                 android:gravity="center">
 
                 <TextView
-                    android:id="@+id/divice_connected"
+                    android:id="@+id/device_connected"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="CONECTADO A: "
@@ -43,16 +48,16 @@
                     android:tooltipText="Datos de lista de pesos disponibles"
                     class="com.example.blueapp.ui.Jabas.CustomSpinner"/>
 
-<!--                <ImageButton-->
-<!--                    android:id="@+id/boton_reload_peso"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:elevation="8dp"-->
-<!--                    android:padding="20dp"-->
-<!--                    app:backgroundTint="@color/gray"-->
-<!--                    android:tooltipText="Recargar lista de pesos"-->
-<!--                    app:srcCompat="@drawable/baseline_refresh_24"-->
-<!--                    android:visibility="gone"/>-->
+                <ImageButton
+                    android:id="@+id/boton_reload_peso"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:elevation="8dp"
+                    android:padding="20dp"
+                    app:backgroundTint="@color/gray"
+                    android:tooltipText="Recargar lista de pesos"
+                    app:srcCompat="@drawable/baseline_refresh_24"
+                    android:visibility="gone"/>
 
             </LinearLayout>
             <TextView
@@ -206,21 +211,21 @@
 
             </LinearLayout>
 
+            <TextView
+                style="@style/Titulo_Diseño"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="DATOS DEL PESAJE"/>
+
             <!-- Sección 2: Datos del Pesaje -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <TextView
-                    style="@style/Titulo_Diseño"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginBottom="-4dp"
-                    android:text="DATOS DEL PESAJE"/>
-
                 <!-- Sección 2: Inputs en una fila -->
                 <LinearLayout
+                    android:id="@+id/viewPesoMayor"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -324,6 +329,7 @@
                                 android:checked="false"
                                 android:text="JABAS CON POLLOS"
                                 android:tooltipText="Valor para pesar con pollos o sin pollos"/>
+
                         </LinearLayout>
 
                         <!-- Segundo LinearLayout para el input de número de pollos -->
@@ -391,7 +397,8 @@
                             android:layout_height="match_parent"
                             android:hint=""
                             android:inputType="numberDecimal"
-                            android:tooltipText="Valor para el Peso obtenido"/>
+                            android:tooltipText="Valor para el Peso obtenido"
+                            android:textColor="@android:color/black"/>
                     </LinearLayout>
 
                     <!-- ImageButton -->
@@ -408,7 +415,6 @@
                         android:tooltipText="Guardar Jabas y/o Pollos pesados a la tabla"/>
 
                 </LinearLayout>
-
 
 
             </LinearLayout>
@@ -449,6 +455,7 @@
                         app:backgroundTint="@color/purple_500"
                         app:srcCompat="@drawable/baseline_add_24"
                         android:tooltipText="Guardar Peso / Editar Peso" />
+
                     <ImageButton
                         android:id="@+id/boton_delete_peso"
                         android:layout_width="wrap_content"
@@ -460,13 +467,14 @@
                         app:srcCompat="@drawable/null_24"
                         android:visibility="visible"
                         android:tooltipText="Eliminar peso guardado"/>
+
                     <TextView
                         android:id="@+id/idListPeso"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="40dp"
                         android:inputType="number"
-                        android:visibility="visible"/>
+                        android:visibility="gone"/>
 
                 </LinearLayout>
 

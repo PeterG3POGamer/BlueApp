@@ -6,11 +6,13 @@ import android.view.MenuItem
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.example.blueapp.VersionControl.UpdateChecker
 import com.example.blueapp.databinding.ActivityMainBinding
+import com.example.blueapp.ui.ViewModel.TabViewModel
 import com.google.android.material.navigation.NavigationView
 
 //import com.github.javiersantos.appupdater.AppUpdater
@@ -22,6 +24,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var drawerToggle: ActionBarDrawerToggle
     private val updateChecker by lazy { UpdateChecker(this) }
+
+    private lateinit var tabViewModel: TabViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -49,6 +53,8 @@ class MainActivity : AppCompatActivity() {
         val drawerLayout: DrawerLayout = binding.drawerLayout
         val navView: NavigationView = binding.navView
         val navController = findNavController(R.id.nav_host_fragment_content_main)
+
+        tabViewModel = ViewModelProvider(this).get(TabViewModel::class.java)
 
         // Definir los destinos de nivel superior del AppBarConfiguration según tus necesidades
         appBarConfiguration = AppBarConfiguration(

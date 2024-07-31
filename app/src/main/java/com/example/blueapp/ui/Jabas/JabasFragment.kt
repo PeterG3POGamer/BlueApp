@@ -3,6 +3,7 @@ package com.example.blueapp.ui.Jabas
 import NetworkUtils
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -33,6 +34,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat
@@ -56,6 +58,8 @@ import com.example.blueapp.ui.Services.PreLoading
 import com.example.blueapp.ui.Services.getAddressMacDivice.getDeviceId
 import com.example.blueapp.ui.Utilidades.NetworkChangeReceiver
 import com.example.blueapp.ui.ViewModel.SharedViewModel
+import com.example.blueapp.ui.ViewModel.TabViewModel
+import com.example.blueapp.ui.slideshow.BluetoothConnectionService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -69,6 +73,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
     private val NOTIFICATION_PERMISSION_REQUEST_CODE = 1001
 
+    private lateinit var bluetoothAdapter: BluetoothAdapter
+    private var bluetoothConnectionService: BluetoothConnectionService? = null
     private lateinit var networkChangeReceiver: NetworkChangeReceiver
     private val handler = Handler(Looper.getMainLooper())
     private val checkInterval = 3000L
@@ -82,6 +88,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
     private var idPesoShared: Int = 0
     private var dataPesoPollosJson: String? = ""
     private var dataDetaPesoPollosJson: String? = ""
+    private var connectedDeviceAddress: String? = ""
     private var currentToast: Toast? = null
     private lateinit var progressBar: ProgressBar
 
@@ -107,6 +114,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
     private lateinit var botonGuardar: Button
     private lateinit var botonCancelar: Button
     private val sharedViewModel: SharedViewModel by activityViewModels()
+    private lateinit var sharedTabViewModel: TabViewModel
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     private var _binding: FragmentPesosBinding? = null
@@ -141,15 +149,24 @@ class JabasFragment : Fragment(), OnItemClickListener {
         _binding = FragmentPesosBinding.inflate(inflater, container, false)
         val root: View = binding.root
         progressBar = binding.progressBar.findViewById(R.id.progressBar)
+
+        sharedTabViewModel = ViewModelProvider(requireActivity()).get(TabViewModel::class.java)
+
         val db = AppDatabase(requireContext())
+
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+        bluetoothConnectionService = BluetoothConnectionService(bluetoothAdapter) { message ->
+
+        }
 
         sharedViewModel.pesoValue.observe(viewLifecycleOwner) { peso ->
             val pesoFormatted = String.format("%.2f", peso.toDoubleOrNull() ?: 0.0)
             binding.inputPesoKg.setText(pesoFormatted)
         }
         showLoading()
+        connectedDeviceAddress = sharedViewModel.getConnectedDeviceAddress().toString()
         sharedViewModel.connectedDeviceName.observe(viewLifecycleOwner) { deviceName ->
-            binding.diviceConnected.text = if (!deviceName.isNullOrEmpty()) {
+            binding.deviceConnected.text = if (!deviceName.isNullOrEmpty()) {
                 "Conectado a: $deviceName"
             } else {
                 "No Conectado"
@@ -600,7 +617,9 @@ class JabasFragment : Fragment(), OnItemClickListener {
             }
         }
 
-
+        binding.deviceConnected.setOnClickListener {
+            showDisconnectDialog()
+        }
 
         binding.botonGuardarPeso.setOnClickListener{
             CoroutineScope(Dispatchers.Main).launch {
@@ -686,7 +705,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.inputCantPollos.setText("0")
         binding.inputNumeroJabas.isEnabled = true
         binding.inputCantPollos.isEnabled = false
-        binding.inputPesoKg.isEnabled = true
+        binding.inputPesoKg.isEnabled = false
 
         if (!dataDetaPesoPollosJson.isNullOrBlank()){
             sharedViewModel.setBtnTrue()
@@ -718,7 +737,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 if (nJabas == 0){
                     binding.botonGuardar.isEnabled = false
                     binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.gray)
-                    showCustomToast(requireContext(), "No te quedan Jabas para usar", "error")
+                    showCustomToast(requireContext(), "No te quedan Jabas para usar", "warning")
                 } else if (nJabas!! < 0){
                     binding.botonGuardar.isEnabled = false
                     binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.gray)
@@ -827,31 +846,33 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     totalPagar = ""
                 )
                 var idEstablecimiento = binding.selectEstablecimiento.selectedItemPosition
-                var precio =  dataPesoPollos.PKPollo.toDouble()
+                var precio =  dataPesoPollos.PKPollo.toDoubleOrNull()
                 if (idEstablecimiento == 0){
                     showCustomToast(requireContext(), "¡Seleccione un establecimiento!", "info")
-                    fetchData(2000)
+                    fetchData(500)
 
                 }else if (dataPesoPollos.idGalpon == "0" || dataPesoPollos.idGalpon.isBlank()){
                     showCustomToast(requireContext(), "¡Seleccione un galpón!", "info")
-                    fetchData(2000)
+                    fetchData(500)
 
                 }else if (dataPesoPollos.numeroDocCliente == "" && dataPesoPollos.nombreCompleto == ""){
                     showCustomToast(requireContext(), "¡Registre un cliente!", "info")
-                    fetchData(2000)
+                    fetchData(500)
 
                 }else if (dataDetaPesoPollos.isEmpty()) {
                     showCustomToast(requireContext(), "¡La tabla esta vacía, por favor registre datos antes de enviar!", "info")
-                    fetchData(2000)
+                    fetchData(500)
 
                 }else if (dataPesoPollos.PKPollo.isBlank()) {
                     binding.PrecioKilo.error = "¡Para calcular el Total a Pagar necesitamos saber el precio por kilo!"
-                    fetchData(2000)
+                    fetchData(500)
 
-                }else if (precio <= 0) {
+                }else if (precio == null || dataPesoPollos.PKPollo.isBlank()) {
                     binding.PrecioKilo.error = "¡Para calcular el Total a Pagar necesitamos saber el precio por kilo!"
-                    fetchData(2000)
-
+                    fetchData(500)
+                }else if (precio <= 0) {
+                    binding.PrecioKilo.error = "¡El precio por kilo no puede ser 0!"
+                    fetchData(500)
                 }else{
                     Log.d("JabasFragment", "$dataDetaPesoPollos")
                     Log.d("JabasFragment", "$dataPesoPollos")
@@ -863,11 +884,38 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     sharedViewModel.setDataDetaPesoPollosJson(dataDetaPesoPollosJson!!)
 
                     navegationTrue = true
-                    findNavController().navigate(R.id.nav_initPreliminar)
+//                    findNavController().navigate(R.id.nav_initPreliminar)
+                    sharedTabViewModel.setNavigateToTab(2)
                 }
             }
         }
         return root
+    }
+
+    private fun showDisconnectDialog() {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setMessage("¿Deseas desconectarte del dispositivo Bluetooth?")
+            .setCancelable(false)
+            .setPositiveButton("Desconectar") { dialog, id ->
+                showLoading()
+                val deviceAddress = connectedDeviceAddress
+                val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+                val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
+                val disconnected = bluetoothConnectionService?.closeConnection(device) ?: false
+                if (disconnected) {
+                    findNavController().navigate(R.id.nav_slideshow)
+                } else {
+                    // Puedes mostrar un mensaje de error o hacer otra cosa si no se desconectó correctamente
+                    Log.e("Bluetooth", "No se pudo desconectar correctamente")
+                    fetchData(1000)
+                }
+
+            }
+            .setNegativeButton("Cancelar") { dialog, id ->
+                dialog.dismiss()
+            }
+        val alert = builder.create()
+        alert.show()
     }
 
     private fun actualizarSpinnerGalpon(idGalpon: String) {
