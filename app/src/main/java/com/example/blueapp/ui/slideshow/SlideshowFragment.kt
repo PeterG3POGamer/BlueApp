@@ -83,7 +83,7 @@ class SlideshowFragment : Fragment() {
         if (permissions.all { it.value }) {
             initializeBluetoothAdapterAndServer()
         } else {
-            Toast.makeText(requireContext(), "Se requieren permisos para usar Bluetooth", Toast.LENGTH_SHORT).show()
+            showToast("Se requieren permisos para usar Bluetooth")
         }
     }
 
@@ -91,7 +91,7 @@ class SlideshowFragment : Fragment() {
         if (result.resultCode == AppCompatActivity.RESULT_OK) {
             initializeBluetoothAdapterAndServer()
         } else {
-            Toast.makeText(requireContext(), "El Bluetooth debe estar habilitado para continuar", Toast.LENGTH_SHORT).show()
+            showToast("El Bluetooth debe estar habilitado para continuar")
         }
     }
 
@@ -113,15 +113,15 @@ class SlideshowFragment : Fragment() {
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
                     // Ocultar ProgressBar cuando finaliza la búsqueda
                     binding.progressBar.visibility = View.GONE
-                    Toast.makeText(context, "Búsqueda de dispositivos finalizada", Toast.LENGTH_SHORT).show()
+                    showToast("Búsqueda de dispositivos finalizada")
                 }
                 BluetoothAdapter.ACTION_STATE_CHANGED -> {
                     when (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {
                         BluetoothAdapter.STATE_OFF -> {
-                            Toast.makeText(context, "Bluetooth desactivado", Toast.LENGTH_SHORT).show()
+                            showToast("Bluetooth desactivado")
                         }
                         BluetoothAdapter.STATE_ON -> {
-                            Toast.makeText(context, "Bluetooth activado", Toast.LENGTH_SHORT).show()
+                            showToast("Bluetooth activado")
                             startDiscovery()
                         }
                     }
@@ -304,7 +304,7 @@ class SlideshowFragment : Fragment() {
         bluetoothAdapter = bluetoothManager.adapter
 
         if (bluetoothAdapter == null) {
-            Toast.makeText(requireContext(), "Este dispositivo no soporta Bluetooth", Toast.LENGTH_SHORT).show()
+            showToast("Este dispositivo no soporta Bluetooth")
             return
         }
 
@@ -350,7 +350,7 @@ class SlideshowFragment : Fragment() {
             bluetoothAdapter.cancelDiscovery()
         }
         bluetoothAdapter.startDiscovery()
-        Toast.makeText(requireContext(), "Buscando dispositivos Bluetooth...", Toast.LENGTH_SHORT).show()
+        showToast("Buscando dispositivos Bluetooth...")
     }
 
     @SuppressLint("MissingPermission")
@@ -360,10 +360,10 @@ class SlideshowFragment : Fragment() {
         } else {
             try {
                 device.createBond()
-                Toast.makeText(requireContext(), "Emparejando con ${device.name}", Toast.LENGTH_SHORT).show()
+                showToast("Emparejando con ${device.name}")
             } catch (e: Exception) {
                 e.printStackTrace()
-                Toast.makeText(requireContext(), "No se pudo emparejar con ${device.name}", Toast.LENGTH_SHORT).show()
+                showToast("No se pudo emparejar con ${device.name}")
             }
         }
     }
@@ -379,7 +379,7 @@ class SlideshowFragment : Fragment() {
                     binding.deviceName.text = "Conectado a: ${device.name}"
                     sharedViewModel.updateConnectedDeviceName(device.name)
                     sharedViewModel.updateConnectedDeviceAddress(device.address.toString())
-                    Toast.makeText(requireContext(), "Conectado a ${device.name}", Toast.LENGTH_SHORT).show()
+                    showToast("Conectado a ${device.name}")
 
                     // Redirigir al tab 1 solo si la conexión fue exitosa
                     findNavController().navigate(R.id.nav_initReportePeso)
@@ -389,7 +389,7 @@ class SlideshowFragment : Fragment() {
                 withContext(Dispatchers.Main) {
                     Log.e("Bluetooth", "Error al conectar: ${e.message}", e)
                     binding.deviceName.text = "Error de conexión"
-                    Toast.makeText(requireContext(), "Error al conectar: ${e.message}", Toast.LENGTH_SHORT).show()
+                    showToast("Error al conectar: ${e.message}")
                 }
             }
         }

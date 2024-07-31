@@ -944,32 +944,6 @@ class JabasFragment : Fragment(), OnItemClickListener {
         Log.d("idGalponSelect", "Galpón seleccionado: posición $positionToSelect, idGalpon: $idGalpon")
     }
 
-    private fun reloadListPesos() {
-            val idDevice = getDeviceId(requireContext())
-            val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
-            val idNucleo = binding.selectEstablecimiento.selectedItemPosition
-            val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
-            // Obtener los pesos guardados en la base de datos
-            ManagerPost.getListPesosByIdGalpon(idGalpon, idNucleo, idDevice) { fetchedPesosList ->
-            if (fetchedPesosList != null && fetchedPesosList.isNotEmpty()) {
-                // Actualizar la lista global
-                pesosList = fetchedPesosList
-                val spinnerItems = mutableListOf("Seleccione Pesos")
-                spinnerItems.addAll(pesosList.map { "${it.id}: ${it.numeroDocCliente}/${it.nombreCompleto}" })
-
-                val adapter = ArrayAdapter(
-                        requireContext(),
-                        android.R.layout.simple_spinner_item,
-                        spinnerItems
-                    )
-                _binding?.let { binding ->
-                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                    binding.selectListpesos.adapter = adapter
-                }
-            }
-        }
-    }
-
     private fun updateSpinnerPesosIdGalpon(idNucleo : Int, idGalpon: Int) {
         val idDevice = getDeviceId(requireContext())
         // Obtener los pesos guardados en la base de datos
