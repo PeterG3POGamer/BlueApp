@@ -56,6 +56,7 @@ import com.example.blueapp.ui.Jabas.ManagerPost.getSelectGalpon
 import com.example.blueapp.ui.Jabas.ManagerPost.setStatusUsed
 import com.example.blueapp.ui.Jabas.ManagerPost.showCustomToast
 import com.example.blueapp.ui.Jabas.ManagerPost.updateListPesos
+import com.example.blueapp.ui.Services.Logger
 import com.example.blueapp.ui.Services.PreLoading
 import com.example.blueapp.ui.Services.getAddressMacDivice.getDeviceId
 import com.example.blueapp.ui.Utilidades.NetworkChangeReceiver
@@ -94,6 +95,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
     private var currentToast: Toast? = null
     private lateinit var progressBar: ProgressBar
     private lateinit var dialogFragment: DialogFragment
+
+    private lateinit var logger: Logger
 
     private val checkInternetRunnable = object : Runnable {
         override fun run() {
@@ -153,21 +156,26 @@ class JabasFragment : Fragment(), OnItemClickListener {
         val root: View = binding.root
         progressBar = binding.progressBar.findViewById(R.id.progressBar)
 
+        logger = Logger(requireContext())
+
         sharedTabViewModel = ViewModelProvider(requireActivity()).get(TabViewModel::class.java)
 
         val db = AppDatabase(requireContext())
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-        bluetoothConnectionService = BluetoothConnectionService(
+        bluetoothConnectionService = BluetoothConnectionService(requireContext(),
             bluetoothAdapter,
             onMessageReceived = { message ->
 
             }
         )
-
-        sharedViewModel.pesoValue.observe(viewLifecycleOwner) { peso ->
-            val pesoFormatted = String.format("%.2f", peso.toDoubleOrNull() ?: 0.0)
-            binding.inputPesoKg.setText(pesoFormatted)
+        if (isAdded) {
+            sharedViewModel.pesoValue.observe(viewLifecycleOwner) { peso ->
+                logger.log2("PesoValue: Texto -> $peso")
+                val pesoFormatted = String.format("%.2f", peso.toDoubleOrNull() ?: 0.0)
+                binding.inputPesoKg.setText(pesoFormatted)
+                logger.log2("PesoValue: Pesos Foramteado recibido en JabaFragment -> $pesoFormatted")
+            }
         }
         showLoading()
 

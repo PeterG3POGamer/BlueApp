@@ -29,6 +29,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.blueapp.R
 import com.example.blueapp.databinding.FragmentBluetoothBinding
+import com.example.blueapp.ui.Services.Logger
 import com.example.blueapp.ui.ViewModel.SharedViewModel
 import com.example.blueapp.ui.ViewModel.TabViewModel
 import com.example.blueapp.ui.slideshow.BluetoothConnectionService
@@ -53,6 +54,7 @@ class BluetoothFragment : DialogFragment() {
     private val binding get() = _binding!!
 
     private val sharedViewModel: SharedViewModel by activityViewModels()
+    private lateinit var logger: Logger
 
     private lateinit var bluetoothAdapter: BluetoothAdapter
 //    private val bluetoothDevices = mutableListOf<BluetoothDevice>()
@@ -132,10 +134,12 @@ class BluetoothFragment : DialogFragment() {
                     when (intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR)) {
                         BluetoothDevice.BOND_BONDED -> {
                             Log.d("Bluetooth", "Dispositivo emparejado: ${device?.name}")
+                            logger.log("onReceive: Dispositivo emparejado: ${device?.name}")
                             device?.let { connectToDevice(it) }
                         }
                         BluetoothDevice.BOND_NONE -> {
                             Log.d("Bluetooth", "Dispositivo desemparejado: ${device?.name}")
+                            logger.log("onReceive: Dispositivo desemparejado: ${device?.name}")
                         }
                     }
                 }
@@ -153,6 +157,7 @@ class BluetoothFragment : DialogFragment() {
         _binding = FragmentBluetoothBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
+        logger = Logger(requireContext())
         tabViewModel = ViewModelProvider(requireActivity()).get(TabViewModel::class.java)
 
         return root
@@ -177,9 +182,11 @@ class BluetoothFragment : DialogFragment() {
     private fun setupBluetoothCallbacks() {
         bluetooth!!.setBluetoothCallback(object : BluetoothCallback {
             override fun onBluetoothTurningOn() {
+                updateUIForBluetoothOn()
             }
 
             override fun onBluetoothTurningOff() {
+                updateUIForBluetoothOff()
             }
 
             override fun onBluetoothOff() {
@@ -209,6 +216,7 @@ class BluetoothFragment : DialogFragment() {
                     bluetoothDevices.add(device)
                     devicesAdapter!!.notifyDataSetChanged()
                     Log.d(TAG, "Device found: ${device.name} (${device.address})")
+                    logger.log("setDiscoveryCallback: Device found: ${device.name} (${device.address})")
                 }
             }
 
@@ -216,6 +224,7 @@ class BluetoothFragment : DialogFragment() {
             override fun onDevicePaired(device: BluetoothDevice) {
                 showToast("Emparejado con ${device.name}")
                 Log.d(TAG, "Device paired: ${device.name}")
+                logger.log("setDiscoveryCallback: Device paired: ${device.name}")
             }
 
             @SuppressLint("MissingPermission")
@@ -225,6 +234,7 @@ class BluetoothFragment : DialogFragment() {
             override fun onError(errorCode: Int) {
                 showToast("Error: $errorCode")
                 Log.e(TAG, "Discovery error: $errorCode")
+                logger.log("setDiscoveryCallback: Discovery error: $errorCode")
             }
         })
 
@@ -233,6 +243,7 @@ class BluetoothFragment : DialogFragment() {
             override fun onDeviceConnected(device: BluetoothDevice) {
                 showToast("Conectado a ${device.name}")
                 Log.d(TAG, "Device connected: ${device.name}")
+                logger.log("setDeviceCallback: Device connected: ${device.name}")
                 updateUIForConnectedState()
             }
 
@@ -240,6 +251,7 @@ class BluetoothFragment : DialogFragment() {
             override fun onDeviceDisconnected(device: BluetoothDevice, message: String) {
                 showToast("Desconectado de ${device.name}")
                 Log.d(TAG, "Device disconnected: ${device.name}. Message: $message")
+                logger.log("setDeviceCallback: Device disconnected: ${device.name}. Message: $message")
                 updateUIForDisconnectedState()
             }
 
@@ -247,17 +259,20 @@ class BluetoothFragment : DialogFragment() {
                 val receivedMessage = String(message)
                 showToast("Mensaje recibido: $receivedMessage")
                 Log.d(TAG, "Message received: $receivedMessage")
+                logger.log("setDeviceCallback: Message received: $receivedMessage")
             }
 
             override fun onError(errorCode: Int) {
                 showToast("Error: $errorCode")
                 Log.e(TAG, "Device error: $errorCode")
+                logger.log("setDeviceCallback: Device error: $errorCode")
             }
 
             @SuppressLint("MissingPermission")
             override fun onConnectError(device: BluetoothDevice, message: String) {
                 showToast("Error de conexión: $message")
                 Log.e(TAG, "Connection error with ${device.name}: $message")
+                logger.log("setDeviceCallback: Connection error with ${device.name}: $message")
             }
         })
     }
@@ -306,6 +321,7 @@ class BluetoothFragment : DialogFragment() {
 
         if (bluetoothAdapter == null) {
             showToast("Este dispositivo no soporta Bluetooth")
+            logger.log("initializeBluetoothAdapterAndServer: Este dispositivo no soporta Bluetooth")
             return
         }
 
@@ -318,7 +334,7 @@ class BluetoothFragment : DialogFragment() {
     }
 
     private fun setupBluetoothService() {
-        bluetoothConnectionService = BluetoothConnectionService(bluetoothAdapter) { message ->
+        bluetoothConnectionService = BluetoothConnectionService(requireContext(), bluetoothAdapter) { message ->
             handleReceivedMessage(message)
         }
         bluetoothConnectionService.startServer()
@@ -366,6 +382,7 @@ class BluetoothFragment : DialogFragment() {
             } catch (e: Exception) {
                 e.printStackTrace()
                 showToast("No se pudo emparejar con ${device.name}")
+                logger.log("pairAndConnectDevice: No se pudo emparejar con ${device.name}, $e")
             }
         }
     }
@@ -375,6 +392,7 @@ class BluetoothFragment : DialogFragment() {
         coroutineScope.launch {
             try {
                 Log.d("Bluetooth", "Intentando conectar con: ${device.name}")
+                logger.log("connectToDevice: Intentando conectar con: ${device.name}")
                 bluetoothConnectionService.connect(device)
 
                 withContext(Dispatchers.Main) {
@@ -391,6 +409,7 @@ class BluetoothFragment : DialogFragment() {
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Log.e("Bluetooth", "Error al conectar: ${e.message}", e)
+                    logger.log("connectToDevice: Error al conectar: ${e.message}", e)
                     binding.deviceName.text = "Error de conexión"
                     showToast("Error al conectar: ${e.message}")
                 }
@@ -401,6 +420,7 @@ class BluetoothFragment : DialogFragment() {
     private fun handleReceivedMessage(message: String) {
         sharedViewModel.updatePesoValue(message)
         Log.d("BluetoothFragment", "Peso recibido: $message")
+        logger.log("handleReceivedMessage: Peso recibido: $message")
     }
 
     override fun onResume() {

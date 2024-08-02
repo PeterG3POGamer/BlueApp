@@ -5,7 +5,8 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
-import android.util.Log
+import android.content.Context
+import com.example.blueapp.ui.Services.Logger
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -13,6 +14,7 @@ import java.util.UUID
 
 // BluetoothConnectionService.kt
 class BluetoothConnectionService(
+    private val context: Context,
     private val bluetoothAdapter: BluetoothAdapter,
     private val onMessageReceived: (String) -> Unit // Callback para manejar datos recibidos
 ) {
@@ -23,6 +25,7 @@ class BluetoothConnectionService(
     private var acceptThread: AcceptThread? = null
     private val openSockets = mutableListOf<BluetoothSocket>()
     private var serverSocket: BluetoothServerSocket? = null
+    private val logger = Logger(context)
 
     // Inicia un hilo para conectar con un dispositivo Bluetooth específico.
     fun connect(device: BluetoothDevice) {
@@ -52,19 +55,19 @@ class BluetoothConnectionService(
         try {
             connectThread?.cancelAndJoin()
         } catch (e: Exception) {
-            Log.e("BluetoothServices", "Error al cerrar connectThread", e)
+            logger.log("Error al cerrar connectThread", e)
         }
 
         try {
             connectedThread?.cancelAndJoin()
         } catch (e: Exception) {
-            Log.e("BluetoothServices", "Error al cerrar connectedThread", e)
+            logger.log("Error al cerrar connectedThread", e)
         }
 
         try {
             acceptThread?.cancelAndJoin()
         } catch (e: Exception) {
-            Log.e("BluetoothServices", "Error al cerrar acceptThread", e)
+            logger.log("Error al cerrar acceptThread", e)
         }
 
         connectThread = null
@@ -75,9 +78,9 @@ class BluetoothConnectionService(
             try {
                 val method = device.javaClass.getMethod("removeBond")
                 result = method.invoke(device) as Boolean
-                Log.d("BluetoothServices", "Dispositivo desvinculado: ${device.address}")
+                logger.log("closeConnection: Dispositivo desvinculado: ${device.address}")
             } catch (e: Exception) {
-                Log.e("BluetoothServices", "Error al desvincular el dispositivo", e)
+                logger.log("closeConnection: Error al desvincular el dispositivo", e)
             }
         }
 
@@ -98,7 +101,7 @@ class BluetoothConnectionService(
             try {
                 socket.close()
             } catch (e: IOException) {
-                Log.e("BluetoothServices", "Error al cerrar el socket", e)
+                logger.log("closeAllSockets(): Error al cerrar el socket", e)
             }
         }
         openSockets.clear()
@@ -110,7 +113,7 @@ class BluetoothConnectionService(
             interrupt()
             join(500)  // Espera hasta 500 ms para que el thread termine
         } catch (e: InterruptedException) {
-            Log.e("BluetoothServices", "Error al esperar a que el thread termine", e)
+            logger.log("Thread.cancelAndJoin(): Error al esperar a que el thread termine", e)
         }
     }
 
@@ -128,7 +131,7 @@ class BluetoothConnectionService(
 
             // Asegurar que el dispositivo esté emparejado antes de intentar conectar
             if (device.bondState != BluetoothDevice.BOND_BONDED) {
-                Log.e("BluetoothServices", "El dispositivo no está emparejado. No se puede conectar.")
+                logger.log("ConnectThread: El dispositivo no está emparejado. No se puede conectar.")
                 return
             }
 
@@ -137,12 +140,12 @@ class BluetoothConnectionService(
                     it.connect()
                     connected(it)
                 } catch (e: IOException) {
-                    Log.e("BluetoothServices", "No se pudo conectar", e)
+                    logger.log("ConnectThread: No se pudo conectar", e)
                     // Intentar cerrar el socket
                     try {
                         it.close()
                     } catch (closeException: IOException) {
-                        Log.e("BluetoothServices", "No se pudo cerrar el socket después de un fallo de conexión", closeException)
+                        logger.log("ConnectThread: No se pudo cerrar el socket después de un fallo de conexión", closeException)
                     }
                     return
                 }
@@ -154,7 +157,7 @@ class BluetoothConnectionService(
             try {
                 socket?.close()
             } catch (e: IOException) {
-                Log.e("BluetoothServices", "No se pudo cerrar el socket en cancel", e)
+                logger.log("ConnectThread: No se pudo cerrar el socket en cancel", e)
             }
         }
     }
@@ -173,7 +176,7 @@ class BluetoothConnectionService(
                 while (true) {
                     val bytes = inputStream.read(buffer, bufferPosition, buffer.size - bufferPosition)
                     if (bytes == -1) {
-                        Log.w("BluetoothServices", "Conexión Bluetooth cerrada")
+                        logger.log("ConnectedThread: Conexión Bluetooth cerrada")
                         break
                     }
 
@@ -182,7 +185,7 @@ class BluetoothConnectionService(
                     processReceivedData()
                 }
             } catch (e: IOException) {
-                Log.e("BluetoothServices", "Error al leer", e)
+                logger.log("ConnectedThread: Error al leer", e)
             } finally {
                 cancel()
             }
@@ -191,23 +194,30 @@ class BluetoothConnectionService(
         // Procesa los datos recibidos, acumulando hasta encontrar un mensaje completo.
         private fun processReceivedData() {
             val data = String(buffer, 0, bufferPosition)
-            Log.d("BluetoothServices", "Datos crudos recibidos: $data")
+            logger.log("ConnectedThread: Datos crudos recibidos: $data")
+            logger.log2("ConnectedThread: Datos reales: $data")
 
             for (char in data) {
                 if (char == '\n') {
                     // Fin de un mensaje, procesar el dato acumulado
-                    val message = dataAccumulator.toString().trim()
+                    var message = dataAccumulator.toString().trim()
                     if (message.isNotEmpty()) {
-                        Log.d("BluetoothServices", "Mensaje completo recibido: $message")
+                        if (message.startsWith("=") || message.startsWith(":") || message.startsWith("->") || message.startsWith(">")) {
+                            message = message.substring(1).trim()
+                        }
+
+                        logger.log("ConnectedThread: Mensaje completo recibido: $message")
                         if (isValidDecimalNumber(message)) {
                             onMessageReceived(message)
                         } else {
-                            Log.d("BluetoothServices", "Mensaje no es un número decimal válido: $message")
+                            logger.log("ConnectedThread: Mensaje no es un número decimal válido: $message")
+                            onMessageReceived(message)
                         }
                     }
                     dataAccumulator.clear()
                 } else {
                     // Acumular el carácter
+                    logger.log("ConnectedThread: Mensaje completo recibido sin '\n': $char")
                     dataAccumulator.append(char)
                 }
             }
@@ -217,8 +227,9 @@ class BluetoothConnectionService(
         }
 
         // Verifica si un mensaje es un número decimal válido.
+        private val decimalNumberRegex = "^-?\\d+(\\.\\d+)?\$".toRegex()
         private fun isValidDecimalNumber(message: String): Boolean {
-            return message.matches("^-?\\d+(\\.\\d+)?\$".toRegex())
+            return message.matches(decimalNumberRegex)
         }
 
         // Escribe datos en el socket Bluetooth.
@@ -229,12 +240,12 @@ class BluetoothConnectionService(
                 // Filtrar y enviar solo datos decimales válidos
                 if (message.matches("-?\\d+(\\.\\d+)?".toRegex())) {
                     outputStream.write(bytes)
-                    Log.d("BluetoothServices", "Datos enviados: ${String(bytes)}")
+                    logger.log("Datos enviados: ${String(bytes)}")
                 } else {
-                    Log.d("BluetoothServices", "Datos no válidos: ${String(bytes)}, no se enviaron")
+                    logger.log("Datos no válidos: ${String(bytes)}, no se enviaron")
                 }
             } catch (e: IOException) {
-                Log.e("BluetoothServices", "Error al escribir en el BluetoothSocket", e)
+                logger.log("Error al escribir en el BluetoothSocket", e)
             }
         }
 
@@ -242,9 +253,9 @@ class BluetoothConnectionService(
         fun cancel() {
             try {
                 socket.close()
-                Log.d("BluetoothServices", "Socket cerrado")
+                logger.log("Socket cerrado")
             } catch (e: IOException) {
-                Log.e("BluetoothServices", "No se pudo cerrar el socket", e)
+                logger.log("No se pudo cerrar el socket", e)
             }
         }
     }
@@ -258,12 +269,12 @@ class BluetoothConnectionService(
             while (!isInterrupted) {
                 try {
                     socket = serverSocket?.accept()
-                    Log.d("BluetoothServices", "Nueva conexión aceptada: $socket")
+                    logger.log("AcceptThread: Nueva conexión aceptada: $socket")
                     socket?.let {
                         connected(it)
                     }
                 } catch (e: IOException) {
-                    Log.e("BluetoothServices", "Error al aceptar conexión", e)
+                    logger.log("AcceptThread: Error al aceptar conexión", e)
                     break
                 }
             }
