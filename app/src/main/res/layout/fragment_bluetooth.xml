@@ -1,108 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:layout_height="match_parent">
 
-    <LinearLayout
+    <!-- Contenido del modal -->
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="16dp"
-        tools:context=".ui.slideshow.SlideshowFragment">
+        android:fillViewport="true">
 
-        <!-- Contenedor para los botones -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_margin="8dp">
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp"
+            tools:context=".ui.BluetoothView.BluetoothFragment">
 
-            <ImageButton
-                android:id="@+id/btn_toggle_bluetooth"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:src="@drawable/ic_menu_bluetooth"
-                android:padding="20dp"
-                android:background="@drawable/button_background_active" />
-
-            <ImageButton
-                android:id="@+id/btn_scan"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/baseline_refresh_24"
-                android:padding="20dp"
-                android:background="@drawable/rounded_button_background"/>
-        </LinearLayout>
-
-        <!-- Espaciador para separar botones de la lista de dispositivos -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="16dp" />
-
-        <!-- Títulos y ListView dentro de un FrameLayout para superponer el ProgressBar -->
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
-
+            <!-- Contenedor para los botones -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_margin="8dp">
+
+                <ImageButton
+                    android:id="@+id/btn_toggle_bluetooth"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:src="@drawable/ic_menu_bluetooth"
+                    android:padding="20dp"
+                    android:background="@drawable/button_background_active"
+                    tools:ignore="ContentDescription" />
+
+                <ImageButton
+                    android:id="@+id/btn_scan"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/baseline_refresh_24"
+                    android:padding="20dp"
+                    android:background="@drawable/rounded_button_background"
+                    tools:ignore="ContentDescription" />
+            </LinearLayout>
+
+            <!-- Espaciador para separar botones de la lista de dispositivos -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="16dp" />
+
+            <!-- Títulos y ListView dentro de un FrameLayout para superponer el ProgressBar -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="16dp">
+                    android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/tv_devices_title"
-                        android:layout_width="0dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Dispositivos encontrados:"
-                        android:textStyle="bold"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="16dp">
+
+                        <TextView
+                            android:id="@+id/tv_devices_title"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="Dispositivos encontrados:"
+                            android:textStyle="bold"
+                            android:layout_weight="1"/>
+
+                        <TextView
+                            android:id="@+id/deviceName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Conectado a:"
+                            android:textStyle="bold"
+                            android:layout_marginStart="16dp"/>
+
+                        <TextView
+                            android:id="@+id/deviceAddress"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Dirección del dispositivo:"
+                            android:textStyle="bold"
+                            android:layout_marginStart="16dp"
+                            android:visibility="gone"/>
+                    </LinearLayout>
+
+                    <ListView
+                        android:id="@+id/list_devices"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/button_background_inactive"
+                        android:divider="@android:color/darker_gray"
+                        android:dividerHeight="15dp"
                         android:layout_weight="1"/>
 
-                    <TextView
-                        android:id="@+id/deviceName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Conectado a:"
-                        android:textStyle="bold"
-                        android:layout_marginStart="16dp"/>
-
-                    <TextView
-                        android:id="@+id/deviceAddress"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Dirección del dispositivo:"
-                        android:textStyle="bold"
-                        android:layout_marginStart="16dp"
-                        android:visibility="gone"/>
                 </LinearLayout>
 
-                <ListView
-                    android:id="@+id/list_devices"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_weight="1" />
+                <ProgressBar
+                    android:id="@+id/progress_bar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:layout_gravity="center" />
 
-            </LinearLayout>
+            </FrameLayout>
 
-            <ProgressBar
-                android:id="@+id/progress_bar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:layout_gravity="center" />
-        </FrameLayout>
+        </LinearLayout>
+    </ScrollView>
 
-    </LinearLayout>
-</ScrollView>
+    <!-- Botón para cerrar el modal, en la esquina superior derecha -->
+    <ImageButton
+        android:id="@+id/btn_close_modal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        android:padding="5dp"
+        android:src="@drawable/ic_close"
+        android:background="@drawable/button_background_close"
+        android:contentDescription="@string/cerrar" />
+</FrameLayout>

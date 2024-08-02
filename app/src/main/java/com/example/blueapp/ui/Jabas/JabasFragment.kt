@@ -32,6 +32,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
@@ -40,6 +41,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat
 import com.example.blueapp.R
 import com.example.blueapp.databinding.FragmentPesosBinding
+import com.example.blueapp.ui.BluetoothView.BluetoothFragment
 import com.example.blueapp.ui.DataBase.AppDatabase
 import com.example.blueapp.ui.DataBase.Entities.ClienteEntity
 import com.example.blueapp.ui.DataBase.Entities.DataDetaPesoPollosEntity
@@ -88,9 +90,10 @@ class JabasFragment : Fragment(), OnItemClickListener {
     private var idPesoShared: Int = 0
     private var dataPesoPollosJson: String? = ""
     private var dataDetaPesoPollosJson: String? = ""
-    private var connectedDeviceAddress: String? = ""
+    private var connectedDeviceAddress: String? = null
     private var currentToast: Toast? = null
     private lateinit var progressBar: ProgressBar
+    private lateinit var dialogFragment: DialogFragment
 
     private val checkInternetRunnable = object : Runnable {
         override fun run() {
@@ -145,7 +148,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentPesosBinding.inflate(inflater, container, false)
         val root: View = binding.root
         progressBar = binding.progressBar.findViewById(R.id.progressBar)
@@ -155,23 +158,37 @@ class JabasFragment : Fragment(), OnItemClickListener {
         val db = AppDatabase(requireContext())
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-        bluetoothConnectionService = BluetoothConnectionService(bluetoothAdapter) { message ->
+        bluetoothConnectionService = BluetoothConnectionService(
+            bluetoothAdapter,
+            onMessageReceived = { message ->
 
-        }
+            }
+        )
 
         sharedViewModel.pesoValue.observe(viewLifecycleOwner) { peso ->
             val pesoFormatted = String.format("%.2f", peso.toDoubleOrNull() ?: 0.0)
             binding.inputPesoKg.setText(pesoFormatted)
         }
         showLoading()
-        connectedDeviceAddress = sharedViewModel.getConnectedDeviceAddress().toString()
-        sharedViewModel.connectedDeviceName.observe(viewLifecycleOwner) { deviceName ->
-            binding.deviceConnected.text = if (!deviceName.isNullOrEmpty()) {
-                "Conectado a: $deviceName"
-            } else {
-                "No Conectado"
+
+        connectedDeviceAddress = sharedViewModel.getConnectedDeviceAddress()
+
+        if (!connectedDeviceAddress.isNullOrBlank()){
+            sharedViewModel.connectedDeviceName.observe(viewLifecycleOwner) { deviceName ->
+                if (!deviceName.isNullOrEmpty()) {
+                    binding.deviceConnected.text = "CONECTADO A: $deviceName"
+                    binding.deviceConnected.background = ContextCompat.getDrawable(requireContext(), R.drawable.button_background_active)
+                } else {
+                    binding.deviceConnected.text = "NO CONECTADO"
+                    binding.deviceConnected.background = ContextCompat.getDrawable(requireContext(), R.drawable.button_background_inactive)
+                }
             }
+        }else{
+            binding.deviceConnected.text = "NO CONECTADO"
+            binding.deviceConnected.background = ContextCompat.getDrawable(requireContext(), R.drawable.button_background_inactive)
+
         }
+
         // Regreso de datos de la preliminar
         dataDetaPesoPollosJson = sharedViewModel.getDataDetaPesoPollosJson()
         dataPesoPollosJson = sharedViewModel.getDataPesoPollosJson()
@@ -618,7 +635,13 @@ class JabasFragment : Fragment(), OnItemClickListener {
         }
 
         binding.deviceConnected.setOnClickListener {
-            showDisconnectDialog()
+            if (connectedDeviceAddress.isNullOrBlank() || connectedDeviceAddress == "null") {
+                // Muestra un fragmento modal si connectedDeviceAddress es null
+                showModalBluetoothFragment()
+            } else {
+                // Muestra el diálogo de confirmación si connectedDeviceAddress no es null
+                showDisconnectDialog()
+            }
         }
 
         binding.botonGuardarPeso.setOnClickListener{
@@ -903,7 +926,12 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
                 val disconnected = bluetoothConnectionService?.closeConnection(device) ?: false
                 if (disconnected) {
-                    findNavController().navigate(R.id.nav_slideshow)
+                    connectedDeviceAddress = null
+                    sharedViewModel.updateConnectedDeviceAddress("")
+                    binding.deviceConnected.text = "NO CONECTADO"
+                    binding.deviceConnected.background = ContextCompat.getDrawable(requireContext(), R.drawable.button_background_inactive)
+//                    findNavController().navigate(R.id.nav_slideshow)
+                    fetchData(1000)
                 } else {
                     // Puedes mostrar un mensaje de error o hacer otra cosa si no se desconectó correctamente
                     Log.e("Bluetooth", "No se pudo desconectar correctamente")
@@ -916,6 +944,11 @@ class JabasFragment : Fragment(), OnItemClickListener {
             }
         val alert = builder.create()
         alert.show()
+    }
+
+    private fun showModalBluetoothFragment() {
+        dialogFragment = BluetoothFragment()
+        dialogFragment.show(requireActivity().supportFragmentManager, "BluetoothFragment")
     }
 
     private fun actualizarSpinnerGalpon(idGalpon: String) {

@@ -34,6 +34,9 @@
                     android:id="@+id/device_connected"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:padding="10dp"
+                    android:background="@drawable/button_background_inactive"
                     android:text="CONECTADO A: "
                     android:tooltipText="Información del dispositivo conectado a bluetooth" />
 
@@ -65,6 +68,7 @@
                 style="@style/Titulo_Diseño"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@color/purple_500"
                 android:text="DATOS DEL NUCLEO" />
             <!-- Sección 1: Selector y Datos del Cliente -->
             <LinearLayout
@@ -127,6 +131,7 @@
                     style="@style/Titulo_Diseño"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@color/purple_500"
                     android:text="DATOS DEL CLIENTE"/>
 
                 <!-- Datos del cliente en fila con ImageButton al costado -->
@@ -215,6 +220,7 @@
                 style="@style/Titulo_Diseño"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@color/purple_500"
                 android:text="DATOS DEL PESAJE"/>
 
             <!-- Sección 2: Datos del Pesaje -->
@@ -506,7 +512,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:padding="4dp"
-                android:background="?attr/colorPrimary"
+                android:background="@color/purple_500"
                 android:elevation="4dp"
                 android:layout_margin="2dp"
                 android:gravity="center"
@@ -525,7 +531,7 @@
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:textSize="16sp"
-                    android:background="?attr/colorPrimary"
+                    android:background="@color/purple_500"
                     android:layout_marginEnd="2dp" />
 
                 <TextView
@@ -539,7 +545,7 @@
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:textSize="16sp"
-                    android:background="?attr/colorPrimary"
+                    android:background="@color/purple_500"
                     android:layout_marginEnd="2dp" />
 
                 <TextView
@@ -553,7 +559,7 @@
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:textSize="16sp"
-                    android:background="?attr/colorPrimary"
+                    android:background="@color/purple_500"
                     android:layout_marginEnd="2dp" />
 
                 <TextView
@@ -567,7 +573,7 @@
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:textSize="16sp"
-                    android:background="?attr/colorPrimary"
+                    android:background="@color/purple_500"
                     android:layout_marginEnd="2dp" />
 
                 <TextView
@@ -581,7 +587,7 @@
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:textSize="16sp"
-                    android:background="?attr/colorPrimary" />
+                    android:background="@color/purple_500" />
             </LinearLayout>
 
 

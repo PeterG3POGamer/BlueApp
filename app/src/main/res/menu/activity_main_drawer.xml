@@ -3,41 +3,55 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <group android:checkableBehavior="single">
+    <group
+        android:id="@+id/nav_group_bluetooth"
+        android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_slideshow"
-            android:icon="@drawable/ic_menu_bluetooth"
-            android:title="@string/menu_bt_balanza" />
+            android:id="@+id/nav_bluetooth_section"
+            android:icon="@drawable/ic_info"
+            android:title="@string/pesajes">
+            <menu>
+                <item
+                    android:id="@+id/nav_initReportePeso"
+                    android:icon="@drawable/ic_menu_slideshow"
+                    android:title="@string/menu_pesos" />
+            </menu>
+        </item>
+    </group>
 
-<!--        <item-->
-<!--            android:id="@+id/nav_initTabs"-->
-<!--            android:icon="@drawable/ic_menu_slideshow"-->
-<!--            android:title="@string/menu_pesos" />-->
-
+    <group
+        android:id="@+id/nav_group_reportes"
+        android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_initReportePeso"
-            android:icon="@drawable/ic_menu_slideshow"
-            android:title="@string/menu_pesos" />
+            android:id="@+id/nav_report_section"
+            android:icon="@drawable/ic_info"
+            android:title="@string/reportes">
+            <menu>
+                <item
+                    android:id="@+id/nav_initReporteGuias"
+                    android:icon="@drawable/baseline_travel_explore_24"
+                    android:title="@string/menu_GuiasWeb" />
+                <item
+                    android:id="@+id/nav_initReporteVentasApp"
+                    android:icon="@drawable/baseline_diamond_24"
+                    android:title="@string/menu_VentasAppWeb" />
+            </menu>
+        </item>
+    </group>
 
+    <group
+        android:id="@+id/nav_group_configuracion"
+        android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_initReporteGuias"
-            android:icon="@drawable/baseline_travel_explore_24"
-            android:title="@string/menu_GuiasWeb" />
-
-        <item
-            android:id="@+id/nav_initReporteVentasApp"
-            android:icon="@drawable/baseline_diamond_24"
-            android:title="@string/menu_VentasAppWeb" />
-
-        <item
-            android:id="@+id/nav_impresoraConfig"
-            android:icon="@drawable/baseline_adf_scanner_24"
-            android:title="@string/menu_impresora" />
-
-        <item
-            android:id="@+id/nav_initPreliminar"
-            android:icon="@drawable/baseline_watch_later_24"
-            android:title="@string/menu_Preliminar"
-            android:enabled="false"/>
+            android:id="@+id/nav_config_section"
+            android:icon="@drawable/ic_info"
+            android:title="@string/configuration">
+            <menu>
+                <item
+                    android:id="@+id/nav_impresoraConfig"
+                    android:icon="@drawable/baseline_adf_scanner_24"
+                    android:title="@string/menu_impresora" />
+            </menu>
+        </item>
     </group>
 </menu>

@@ -23,4 +23,12 @@
         <item name="android:background">#BF79FF5A</item>
     </style>
 
+    <style name="SectionTitleTextAppearance">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+    </style>
+
 </resources>

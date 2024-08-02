@@ -3,19 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@id/nav_slideshow">
-
-    <fragment
-        android:id="@+id/nav_initTabs"
-        android:name="com.example.blueapp.ui.TabsMain.TabsMainFragment"
-        android:label="@string/menu_bt_balanza"
-        tools:layout="@layout/fragment_main_tabs" />
-
-    <fragment
-        android:id="@+id/nav_initBluetooth"
-        android:name="com.example.blueapp.ui.BluetoothView.BluetoothFragment"
-        android:label="@string/menu_bt_balanza"
-        tools:layout="@layout/fragment_bluetooth" />
+    app:startDestination="@id/nav_initReportePeso">
 
     <fragment
         android:id="@+id/nav_initReportePeso"
@@ -24,10 +12,10 @@
         tools:layout="@layout/fragment_pesos" />
 
     <fragment
-        android:id="@+id/nav_slideshow"
-        android:name="com.example.blueapp.ui.slideshow.SlideshowFragment"
+        android:id="@+id/nav_initBluetooth"
+        android:name="com.example.blueapp.ui.BluetoothView.BluetoothFragment"
         android:label="@string/menu_bt_balanza"
-        tools:layout="@layout/fragment_slideshow" />
+        tools:layout="@layout/fragment_bluetooth" />
 
     <fragment
         android:id="@+id/nav_initReporteGuias"
