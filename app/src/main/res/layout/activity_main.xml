@@ -17,13 +17,44 @@
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
         style="@style/Widget.Material3.NavigationView"
-        android:layout_width="wrap_content"
+        android:layout_width="260dp"
         android:layout_height="match_parent"
-        app:itemBackground="@color/nav_item_background_state"
-        app:itemIconTint="@color/nav_item_color_state"
-        app:itemTextColor="@color/nav_item_color_state"
         android:layout_gravity="start"
         android:fitsSystemWindows="true"
         app:headerLayout="@layout/nav_header_main"
-        app:menu="@menu/activity_main_drawer" />
+        app:menu="@menu/activity_main_drawer">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <!-- Aquí va el contenido del menú -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+                <!-- El menú se incluye aquí -->
+            </FrameLayout>
+
+            <!-- Espacio vacío para empujar el ítem de la versión hacia abajo -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <!-- Ítem de versión -->
+                <TextView
+                    android:id="@+id/nav_version"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:title="@string/app_version"
+                    android:textColor="?attr/colorOnSurface"
+                    android:enabled="false"
+                    android:paddingTop="16dp"/>
+
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.navigation.NavigationView>
 </androidx.drawerlayout.widget.DrawerLayout>

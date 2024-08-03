@@ -49,7 +49,7 @@
                     android:padding="12dp"
                     android:prompt="@string/select_pesos_prompt"
                     android:tooltipText="Datos de lista de pesos disponibles"
-                    class="com.example.blueapp.ui.Jabas.CustomSpinner"/>
+                    class="app.serlanventas.mobile.ui.Jabas.CustomSpinner"/>
 
                 <ImageButton
                     android:id="@+id/boton_reload_peso"

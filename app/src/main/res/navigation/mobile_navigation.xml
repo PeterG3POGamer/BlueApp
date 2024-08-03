@@ -7,37 +7,37 @@
 
     <fragment
         android:id="@+id/nav_initReportePeso"
-        android:name="com.example.blueapp.ui.Jabas.JabasFragment"
+        android:name="app.serlanventas.mobile.ui.Jabas.JabasFragment"
         android:label="@string/menu_bt_balanza"
         tools:layout="@layout/fragment_pesos" />
 
     <fragment
         android:id="@+id/nav_initBluetooth"
-        android:name="com.example.blueapp.ui.BluetoothView.BluetoothFragment"
+        android:name="app.serlanventas.mobile.ui.BluetoothView.BluetoothFragment"
         android:label="@string/menu_bt_balanza"
         tools:layout="@layout/fragment_bluetooth" />
 
     <fragment
         android:id="@+id/nav_initReporteGuias"
-        android:name="com.example.blueapp.ui.Web.GuiasWebFragment"
+        android:name="app.serlanventas.mobile.ui.Web.GuiasWebFragment"
         android:label="@string/menu_bt_balanza"
         tools:layout="@layout/fragment_guias_web" />
 
     <fragment
         android:id="@+id/nav_initReporteVentasApp"
-        android:name="com.example.blueapp.ui.Web.VentasWebFragment"
+        android:name="app.serlanventas.mobile.ui.Web.VentasWebFragment"
         android:label="@string/menu_bt_balanza"
         tools:layout="@layout/fragment_ventas_web" />
 
     <fragment
         android:id="@+id/nav_initPreliminar"
-        android:name="com.example.blueapp.ui.preliminar.FragmentPreliminar"
+        android:name="app.serlanventas.mobile.ui.preliminar.FragmentPreliminar"
         android:label="@string/menu_bt_balanza"
         tools:layout="@layout/fragment_peso_preliminar" />
 
     <fragment
         android:id="@+id/nav_impresoraConfig"
-        android:name="com.example.blueapp.ui.ImpresoraSettings.ImpresoraSettingsFragment"
+        android:name="app.serlanventas.mobile.ui.ImpresoraSettings.ImpresoraSettingsFragment"
         android:label="@string/menu_bt_balanza"
         tools:layout="@layout/fragment_impresora_settings" />
     <!-- Acciones de navegación -->
