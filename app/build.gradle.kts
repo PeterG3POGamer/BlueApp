@@ -7,13 +7,13 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.blueapp"
+        applicationId = "app.serlanventas.mobile"
         minSdk = 24
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.10"
+        versionCode = 5
+        versionName = "1.12.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        namespace = "com.example.blueapp"
+        namespace = "app.serlanventas.mobile"
     }
 
     buildTypes {
