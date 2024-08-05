@@ -23,7 +23,7 @@ data class VersionInfo(
 )
 
 interface GithubApi {
-    @GET("PeterG3POGamer/BlueApp/master/app/src/main/java/com/example/blueapp/VersionControl/version.json")
+    @GET("PeterG3POGamer/BlueApp/master/app/src/main/java/app/serlanventas/mobile/VersionControl/version.json")
     suspend fun getLatestVersion(): VersionInfo
 }
 
@@ -40,9 +40,9 @@ class UpdateChecker(private val context: Context) {
         return try {
             val latestVersion = githubApi.getLatestVersion()
             val currentVersionCode = context.packageManager
-                .getPackageInfo(context.packageName, 0).versionCode
+                .getPackageInfo(context.packageName, 0).versionName
 
-            if (latestVersion.version_code > currentVersionCode) {
+            if (latestVersion.version_name != currentVersionCode) {
                 latestVersion
             } else {
                 null

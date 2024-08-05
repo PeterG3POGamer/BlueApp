@@ -10,8 +10,8 @@ android {
         applicationId = "app.serlanventas.mobile"
         minSdk = 24
         targetSdk = 34
-        versionCode = 5
-        versionName = "1.12.1"
+        versionCode = 1
+        versionName = "1.12.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         namespace = "app.serlanventas.mobile"
     }

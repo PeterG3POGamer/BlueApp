@@ -9,6 +9,7 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavDestination
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -17,6 +18,7 @@ import app.serlanventas.mobile.VersionControl.UpdateChecker
 import app.serlanventas.mobile.databinding.ActivityMainBinding
 import app.serlanventas.mobile.ui.ViewModel.TabViewModel
 import com.google.android.material.navigation.NavigationView
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -41,9 +43,9 @@ class MainActivity : AppCompatActivity() {
 //            .start()
 
 //        opcion 2 : actualizar aplicacion desde git
-//        lifecycleScope.launch {
-//            updateChecker.checkAndDownloadUpdate()
-//        }
+        lifecycleScope.launch {
+            updateChecker.checkAndDownloadUpdate()
+        }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
