@@ -91,7 +91,7 @@ class UpdateChecker(private val context: Context) {
         val downloadButton = dialogView.findViewById<Button>(R.id.btn_download)
         val cancelButton = dialogView.findViewById<Button>(R.id.btn_cancel)
 
-        updateInfoTextView.text = "Versión ${versionInfo.version_name}\nTamaño: ${versionInfo.file_size / 1024 / 1024} MB"
+        updateInfoTextView.text = "Versión: ${versionInfo.version_name}\nTamaño: ${versionInfo.file_size / 1024 / 1024} MB"
 
         changesRecyclerView.layoutManager = LinearLayoutManager(context)
         changesRecyclerView.adapter = ChangesAdapter(versionInfo.changes ?: emptyList())
@@ -143,9 +143,10 @@ class ChangesAdapter(private val changes: List<Change>) : RecyclerView.Adapter<C
 
     private fun getColorForChangeType(type: String): Int {
         return when (type.toLowerCase()) {
-            "fix" -> Color.parseColor("#FF9800")  // Orange
-            "update" -> Color.parseColor("#4CAF50")  // Green
-            "new" -> Color.parseColor("#2196F3")  // Blue
+            "update" -> Color.parseColor("#f5af2c")  // Orange
+            "new" -> Color.parseColor("#41f048")  // Green
+            "improved" -> Color.parseColor("#45a8f7")  // Blue
+            "fix" -> Color.parseColor("#f55858")  // Red
             else -> Color.parseColor("#9E9E9E")  // Grey
         }
     }
