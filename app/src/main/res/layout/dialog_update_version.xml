@@ -58,8 +58,7 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/changes_recycler_view"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:maxHeight="200dp"
+        android:layout_height="500dp"
         android:scrollbars="vertical"
         app:layout_constraintTop_toBottomOf="@id/changes_title"
         app:layout_constraintStart_toStartOf="parent"

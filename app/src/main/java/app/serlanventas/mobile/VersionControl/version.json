@@ -4,32 +4,6 @@
   "download_url": "https://github.com/PeterG3POGamer/BlueApp/releases/download/v.0.1-beta/app-debug.apk",
   "file_size": 5000000,
   "changes": [
-    {"type": "New", "description": "Actualización automatica."},
-    {"type": "Update", "description": "Change 1"},
-    {"type": "Improved", "description": "Change 2"},
-    {"type": "Fix", "description": "Change 3"},
-    {"type": "New", "description": "Actualización automatica."},
-    {"type": "New", "description": "Actualización automatica."},
-    {"type": "New", "description": "Actualización automatica."},
-    {"type": "New", "description": "Actualización automatica."},
-    {"type": "New", "description": "Actualización automatica."},
-    {"type": "New", "description": "Actualización automatica."},
-    {"type": "Update", "description": "Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo"},
-    {"type": "Update", "description": "Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo"},
-    {"type": "Update", "description": "Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo"},
-    {"type": "Update", "description": "Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo"},
-    {"type": "Update", "description": "Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo"},
-    {"type": "Update", "description": "Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo"},
-    {"type": "Improved", "description": "Change 2"},
-    {"type": "Improved", "description": "Change 2"},
-    {"type": "Improved", "description": "Change 2"},
-    {"type": "Improved", "description": "Change 2"},
-    {"type": "Improved", "description": "Change 2"},
-    {"type": "Improved", "description": "Change 2"},
-    {"type": "Fix", "description": "Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo"},
-    {"type": "Fix", "description": "Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo"},
-    {"type": "Fix", "description": "Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo"},
-    {"type": "Fix", "description": "Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo"},
-    {"type": "Fix", "description": "Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo, Esto es un texto muy largo"}
+    {"type": "Update", "description": "Correcciones y mejoras importantes."}
   ]
 }
