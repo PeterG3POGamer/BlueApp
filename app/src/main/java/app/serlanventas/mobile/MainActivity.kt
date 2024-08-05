@@ -31,17 +31,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // opcion 1 : Actualizar aplicacion desde git
-//        AppUpdater(this)
-//            .setUpdateFrom(UpdateFrom.GITHUB)
-//            .setGitHubUserAndRepo("PeterG3POGamer", "BlueApp")
-//            .setTitleOnUpdateAvailable("Actualización disponible")
-//            .setContentOnUpdateAvailable("Una nueva versión está disponible. ¿Deseas actualizar?")
-//            .setButtonUpdate("Actualizar")
-//            .setButtonDismiss("Más tarde")
-//            .showAppUpdated(true)
-//            .start()
-
 //        opcion 2 : actualizar aplicacion desde git
         lifecycleScope.launch {
             updateChecker.checkAndDownloadUpdate()

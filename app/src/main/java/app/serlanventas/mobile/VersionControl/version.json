@@ -1,5 +1,11 @@
 {
   "version_code": 1,
-  "version_name": "1.12.2",
-  "download_url": "https://github.com/PeterG3POGamer/BlueApp/releases/download/v.0.1-beta/SerlanVentas.apk"
+  "version_name": "1.12.3",
+  "download_url": "https://github.com/PeterG3POGamer/BlueApp/releases/download/v.0.1-beta/SerlanVentas.apk",
+  "file_size": 5000000,
+  "changes": [
+    {"type": "Fix", "description": "Correccion de errores."},
+    {"type": "Update", "description": "Mejora en el diseño de actualización automatica."},
+    {"type": "New", "description": "Actualización automatica."}
+  ]
 }
