@@ -154,7 +154,7 @@ class ChangesAdapter(private val changes: List<Change>) : RecyclerView.Adapter<C
 
 class UpdateManager(private val context: Context) {
     private var downloadId: Long = 0
-    private val fileName = "SerlanVentas.apk"
+    private val fileName = "app-debug.apk"
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     fun downloadUpdate(versionInfo: VersionInfo) {
