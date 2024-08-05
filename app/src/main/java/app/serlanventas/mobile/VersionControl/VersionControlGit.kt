@@ -199,9 +199,6 @@ class UpdateManager(private val context: Context) {
         intent.setDataAndType(downloadedApk, "application/vnd.android.package-archive")
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
         context.startActivity(intent)
-
-        // Programar la eliminación del archivo después de iniciar la instalación
-        file.deleteOnExit()
     }
 
     private fun getDownloadFolder(): File {
