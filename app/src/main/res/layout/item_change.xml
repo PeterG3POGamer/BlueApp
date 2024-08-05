@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:paddingLeft="8dp"
         android:paddingRight="8dp"
-        android:paddingTop="2dp"
+        android:paddingTop="1dp"
         android:paddingBottom="2dp"
         android:textColor="#FFFFFF"
         android:textSize="12sp"
