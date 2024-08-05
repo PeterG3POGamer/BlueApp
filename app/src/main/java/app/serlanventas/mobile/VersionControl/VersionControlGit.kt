@@ -75,23 +75,23 @@ class UpdateChecker(private val context: Context) {
             update?.let {
                 showUpdateDialog(it)
             }
-        } else {
-            showNoInternetDialog()
         }
+
     }
 
+    @SuppressLint("MissingInflatedId")
     private fun showUpdateDialog(versionInfo: VersionInfo) {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_update_version, null)
         val dialog = AlertDialog.Builder(context, R.style.CustomAlertDialog)
             .setView(dialogView)
             .create()
 
-        val updateInfoTextView = dialogView.findViewById<TextView>(R.id.update_info)
+        val versionInfoTextView = dialogView.findViewById<TextView>(R.id.update_info)
         val changesRecyclerView = dialogView.findViewById<RecyclerView>(R.id.changes_recycler_view)
         val downloadButton = dialogView.findViewById<Button>(R.id.btn_download)
         val cancelButton = dialogView.findViewById<Button>(R.id.btn_cancel)
 
-        updateInfoTextView.text = "Versión: ${versionInfo.version_name}\nTamaño: ${versionInfo.file_size / 1024 / 1024} MB"
+        versionInfoTextView.text = "Versión: ${versionInfo.version_name}\nTamaño: ${versionInfo.file_size / 1024 / 1024} MB"
 
         changesRecyclerView.layoutManager = LinearLayoutManager(context)
         changesRecyclerView.adapter = ChangesAdapter(versionInfo.changes ?: emptyList())
@@ -106,14 +106,6 @@ class UpdateChecker(private val context: Context) {
         }
 
         dialog.show()
-    }
-
-    private fun showNoInternetDialog() {
-        AlertDialog.Builder(context, R.style.CustomAlertDialog)
-            .setTitle("Sin conexión a Internet")
-            .setMessage("No se puede verificar actualizaciones. Por favor, comprueba tu conexión a Internet e intenta nuevamente.")
-            .setPositiveButton("Aceptar", null)
-            .show()
     }
 }
 
@@ -205,7 +197,7 @@ class UpdateManager(private val context: Context) {
         return context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: context.filesDir
     }
 
-    private fun cleanDownloadFolder() {
+    fun cleanDownloadFolder() {
         val folder = getDownloadFolder()
         folder.listFiles()?.forEach { file ->
             if (file.name.endsWith(".apk")) {
