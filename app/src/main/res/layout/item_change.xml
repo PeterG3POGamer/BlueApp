@@ -3,24 +3,32 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp">
+    android:padding="4dp"
+    android:gravity="center_vertical">
 
-    <TextView
-        android:id="@+id/change_type"
-        android:layout_width="wrap_content"
+    <FrameLayout
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:paddingLeft="8dp"
-        android:paddingRight="8dp"
-        android:textColor="#FFFFFF"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:layout_marginRight="8dp"/>
+        android:layout_marginRight="8dp">
+
+        <!-- TextView with background color -->
+        <TextView
+            android:id="@+id/change_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:textSize="15sp"
+            android:gravity="center"/>
+
+    </FrameLayout>
 
     <TextView
         android:id="@+id/change_description"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:textStyle="bold"
         android:textColor="#333333"
-        android:textSize="14sp"/>
+        android:textSize="15sp"/>
 </LinearLayout>

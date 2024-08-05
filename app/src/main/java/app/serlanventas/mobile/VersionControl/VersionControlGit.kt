@@ -1,6 +1,7 @@
 package app.serlanventas.mobile.VersionControl
 
 import NetworkUtils
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DownloadManager
@@ -9,12 +10,17 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.LinearInterpolator
 import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,6 +30,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import java.io.File
+import java.util.Locale
 
 data class Change(
     val type: String,
@@ -127,31 +134,56 @@ class ChangesAdapter(private val changes: List<Change>) : RecyclerView.Adapter<C
         holder.changeType.text = change.type
         holder.changeDescription.text = change.description
 
-        // Set background color based on change type
-        holder.changeType.setBackgroundColor(getColorForChangeType(change.type))
+        // Set background color and border based on change type
+        val backgroundColor = getColorForChangeType(change.type)
+        val borderColor = darkenColor(backgroundColor, 0.7f)
+        holder.changeType.setBackgroundColor(backgroundColor)
+
+        // Create a drawable with background color and border
+        val drawable = GradientDrawable().apply {
+            setColor(backgroundColor)
+            setStroke(0, borderColor)
+            cornerRadius = 8f
+        }
+        holder.changeType.background = drawable
+
+        // Set text color as a darker version of the background color
+        holder.changeType.setTextColor(borderColor)
     }
 
     override fun getItemCount() = changes.size
 
     private fun getColorForChangeType(type: String): Int {
-        return when (type.toLowerCase()) {
-            "update" -> Color.parseColor("#f5af2c")  // Orange
-            "new" -> Color.parseColor("#41f048")  // Green
-            "improved" -> Color.parseColor("#45a8f7")  // Blue
-            "fix" -> Color.parseColor("#f55858")  // Red
+        return when (type.lowercase(Locale.getDefault())) {
+            "update" -> Color.parseColor("#f5b169")  // Orange
+            "new" -> Color.parseColor("#69fa6e")  // Green
+            "improved" -> Color.parseColor("#7abcfa")  // Blue
+            "fix" -> Color.parseColor("#faacac")  // Red
             else -> Color.parseColor("#9E9E9E")  // Grey
         }
     }
-}
 
+    private fun darkenColor(color: Int, factor: Float): Int {
+        val a = Color.alpha(color)
+        val r = (Color.red(color) * factor).toInt()
+        val g = (Color.green(color) * factor).toInt()
+        val b = (Color.blue(color) * factor).toInt()
+        return Color.argb(a, r, g, b)
+    }
+}
 
 class UpdateManager(private val context: Context) {
     private var downloadId: Long = 0
     private val fileName = "app-debug.apk"
+    private lateinit var progressDialog: AlertDialog
+    private lateinit var progressBar: ProgressBar
+    private lateinit var percentageText: TextView
+    private var currentProgress = 0
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     fun downloadUpdate(versionInfo: VersionInfo) {
         cleanDownloadFolder()
+        showProgressDialog()
 
         val file = File(getDownloadFolder(), fileName)
         val request = DownloadManager.Request(Uri.parse(versionInfo.download_url))
@@ -169,15 +201,78 @@ class UpdateManager(private val context: Context) {
             onDownloadComplete,
             IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
         )
+
+        // Iniciar la actualización del progreso
+        updateProgress()
+    }
+
+    private fun showProgressDialog() {
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_download_progress, null)
+        progressBar = dialogView.findViewById(R.id.progressBar)
+        percentageText = dialogView.findViewById(R.id.percentageText)
+
+        progressDialog = AlertDialog.Builder(context)
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+
+        progressDialog.show()
+    }
+
+    private fun updateProgress() {
+        val handler = Handler(Looper.getMainLooper())
+        handler.post(object : Runnable {
+            @SuppressLint("Range")
+            override fun run() {
+                val query = DownloadManager.Query().setFilterById(downloadId)
+                val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                val cursor = downloadManager.query(query)
+
+                if (cursor.moveToFirst()) {
+                    val bytesDownloaded = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                    val bytesTotal = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+
+                    if (bytesTotal > 0) {
+                        val progress = (bytesDownloaded * 100 / bytesTotal).toInt()
+                        animateProgress(currentProgress, progress)
+                        currentProgress = progress
+                    }
+
+                    val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
+                    if (status != DownloadManager.STATUS_SUCCESSFUL) {
+                        handler.postDelayed(this, 1000)
+                    } else {
+                        // Asegurarse de que el progreso llegue al 100%
+                        animateProgress(currentProgress, 100)
+                        // Esperar un momento antes de cerrar el diálogo y continuar
+                        handler.postDelayed({
+                            progressDialog.dismiss()
+                            val file = File(getDownloadFolder(), fileName)
+                            installUpdate(file)
+                        }, 2000) // Espera 2 segundos en 100%
+                    }
+                }
+
+                cursor.close()
+            }
+        })
+    }
+
+    private fun animateProgress(from: Int, to: Int) {
+        val animator = ValueAnimator.ofInt(from, to)
+        animator.duration = 500 // duración de la animación en milisegundos
+        animator.interpolator = LinearInterpolator()
+        animator.addUpdateListener { animation ->
+            val progress = animation.animatedValue as Int
+            progressBar.progress = progress
+            percentageText.text = "$progress%"
+        }
+        animator.start()
     }
 
     private val onDownloadComplete = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-            if (downloadId == id) {
-                val file = File(getDownloadFolder(), fileName)
-                installUpdate(file)
-            }
+            // No hacemos nada aquí, ya que el manejo se hace en updateProgress()
         }
     }
 

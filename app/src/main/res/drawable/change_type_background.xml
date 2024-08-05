@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="#4CAF50" /> <!-- Color por defecto, se cambiará programáticamente -->
-    <corners android:radius="50dp" />
+    <!-- Define el color de fondo (esto se cambiará programáticamente) -->
+    <solid android:color="#FFFFFF" />
+
+    <!-- Define el color y grosor del borde -->
+    <stroke
+        android:width="2dp"
+        android:color="#333333" />
+
+    <!-- Define esquinas redondeadas si lo deseas -->
+    <corners android:radius="4dp" />
 </shape>
