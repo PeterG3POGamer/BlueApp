@@ -37,4 +37,10 @@
         <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
     </style>
 
+    <style name="AppTheme.NavigationView" parent="Widget.MaterialComponents.NavigationView">
+        <item name="itemBackground">@drawable/nav_item_background_with_border</item>
+        <item name="itemHorizontalPadding">16dp</item>
+        <item name="itemVerticalPadding">8dp</item>
+    </style>
+
 </resources>

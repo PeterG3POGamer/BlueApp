@@ -13,7 +13,7 @@
             <menu>
                 <item
                     android:id="@+id/nav_initReportePeso"
-                    android:icon="@drawable/ic_menu_slideshow"
+                    android:icon="@drawable/ic_cabezapollo3"
                     android:title="@string/menu_pesos" />
             </menu>
         </item>

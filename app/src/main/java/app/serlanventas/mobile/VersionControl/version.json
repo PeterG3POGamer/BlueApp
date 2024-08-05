@@ -2,8 +2,8 @@
   "version_code": 1,
   "version_name": "1.12.3",
   "download_url": "https://github.com/PeterG3POGamer/BlueApp/releases/download/v.0.1-beta/app-debug.apk",
-  "file_size": 42000000,
+  "file_size": 47000000,
   "changes": [
-    {"type": "Update", "description": "Correcciones y mejoras importantes."}
+    {"type": "Improved", "description": "Correcciones y mejoras importantes."}
   ]
 }

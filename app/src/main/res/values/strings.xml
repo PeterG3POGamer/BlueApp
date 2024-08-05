@@ -23,7 +23,7 @@
 
     <!--    ITEMS-->
     <string name="menu_bt_balanza">Balanza</string>
-    <string name="menu_pesos">Pesos</string>
+    <string name="menu_pesos">Pesajes</string>
     <string name="menu_GuiasWeb">Guías</string>
     <string name="menu_VentasAppWeb">Ventas</string>
     <string name="menu_impresora">Impresora</string>

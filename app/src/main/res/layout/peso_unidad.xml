@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <!-- Título de la aplicación -->
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Venta de Pollos"
+        android:textSize="24sp"
+        android:padding="16dp"
+        android:textAlignment="center"/>
+
+
+    <!-- Botón para agregar pollo al carrito -->
+    <Button
+        android:id="@+id/button_add_to_cart"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Agregar al Carrito"
+        android:layout_margin="16dp"/>
+
+    <!-- TextView para mostrar el total del carrito -->
+    <TextView
+        android:id="@+id/textView_total"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Total: $0.00"
+        android:layout_margin="16dp"
+        android:textSize="18sp"
+        android:textAlignment="center"/>
+
+</LinearLayout>
