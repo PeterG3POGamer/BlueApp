@@ -46,7 +46,8 @@ class FragmentPreliminar : Fragment() {
         R.id.inputTara,
         R.id.inputNeto,
         R.id.inputKlPollo,
-        R.id.inputTotalPagar
+        R.id.inputTotalPagar,
+        R.id.inputPesoPromedioPollo
     )
 
     companion object {
@@ -83,6 +84,8 @@ class FragmentPreliminar : Fragment() {
                 val pesoKPollo = dataPesoPollos.getDouble("_PP_PKPollo")
                 val TotalPagar = pesoKPollo * neto
 
+                val promedioPesoPollo = if (totalPollos > 0) neto / totalPollos else 0.0
+
                 dataPesoPollos.put("_PP_totalJabas", totalJabas)
                 dataPesoPollos.put("_PP_totalPollos", totalPollos)
                 dataPesoPollos.put("_PP_totalPeso", formatDecimal(totalPesoPollos))
@@ -90,6 +93,7 @@ class FragmentPreliminar : Fragment() {
                 dataPesoPollos.put("_PP_totalPesoJabas", formatDecimal(totalPesoJabas))
                 dataPesoPollos.put("_PP_PKPollo", formatDecimal(pesoKPollo))
                 dataPesoPollos.put("_PP_TotalPagar", formatDecimal(TotalPagar))
+                dataPesoPollos.put("_PP_PromedioPollo", formatDecimal(promedioPesoPollo))
 
                 sharedViewModel.setDataPesoPollosJson(dataPesoPollos.toString())
 
@@ -140,6 +144,7 @@ class FragmentPreliminar : Fragment() {
         view?.findViewById<EditText>(R.id.inputNeto)?.setText("")
         view?.findViewById<EditText>(R.id.inputKlPollo)?.setText("")
         view?.findViewById<EditText>(R.id.inputTotalPagar)?.setText("")
+        view?.findViewById<EditText>(R.id.inputPesoPromedioPollo)?.setText("")
         reportesAdapter.actualizarReportesDetapp(emptyList())
     }
 
@@ -220,12 +225,6 @@ class FragmentPreliminar : Fragment() {
         } else {
             Toast.makeText(requireContext(), "Datos incompletos", Toast.LENGTH_SHORT).show()
         }
-    }
-    private fun checkStoragePermission(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            requireContext(),
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-        ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun requestStoragePermission() {
@@ -329,26 +328,29 @@ class FragmentPreliminar : Fragment() {
         view.findViewById<EditText>(R.id.inputDniCliente)?.setText(dataPesoPollos.optString("_PP_docCliente"))
         view.findViewById<EditText>(R.id.inputNomCliente)?.setText(dataPesoPollos.optString("_PP_nombreCompleto"))
 
-        // Redondear a 2 decimales para los campos numéricos
         view.findViewById<EditText>(R.id.inputCantPollo)?.setText(
-            formatDecimal(dataPesoPollos.optString("_PP_totalPollos").toDoubleOrNull())
+            formatDecimal(dataPesoPollos.optString("_PP_totalPollos").replace(",", ".").toDoubleOrNull())
         )
         view.findViewById<EditText>(R.id.inputPesoBruto)?.setText(
-            formatDecimal(dataPesoPollos.optString("_PP_totalPeso").toDoubleOrNull())
+            formatDecimal(dataPesoPollos.optString("_PP_totalPeso").replace(",", ".").toDoubleOrNull())
         )
         view.findViewById<EditText>(R.id.inputTara)?.setText(
-            formatDecimal(dataPesoPollos.optString("_PP_totalPesoJabas").toDoubleOrNull())
+            formatDecimal(dataPesoPollos.optString("_PP_totalPesoJabas").replace(",", ".").toDoubleOrNull())
         )
         view.findViewById<EditText>(R.id.inputNeto)?.setText(
-            formatDecimal(dataPesoPollos.optString("_PP_totalNeto").toDoubleOrNull())
+            formatDecimal(dataPesoPollos.optString("_PP_totalNeto").replace(",", ".").toDoubleOrNull())
         )
         view.findViewById<EditText>(R.id.inputKlPollo)?.setText(
-            formatDecimal(dataPesoPollos.optString("_PP_PKPollo").toDoubleOrNull())
+            formatDecimal(dataPesoPollos.optString("_PP_PKPollo").replace(",", ".").toDoubleOrNull())
         )
         view.findViewById<EditText>(R.id.inputTotalPagar)?.setText(
-            formatDecimal(dataPesoPollos.optString("_PP_TotalPagar").toDoubleOrNull())
+            formatDecimal(dataPesoPollos.optString("_PP_TotalPagar").replace(",", ".").toDoubleOrNull())
+        )
+        view.findViewById<EditText>(R.id.inputPesoPromedioPollo)?.setText(
+            formatDecimal(dataPesoPollos.optString("_PP_PromedioPollo").replace(",", ".").toDoubleOrNull())
         )
     }
+
 
     private fun formatDecimal(number: Double?): String {
         return number?.let { String.format("%.2f", it) } ?: ""
@@ -381,17 +383,6 @@ class FragmentPreliminar : Fragment() {
 //            }
 //        }
 //    }
-
-    private fun inicializarDatosPredefinidos(view: View) {
-        view.findViewById<EditText>(R.id.inputDniCliente)?.setText("95687415")
-        view.findViewById<EditText>(R.id.inputNomCliente)?.setText("FREDDY MENDEZ SEGUNDO PRIMERO")
-        view.findViewById<EditText>(R.id.inputCantPollo)?.setText("10")
-        view.findViewById<EditText>(R.id.inputPesoBruto)?.setText("200")
-        view.findViewById<EditText>(R.id.inputTara)?.setText("20")
-        view.findViewById<EditText>(R.id.inputNeto)?.setText("150")
-        view.findViewById<EditText>(R.id.inputKlPollo)?.setText("2.5")
-        view.findViewById<EditText>(R.id.inputTotalPagar)?.setText("375")
-    }
 
     private fun bloquearInputs(view: View) {
         editTextIds.forEach { editTextId ->

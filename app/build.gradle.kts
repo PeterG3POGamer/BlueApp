@@ -11,7 +11,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 1
-        versionName = "1.12.4"
+        versionName = "1.12.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         namespace = "app.serlanventas.mobile"
     }
@@ -92,6 +92,7 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.foundation.android)
     implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.play.services.location)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

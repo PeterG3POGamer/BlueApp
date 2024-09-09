@@ -92,218 +92,195 @@
             android:text="RESUMEN DE CÁLCULO"/>
 
 
-        <!-- Contenedor principal para las dos columnas -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <!-- Columna izquierda: Sección de datos de cálculo -->
+            <!-- Contenedor principal para las dos columnas -->
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginEnd="8dp">
+                android:orientation="horizontal"
+                android:baselineAligned="false">
 
-                <!-- Título de la sección de datos de cálculo -->
-
-                <!-- Campos de datos de cálculo -->
+                <!-- Columna izquierda: Sección de datos de cálculo -->
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:orientation="vertical"
-                    android:layout_marginBottom="8dp">
+                    android:layout_marginEnd="8dp">
 
                     <LinearLayout
-                        android:padding="5dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginBottom="8dp">
 
                         <TextView
-                            android:layout_width="98dp"
+                            android:layout_width="120dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="8dp"
-                            android:gravity="center_vertical"
-                            android:text="CANT. DE POLLO:"
+                            android:text="C. DE POLLO:"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
-                        <!-- Cantidad de Pollos -->
                         <EditText
                             android:id="@+id/inputCantPollo"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="numberDecimal"
-                            android:layout_marginBottom="8dp"
                             android:textStyle="bold"
                             tools:ignore="Autofill" />
                     </LinearLayout>
 
                     <LinearLayout
-                        android:padding="5dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginBottom="8dp">
 
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:layout_width="120dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="8dp"
-                            android:gravity="center_vertical"
                             android:text="PESO BRUTO:"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
-                        <!-- Peso Bruto -->
                         <EditText
                             android:id="@+id/inputPesoBruto"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="numberDecimal"
-                            android:layout_marginBottom="8dp"
                             android:textStyle="bold"
                             tools:ignore="Autofill" />
                     </LinearLayout>
 
                     <LinearLayout
-                        android:padding="5dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginBottom="8dp">
 
                         <TextView
-                            android:layout_width="96dp"
+                            android:layout_width="120dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="8dp"
-                            android:gravity="center_vertical"
                             android:text="TARA:"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
-                        <!-- Tara -->
                         <EditText
                             android:id="@+id/inputTara"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="numberDecimal"
-                            android:layout_marginBottom="8dp"
                             android:textStyle="bold"
                             tools:ignore="Autofill" />
                     </LinearLayout>
-
-                    <!-- Otros campos de datos de cálculo -->
                 </LinearLayout>
-            </LinearLayout>
 
-            <!-- Columna derecha: Sección de datos del conductor -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="8dp">
-
-                <!-- Título de la sección de datos del conductor -->
-
-                <!-- Campos de datos del conductor -->
+                <!-- Columna derecha: Sección de datos adicionales -->
                 <LinearLayout
-
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:orientation="vertical"
-                    android:layout_marginBottom="8dp">
+                    android:layout_marginStart="8dp">
 
-                    <!-- DNI Conductor -->
                     <LinearLayout
-                        android:padding="5dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginBottom="8dp">
 
                         <TextView
-                            android:layout_width="73dp"
+                            android:layout_width="120dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="8dp"
-                            android:gravity="center_vertical"
-                            android:text="Neto:"
+                            android:text="NETO:"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
                         <EditText
                             android:id="@+id/inputNeto"
-                            android:layout_width="0dp"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="numberDecimal"
-                            android:layout_weight="1"
                             android:textStyle="bold"
                             tools:ignore="Autofill" />
                     </LinearLayout>
 
-                    <!-- Licencia Conductor -->
                     <LinearLayout
-                        android:padding="5dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginBottom="16dp">
+                        android:layout_marginBottom="8dp">
 
                         <TextView
-                            android:layout_width="73dp"
-                            android:layout_height="51dp"
-                            android:layout_marginEnd="8dp"
-                            android:gravity="center_vertical"
-                            android:text="Precio x Kg. Pollo:"
+                            android:layout_width="120dp"
+                            android:layout_height="wrap_content"
+                            android:text="PRECIO X KG:"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
                         <EditText
                             android:id="@+id/inputKlPollo"
-                            android:layout_width="0dp"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="numberDecimal"
-                            android:layout_weight="1"
                             android:textStyle="bold"
                             tools:ignore="Autofill" />
                     </LinearLayout>
 
                     <LinearLayout
                         style="@style/Input_Diseño"
-                        android:padding="5dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginBottom="8dp">
 
                         <TextView
-                            android:layout_width="72dp"
+                            android:layout_width="120dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="8dp"
-                            android:gravity="center_vertical"
-                            android:text="Total a pagar:"
+                            android:text="T. A PAGAR:"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
-                        <!-- Total a Pagar -->
                         <EditText
                             android:id="@+id/inputTotalPagar"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="numberDecimal"
-                            android:layout_marginBottom="8dp"
                             android:textStyle="bold"
                             tools:ignore="Autofill" />
                     </LinearLayout>
-                    <!-- Otros campos de datos del conductor -->
                 </LinearLayout>
             </LinearLayout>
-        </LinearLayout>
 
+            <!-- Fila adicional para el Peso Promedio -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp">
+
+                <TextView
+                    android:layout_width="150dp"
+                    android:layout_height="wrap_content"
+                    android:text="PESO PROMEDIO:"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/inputPesoPromedioPollo"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:inputType="numberDecimal"
+                    android:textStyle="bold"
+                    tools:ignore="Autofill" />
+            </LinearLayout>
+        </LinearLayout>
         <!-- Sección 3: Botones con íconos divididos en tres partes -->
         <LinearLayout
             android:layout_width="match_parent"

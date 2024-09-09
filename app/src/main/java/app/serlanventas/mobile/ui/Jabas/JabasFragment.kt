@@ -898,9 +898,9 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 }else if (precio == null || dataPesoPollos.PKPollo.isBlank()) {
                     binding.PrecioKilo.error = "¡Para calcular el Total a Pagar necesitamos saber el precio por kilo!"
                     fetchData(500)
-                }else if (precio <= 0) {
-                    binding.PrecioKilo.error = "¡El precio por kilo no puede ser 0!"
-                    fetchData(500)
+//                }else if (precio <= 0) {
+//                    binding.PrecioKilo.error = "¡El precio por kilo no puede ser 0!"
+//                    fetchData(500)
                 }else{
                     Log.d("JabasFragment", "$dataDetaPesoPollos")
                     Log.d("JabasFragment", "$dataPesoPollos")

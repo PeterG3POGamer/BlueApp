@@ -49,6 +49,8 @@ suspend fun generateAndOpenPDF2(jsonDataPdf: JSONObject, context: Context) {
         val DETA_PESOPOLLOS = jsonDataPdf.optJSONArray("DETA_PESOPOLLO") ?: JSONArray()
 
         val nroRuc = EMPRESA.optJSONObject(0)?.optString("nroRuc", "N/A") ?: "N/A"
+        val nombreComercial = EMPRESA.optJSONObject(0)?.optString("nombreComercial", "N/A") ?: "N/A"
+
         val serie = PESO_POLLO.optJSONObject(0)?.optString("serie", "N/A") ?: "N/A"
         val fecha = PESO_POLLO.optJSONObject(0)?.optString("fecha", "N/A") ?: "N/A"
         val dni = CLIENTE.optJSONObject(0)?.optString("dni", "N/A") ?: "N/A"
@@ -61,6 +63,7 @@ suspend fun generateAndOpenPDF2(jsonDataPdf: JSONObject, context: Context) {
         val tara = PESO_POLLO.optJSONObject(0)?.optString("tara", "N/A") ?: "N/A"
         val neto = PESO_POLLO.optJSONObject(0)?.optString("neto", "N/A") ?: "N/A"
         val precio_kilo = PESO_POLLO.optJSONObject(0)?.optString("precio_kilo", "N/A") ?: "N/A"
+        val pesoPromedio = PESO_POLLO.optJSONObject(0)?.optString("pesoPromedio", "N/A") ?: "N/A"
         val total_pagar = PESO_POLLO.optJSONObject(0)?.optString("total_pagar", "N/A") ?: "N/A"
 
         val fileName = "$nroRuc-$serie.pdf"
@@ -102,6 +105,11 @@ suspend fun generateAndOpenPDF2(jsonDataPdf: JSONObject, context: Context) {
 
         // Información de la empresa
         document.add(Paragraph("RUC: $nroRuc")
+            .setFont(font)
+            .setFontSize(normalFontSize)
+            .setTextAlignment(TextAlignment.CENTER))
+
+        document.add(Paragraph("$nombreComercial")
             .setFont(font)
             .setFontSize(normalFontSize)
             .setTextAlignment(TextAlignment.CENTER))
@@ -221,6 +229,7 @@ suspend fun generateAndOpenPDF2(jsonDataPdf: JSONObject, context: Context) {
         addTotalRow("Tara:", tara)
         addTotalRow("Neto:", neto)
         addTotalRow("Precio/Kilo:", precio_kilo)
+        addTotalRow("Ps. Promedio:", pesoPromedio, true, true)
         addTotalRow("T. Pagar:", total_pagar, true, true)
 
         document.add(totalsTable)

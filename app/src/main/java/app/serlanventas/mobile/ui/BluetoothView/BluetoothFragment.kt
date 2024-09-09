@@ -2,6 +2,7 @@ package app.serlanventas.mobile.ui.BluetoothView
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
@@ -9,7 +10,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -37,6 +40,14 @@ import app.serlanventas.mobile.ui.Services.Logger
 import app.serlanventas.mobile.ui.ViewModel.SharedViewModel
 import app.serlanventas.mobile.ui.ViewModel.TabViewModel
 import app.serlanventas.mobile.ui.slideshow.BluetoothConnectionService
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
+import com.google.android.gms.location.LocationSettingsResponse
+import com.google.android.gms.location.SettingsClient
+import com.google.android.gms.tasks.Task
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -51,6 +62,10 @@ class BluetoothFragment : DialogFragment() {
 
     private var _binding: FragmentBluetoothBinding? = null
     private val REQUEST_ENABLE_BT = 1
+
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private val REQUEST_CHECK_SETTINGS = 0x1
+
     private val TAG = "BluetoothFragment"
     private var currentToast: Toast? = null
     private val binding get() = _binding!!
@@ -173,12 +188,13 @@ class BluetoothFragment : DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
         bluetooth = Bluetooth(requireContext())
         bluetooth?.onStart()
 
         checkProgressBarRunnable = object : Runnable {
             override fun run() {
-                if (binding.progressBar.visibility == View.VISIBLE) {
+                if (isAdded && view != null && binding.progressBar.visibility == View.VISIBLE) {
                     checkBluetoothPermissions()
                 }
             }
@@ -190,7 +206,6 @@ class BluetoothFragment : DialogFragment() {
         checkBluetoothPermissions()
         setupBluetoothCallbacks()
         setupUI()
-
     }
 
     private fun setupBluetoothCallbacks() {
@@ -329,8 +344,9 @@ class BluetoothFragment : DialogFragment() {
     }
 
     private fun hasBluetoothPermissions(): Boolean {
+        val context = context ?: return false
         return bluetoothPermissions.all { permission ->
-            ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
         }
     }
 
@@ -445,6 +461,49 @@ class BluetoothFragment : DialogFragment() {
         sharedViewModel.updatePesoValue(message)
     }
 
+    private fun isGPSEnabled(): Boolean {
+        val locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+    }
+
+    private fun checkGPSStatus() {
+        if (!isGPSEnabled()) {
+            requestGPSActivation()
+        } else {
+            Log.d(TAG, "GPS está activado")
+            logger.log("checkGPSStatus: GPS está activado")
+        }
+    }
+
+    private fun requestGPSActivation() {
+        val locationRequest = LocationRequest.create().apply {
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        }
+        val builder = LocationSettingsRequest.Builder()
+            .addLocationRequest(locationRequest)
+
+        val client: SettingsClient = LocationServices.getSettingsClient(requireActivity())
+        val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
+
+        task.addOnSuccessListener { locationSettingsResponse ->
+            // GPS está activado o el usuario acaba de activarlo
+            Log.d(TAG, "GPS activado exitosamente")
+            logger.log("requestGPSActivation: GPS activado exitosamente")
+        }
+
+        task.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException){
+                // La ubicación no está activada y hay una resolución disponible
+                try {
+                    // Muestra el diálogo solicitando activar el GPS
+                    exception.startResolutionForResult(requireActivity(), REQUEST_CHECK_SETTINGS)
+                } catch (sendEx: IntentSender.SendIntentException) {
+                    // Ignorar el error
+                }
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         val filter = IntentFilter().apply {
@@ -453,6 +512,8 @@ class BluetoothFragment : DialogFragment() {
             addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
         }
         requireContext().registerReceiver(receiver, filter)
+
+        checkGPSStatus()
     }
 
     private fun toggleBluetooth() {
@@ -506,6 +567,21 @@ class BluetoothFragment : DialogFragment() {
                 updateUIForBluetoothOn()
             } else {
                 updateUIForBluetoothOff()
+            }
+        }
+
+        if (requestCode == REQUEST_CHECK_SETTINGS) {
+            when (resultCode) {
+                Activity.RESULT_OK -> {
+                    Log.d(TAG, "El usuario activó el GPS")
+                    logger.log("onActivityResult: El usuario activó el GPS")
+                    // El GPS fue activado, puedes continuar con tu lógica aquí
+                }
+                Activity.RESULT_CANCELED -> {
+                    Log.d(TAG, "El usuario no activó el GPS")
+                    logger.log("onActivityResult: El usuario no activó el GPS")
+                    // El usuario decidió no activar el GPS, puedes manejarlo aquí
+                }
             }
         }
     }
