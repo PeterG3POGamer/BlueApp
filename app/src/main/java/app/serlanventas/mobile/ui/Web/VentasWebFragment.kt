@@ -22,9 +22,11 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import app.serlanventas.mobile.LoginActivity
 import app.serlanventas.mobile.databinding.FragmentVentasWebBinding
 import app.serlanventas.mobile.ui.Utilidades.Constants
 import app.serlanventas.mobile.ui.ViewModel.VentasWebViewModel
@@ -252,6 +254,7 @@ class VentasWebFragment : Fragment() {
                         // Mostrar WebView y ocultar ProgressBar en caso de error
                         webView.visibility = View.VISIBLE
                         binding.progressBar.visibility = View.GONE
+
                     }
                 }
                 conn.disconnect()
@@ -288,6 +291,8 @@ class VentasWebFragment : Fragment() {
                         iniciarSesion()
                         webView.visibility = View.VISIBLE
                         binding.progressBar.visibility = View.GONE
+                        redirectToLoginActivity()
+
                     }
                 }
             } catch (e: Exception) {
@@ -296,6 +301,34 @@ class VentasWebFragment : Fragment() {
                 webView.visibility = View.VISIBLE
                 binding.progressBar.visibility = View.GONE
             }
+        }
+    }
+
+    private fun redirectToLoginActivity() {
+        // Asegurar que esta función se ejecute en el hilo principal
+        activity?.runOnUiThread {
+            // Ocultar ProgressBar y WebView
+            binding.progressBar.visibility = View.GONE
+            webView.visibility = View.GONE
+
+            val sharedPreferences = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            sharedPreferences.edit().apply {
+                remove("isLoggedIn")
+                remove("storedUsername")
+                remove("storedPassword")
+                apply()
+            }
+            // Mostrar un mensaje de error
+            Toast.makeText(context, "Error en el inicio de sesión. Por favor, inténtelo de nuevo.", Toast.LENGTH_LONG).show()
+
+            // Crear un Intent para iniciar LoginActivity
+            val intent = Intent(requireContext(), LoginActivity::class.java)
+            // Agregar una bandera para limpiar la pila de actividades
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+
+            // Finalizar la actividad actual si es necesario
+            activity?.finish()
         }
     }
 
