@@ -288,7 +288,6 @@ class VentasWebFragment : Fragment() {
                     }
                     else -> {
                         Log.d(TAG, "Estado no exitoso: $status")
-                        iniciarSesion()
                         webView.visibility = View.VISIBLE
                         binding.progressBar.visibility = View.GONE
                         redirectToLoginActivity()
