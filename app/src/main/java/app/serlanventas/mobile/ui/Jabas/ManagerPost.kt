@@ -232,12 +232,15 @@ object ManagerPost {
         dataPesoPollos: DataPesoPollosEntity
     ) {
         val preLoading = PreLoading(context)
-        val urlString = "${Constants.BASE_URL}app/controllers/PesoPollosController.php?op=InsertarDataPesoPollos"
+
+        val isProduction = Constants.obtenerEstadoModo(context)
+        val baseUrl = Constants.getBaseUrl(isProduction)
+        val urlString = "${baseUrl}app/controllers/PesoPollosController.php?op=InsertarDataPesoPollos"
+        val url = URL(urlString)
+        val conn = url.openConnection() as HttpURLConnection
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val url = URL(urlString)
-                val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
                 conn.doOutput = true
@@ -387,11 +390,9 @@ object ManagerPost {
                 }
                 // Ocultar la carga después de obtener la respuesta del servidor
                 withContext(Dispatchers.Main) {
+                    delay(1000)
                     preLoading.hidePreCarga()
                 }
-
-                // Cerrar la conexión al terminar
-                conn.disconnect()
 
             } catch (e: Exception) {
                 // Manejar cualquier otra excepción
@@ -401,6 +402,8 @@ object ManagerPost {
                     Log.e("ManagerPost", "Error: ${e.message}")
                     showRetryDialogNetwork(context, fragment, dataDetaPesoPollos, dataPesoPollos)
                 }
+            } finally {
+                conn.disconnect()
             }
         }
     }
@@ -435,7 +438,10 @@ object ManagerPost {
         dataDetaPesoPollos: List<DataDetaPesoPollosEntity>,
         dataPesoPollos: List<DataPesoPollosEntity>,
     ) {
-        val urlString = "${Constants.BASE_URL}enviar.php"
+        val isProduction = Constants.obtenerEstadoModo(context)
+        val baseUrl = Constants.getBaseUrl(isProduction)
+
+        val urlString = "${baseUrl}enviar.php"
 
         // Crear el canal de notificación
         createNotificationChannel(context)
@@ -590,12 +596,10 @@ object ManagerPost {
     }
 
     // Función para buscar cliente en el servidor ManagerPost.kt
-    fun BuscarCliente(parametros: String, callback: (String?) -> Unit) {
-        val urlString = "${Constants.BASE_URL}app/controllers/FuncionesController/BuscarCliente.php"
-
+    fun BuscarCliente(baseUrl: String, parametros: String, callback: (String?) -> Unit) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val url = URL(urlString)
+                val url = URL(baseUrl)
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
@@ -719,8 +723,8 @@ object ManagerPost {
     // SECCION: SELECT PARA NUCLEOS Y GALPONES
     // =============================================
 
-    fun getSelectGalpon(idNucleo: String, callback: (List<GalponEntity>?) -> Unit) {
-        val urlString = "${Constants.BASE_URL}app/controllers/PesoPollosController.php?op=getSelectGalpon&idNucleo=$idNucleo"
+    fun getSelectGalpon(idNucleo: String, baseUrl: String, callback: (List<GalponEntity>?) -> Unit) {
+        val urlString = "${baseUrl}app/controllers/PesoPollosController.php?op=getSelectGalpon&idNucleo=$idNucleo"
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -782,8 +786,8 @@ object ManagerPost {
         }
     }
 
-    fun getNucleos(callback: (List<NucleoEntity>?) -> Unit) {
-        val urlString = "${Constants.BASE_URL}app/controllers/PesoPollosController.php?op=getNucleo"
+    fun getNucleos(baseUrl: String, callback: (List<NucleoEntity>?) -> Unit) {
+        val urlString = "${baseUrl}app/controllers/PesoPollosController.php?op=getNucleo"
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -849,8 +853,8 @@ object ManagerPost {
     // SECCION: LISTA DE PESOS GET, ADD, DELETE
     // =============================================
 
-    fun getListPesosByIdGalpon(idGalpon: Int, idEstablecimiento: Int, diviceName: String, callback: (List<PesosEntity>?) -> Unit) {
-        val urlString = "${Constants.BASE_URL}app/controllers/TempPesoPollosController.php?op=getListPesosByIdGalpon&idGalpon=$idGalpon&idEstablecimiento=${idEstablecimiento}&diviceName=$diviceName"
+    fun getListPesosByIdGalpon(baseUrl: String, idGalpon: Int, idEstablecimiento: Int, diviceName: String, callback: (List<PesosEntity>?) -> Unit) {
+        val urlString = "${baseUrl}app/controllers/TempPesoPollosController.php?op=getListPesosByIdGalpon&idGalpon=$idGalpon&idEstablecimiento=${idEstablecimiento}&diviceName=$diviceName"
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -919,7 +923,7 @@ object ManagerPost {
 
 
     fun getListPesosId(idPeso: Int, callback: (List<PesosEntity>?, List<DataDetaPesoPollosEntity>?) -> Unit) {
-        val urlString = "${Constants.BASE_URL}app/controllers/TempPesoPollosController.php?op=getListPesosByIdPeso&idPeso=$idPeso"
+        val urlString = "${Constants.BASE_URL_DEV}app/controllers/TempPesoPollosController.php?op=getListPesosByIdPeso&idPeso=$idPeso"
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -998,7 +1002,9 @@ object ManagerPost {
         fragment: JabasFragment,
         pesosEntity: PesosEntity
     ): Boolean = withContext(Dispatchers.IO) {
-        val urlString = "${Constants.BASE_URL}app/controllers/TempPesoPollosController.php?op=insertar"
+        val isProduction = Constants.obtenerEstadoModo(context)
+        val baseUrl = Constants.getBaseUrl(isProduction)
+        val urlString = "${baseUrl}app/controllers/TempPesoPollosController.php?op=insertar"
 
         try {
             val url = URL(urlString)
@@ -1069,7 +1075,9 @@ object ManagerPost {
         pesosEntity: PesosEntity,
         idPesoShared: Int
     ): Boolean = withContext(Dispatchers.IO) {
-        val urlString = "${Constants.BASE_URL}app/controllers/TempPesoPollosController.php?op=insertar&idPesoShared=${idPesoShared}"
+        val isProduction = Constants.obtenerEstadoModo(context)
+        val baseUrl = Constants.getBaseUrl(isProduction)
+        val urlString = "${baseUrl}app/controllers/TempPesoPollosController.php?op=insertar&idPesoShared=${idPesoShared}"
 
         try {
             val url = URL(urlString)
@@ -1139,7 +1147,9 @@ object ManagerPost {
         idPeso: Int,
         callback: (Boolean) -> Unit
     ) {
-        val urlString = "${Constants.BASE_URL}app/controllers/TempPesoPollosController.php?op=removeByIdPeso&idPeso=$idPeso"
+        val isProduction = Constants.obtenerEstadoModo(context)
+        val baseUrl = Constants.getBaseUrl(isProduction)
+        val urlString = "${baseUrl}app/controllers/TempPesoPollosController.php?op=removeByIdPeso&idPeso=$idPeso"
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -1185,7 +1195,9 @@ object ManagerPost {
         diviceName: String,
         callback: (Boolean) -> Unit
     ) {
-        val urlString = "${Constants.BASE_URL}app/controllers/TempPesoPollosController.php?op=$status&idPeso=$idPeso&diviceName=$diviceName"
+        val isProduction = Constants.obtenerEstadoModo(context)
+        val baseUrl = Constants.getBaseUrl(isProduction)
+        val urlString = "${baseUrl}app/controllers/TempPesoPollosController.php?op=$status&idPeso=$idPeso&diviceName=$diviceName"
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -1225,7 +1237,9 @@ object ManagerPost {
         idPeso: Int,
         callback: (String?) -> Unit
     ) {
-        val urlString = "${Constants.BASE_URL}app/controllers/TempPesoPollosController.php?op=getStatusPeso&idPeso=$idPeso"
+        val isProduction = Constants.obtenerEstadoModo(context)
+        val baseUrl = Constants.getBaseUrl(isProduction)
+        val urlString = "${baseUrl}app/controllers/TempPesoPollosController.php?op=getStatusPeso&idPeso=$idPeso"
 
         CoroutineScope(Dispatchers.IO).launch {
             try {

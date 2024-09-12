@@ -19,10 +19,11 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import app.serlanventas.mobile.LoginActivity
 import app.serlanventas.mobile.databinding.FragmentGuiasWebBinding
 import app.serlanventas.mobile.ui.Utilidades.Constants
 import app.serlanventas.mobile.ui.ViewModel.GuiasWebViewModel
@@ -41,7 +42,7 @@ class GuiasWebFragment : Fragment() {
 
     private lateinit var binding: FragmentGuiasWebBinding
     private lateinit var viewModel: GuiasWebViewModel
-    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private lateinit var swipeRefreshLayout: CustomSwipeRefreshLayout
     private lateinit var webView: WebView
     private var webViewStateRestored = false
     private var downloadID: Long = 0
@@ -67,8 +68,10 @@ class GuiasWebFragment : Fragment() {
             webView.restoreState(viewModel.webViewState!!)
             webViewStateRestored = true
         } else if (!webViewStateRestored) {
-            // Cargar LOGIN_URL al inicio
-            webView.loadUrl(Constants.LOGIN_URL)
+            val isProduction = Constants.obtenerEstadoModo(requireContext())
+            val loginUrl = Constants.buildLoginUrl(requireContext(), isProduction)
+
+            webView.loadUrl(loginUrl)
             webViewStateRestored = true
         }
 
@@ -138,26 +141,27 @@ class GuiasWebFragment : Fragment() {
 
                 Log.d(TAG, "onPageFinished: $url")
 
-                when (url) {
-                    Constants.LOGIN_URL -> {
-                        // Mantener WebView oculto y ProgressBar visible
-                        webView.visibility = View.GONE
-                        binding.progressBar.visibility = View.VISIBLE
-                        iniciarSesion()
-                    }
-                    Constants.WEB_URL_GUIA -> {
-                        // Mostrar WebView y ocultar ProgressBar
-                        webView.visibility = View.VISIBLE
-                        binding.progressBar.visibility = View.GONE
-                        Log.d(TAG, "Página WEB_URL_GUIA cargada correctamente.")
-                    }
-                    else -> {
-                        // Mantener WebView oculto y ProgressBar visible
-                        webView.visibility = View.GONE
-                        binding.progressBar.visibility = View.VISIBLE
-                        Log.d(TAG, "La URL cargada no coincide con LOGIN_URL ni WEB_URL_GUIA, volviendo a cargar...")
-                        webView.loadUrl(Constants.LOGIN_URL)
-                    }
+                // Comparación de URLs
+                val isProduction = Constants.obtenerEstadoModo(requireContext())
+                val loginUrl = Constants.buildLoginUrl(requireContext(), isProduction)
+                val guiaUrl = Constants.getGuiaUrl(isProduction)
+
+                if (url == loginUrl) {
+                    // Mantener WebView oculto y ProgressBar visible
+                    webView.visibility = View.GONE
+                    binding.progressBar.visibility = View.VISIBLE
+                    iniciarSesion()
+                } else if (url == guiaUrl) {
+                    // Mostrar WebView y ocultar ProgressBar
+                    webView.visibility = View.VISIBLE
+                    binding.progressBar.visibility = View.GONE
+                    Log.d(TAG, "Página WEB_URL_GUIA cargada correctamente.")
+                } else {
+                    // Mantener WebView oculto y ProgressBar visible
+                    webView.visibility = View.GONE
+                    binding.progressBar.visibility = View.VISIBLE
+                    Log.d(TAG, "La URL cargada no coincide con LOGIN_URL ni WEB_URL_GUIA, volviendo a cargar...")
+                    webView.loadUrl(loginUrl)
                 }
                 swipeRefreshLayout.isRefreshing = false
             }
@@ -206,7 +210,9 @@ class GuiasWebFragment : Fragment() {
     private fun iniciarSesion() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val url = URL(Constants.LOGIN_URL)
+                val isProduction = Constants.obtenerEstadoModo(requireContext())
+                val loginUrl = Constants.buildLoginUrl(requireContext(), isProduction)
+                val url = URL(loginUrl)
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "GET"
 
@@ -250,18 +256,21 @@ class GuiasWebFragment : Fragment() {
                 val status = jsonResponse.optString("status")
                 val message = jsonResponse.optString("message")
 
+                val isProduction = Constants.obtenerEstadoModo(requireContext())
+                val guiaUrl = Constants.getGuiaUrl(isProduction)
                 when (status) {
                     "success" -> {
                         Log.d(TAG, "Success: $message")
                         // Cargar la URL deseada solo después de éxito
                         // WebView sigue oculto, ProgressBar visible
-                        webView.loadUrl(Constants.WEB_URL_GUIA)
+                        webView.loadUrl(guiaUrl)
                     }
                     else -> {
                         Log.d(TAG, "Estado no exitoso: $status")
                         // Mostrar WebView y ocultar ProgressBar en caso de error
                         webView.visibility = View.VISIBLE
                         binding.progressBar.visibility = View.GONE
+                        redirectToLoginActivity()
                     }
                 }
             } catch (e: Exception) {
@@ -270,6 +279,34 @@ class GuiasWebFragment : Fragment() {
                 webView.visibility = View.VISIBLE
                 binding.progressBar.visibility = View.GONE
             }
+        }
+    }
+
+    private fun redirectToLoginActivity() {
+        // Asegurar que esta función se ejecute en el hilo principal
+        activity?.runOnUiThread {
+            // Ocultar ProgressBar y WebView
+            binding.progressBar.visibility = View.GONE
+            webView.visibility = View.GONE
+
+            val sharedPreferences = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            sharedPreferences.edit().apply {
+                remove("isLoggedIn")
+                remove("storedUsername")
+                remove("storedPassword")
+                apply()
+            }
+            // Mostrar un mensaje de error
+            Toast.makeText(context, "Error en el inicio de sesión. Por favor, inténtelo de nuevo.", Toast.LENGTH_LONG).show()
+
+            // Crear un Intent para iniciar LoginActivity
+            val intent = Intent(requireContext(), LoginActivity::class.java)
+            // Agregar una bandera para limpiar la pila de actividades
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+
+            // Finalizar la actividad actual si es necesario
+            activity?.finish()
         }
     }
 

@@ -25,7 +25,6 @@ import android.webkit.WebViewClient
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import app.serlanventas.mobile.databinding.FragmentVentasWebBinding
 import app.serlanventas.mobile.ui.Utilidades.Constants
 import app.serlanventas.mobile.ui.ViewModel.VentasWebViewModel
@@ -45,7 +44,7 @@ class VentasWebFragment : Fragment() {
     private lateinit var binding: FragmentVentasWebBinding
     private lateinit var viewModel: VentasWebViewModel
     private lateinit var webView: WebView
-    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private lateinit var swipeRefreshLayout: CustomSwipeRefreshLayout
     private var webViewStateRestored = false
 
     private var downloadID: Long = 0
@@ -72,7 +71,9 @@ class VentasWebFragment : Fragment() {
             webViewStateRestored = true
         } else if (!webViewStateRestored) {
             // Cargar LOGIN_URL al inicio
-            webView.loadUrl(Constants.LOGIN_URL)
+            val isProduction = Constants.obtenerEstadoModo(requireContext())
+            val loginUrl = Constants.buildLoginUrl(requireContext(), isProduction)
+            webView.loadUrl(loginUrl)
             webViewStateRestored = true
         }
 
@@ -155,29 +156,28 @@ class VentasWebFragment : Fragment() {
 
                 Log.d(TAG, "onPageFinished: $url")
 
-                when (url) {
-                    Constants.LOGIN_URL -> {
-                        // Mantener WebView oculto y ProgressBar visible
-                        webView.visibility = View.GONE
-                        binding.progressBar.visibility = View.VISIBLE
-                        iniciarSesion()
-                    }
-                    Constants.WEB_URL_VENTAS -> {
-                        // Mostrar WebView y ocultar ProgressBar
-                        webView.visibility = View.VISIBLE
-                        binding.progressBar.visibility = View.GONE
-                        Log.d(TAG, "Página WEB_URL_VENTAS cargada correctamente.")
-                    }
-                    else -> {
-                        // Mantener WebView oculto y ProgressBar visible
-                        webView.visibility = View.GONE
-                        binding.progressBar.visibility = View.VISIBLE
-                        Log.d(TAG, "La URL cargada no coincide con LOGIN_URL ni WEB_URL_VENTAS, volviendo a cargar...")
-                        webView.loadUrl(Constants.LOGIN_URL)
-                    }
-                }
+                // Comparación de URLs
+                val isProduction = Constants.obtenerEstadoModo(requireContext())
+                val ventasUrl = Constants.getVentasUrl(isProduction)
+                val loginUrl = Constants.buildLoginUrl(requireContext(), isProduction)
 
-                // Detener la animación de recarga
+                if (url == loginUrl) {
+                    // Mantener WebView oculto y ProgressBar visible
+                    webView.visibility = View.GONE
+                    binding.progressBar.visibility = View.VISIBLE
+                    iniciarSesion()
+                } else if (url == ventasUrl) {
+                    // Mostrar WebView y ocultar ProgressBar
+                    webView.visibility = View.VISIBLE
+                    binding.progressBar.visibility = View.GONE
+                    Log.d(TAG, "Página WEB_URL_GUIA cargada correctamente.")
+                } else {
+                    // Mantener WebView oculto y ProgressBar visible
+                    webView.visibility = View.GONE
+                    binding.progressBar.visibility = View.VISIBLE
+                    Log.d(TAG, "La URL cargada no coincide con LOGIN_URL ni WEB_URL_GUIA, volviendo a cargar...")
+                    webView.loadUrl(loginUrl)
+                }
                 swipeRefreshLayout.isRefreshing = false
             }
 
@@ -227,7 +227,9 @@ class VentasWebFragment : Fragment() {
     private fun iniciarSesion() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val url = URL(Constants.LOGIN_URL)
+                val isProduction = Constants.obtenerEstadoModo(requireContext())
+                val loginUrl = Constants.buildLoginUrl(requireContext(), isProduction)
+                val url = URL(loginUrl)
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "GET"
 
@@ -271,16 +273,19 @@ class VentasWebFragment : Fragment() {
                 val status = jsonResponse.optString("status")
                 val message = jsonResponse.optString("message")
 
+                val isProduction = Constants.obtenerEstadoModo(requireContext())
+                val ventasUrl = Constants.getVentasUrl(isProduction)
+
                 when (status) {
                     "success" -> {
                         Log.d(TAG, "Success: $message")
                         // Cargar la URL deseada solo después de éxito
                         // WebView sigue oculto, ProgressBar visible
-                        webView.loadUrl(Constants.WEB_URL_VENTAS)
+                        webView.loadUrl(ventasUrl)
                     }
                     else -> {
                         Log.d(TAG, "Estado no exitoso: $status")
-                        // Mostrar WebView y ocultar ProgressBar en caso de error
+                        iniciarSesion()
                         webView.visibility = View.VISIBLE
                         binding.progressBar.visibility = View.GONE
                     }

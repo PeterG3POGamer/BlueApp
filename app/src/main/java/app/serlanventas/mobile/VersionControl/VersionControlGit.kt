@@ -26,10 +26,15 @@ import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import app.serlanventas.mobile.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import java.io.File
+import java.io.IOException
 import java.util.Locale
 
 data class Change(
@@ -41,7 +46,7 @@ data class VersionInfo(
     val version_code: Int,
     val version_name: String,
     val download_url: String,
-    val file_size: Long,
+    var file_size: Long,
     val changes: List<Change>? // Cambiado a nullable
 )
 
@@ -50,6 +55,7 @@ interface GithubApi {
     suspend fun getLatestVersion(): VersionInfo
 }
 
+@Suppress("UNUSED_EXPRESSION")
 class UpdateChecker(private val context: Context) {
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://raw.githubusercontent.com/")
@@ -58,6 +64,7 @@ class UpdateChecker(private val context: Context) {
 
     private val githubApi = retrofit.create(GithubApi::class.java)
     private val updateManager = UpdateManager(context)
+    private val okHttpClient = OkHttpClient()
 
     suspend fun checkForUpdate(): VersionInfo? {
         return try {
@@ -67,12 +74,25 @@ class UpdateChecker(private val context: Context) {
 
             if (latestVersion.version_name != currentVersionCode) {
                 latestVersion
+                val fileSize = getFileSizeFromUrl(latestVersion.download_url)
+                latestVersion.copy(file_size = fileSize)
             } else {
                 null
             }
         } catch (e: Exception) {
             android.util.Log.e("UpdateChecker", "Error checking for updates", e)
             null
+        }
+    }
+
+    private suspend fun getFileSizeFromUrl(url: String): Long = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder().url(url).head().build()
+            val response = okHttpClient.newCall(request).execute()
+            response.header("Content-Length")?.toLong() ?: -1L
+        } catch (e: IOException) {
+            android.util.Log.e("UpdateChecker", "Error getting file size", e)
+            -1L
         }
     }
 
@@ -98,7 +118,8 @@ class UpdateChecker(private val context: Context) {
         val downloadButton = dialogView.findViewById<Button>(R.id.btn_download)
         val cancelButton = dialogView.findViewById<Button>(R.id.btn_cancel)
 
-        versionInfoTextView.text = "Versión: ${versionInfo.version_name}\nTamaño: ${versionInfo.file_size / 1024 / 1024} MB"
+        val fileSizeMB = versionInfo.file_size / (1024.0 * 1024.0)
+        versionInfoTextView.text = "Versión: ${versionInfo.version_name}\nTamaño: %.2f MB".format(fileSizeMB)
 
         changesRecyclerView.layoutManager = LinearLayoutManager(context)
         changesRecyclerView.adapter = ChangesAdapter(versionInfo.changes ?: emptyList())
@@ -155,10 +176,10 @@ class ChangesAdapter(private val changes: List<Change>) : RecyclerView.Adapter<C
 
     private fun getColorForChangeType(type: String): Int {
         return when (type.lowercase(Locale.getDefault())) {
-            "update" -> Color.parseColor("#f5b169")  // Orange
-            "new" -> Color.parseColor("#69fa6e")  // Green
-            "improved" -> Color.parseColor("#7abcfa")  // Blue
-            "fix" -> Color.parseColor("#faacac")  // Red
+            "actualizado" -> Color.parseColor("#f5b169")  // Orange
+            "nuevo" -> Color.parseColor("#69fa6e")  // Green
+            "mejorado" -> Color.parseColor("#7abcfa")  // Blue
+            "arreglado" -> Color.parseColor("#faacac")  // Red
             else -> Color.parseColor("#9E9E9E")  // Grey
         }
     }

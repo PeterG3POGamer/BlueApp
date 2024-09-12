@@ -58,6 +58,7 @@ import me.aflak.bluetooth.interfaces.BluetoothCallback
 import me.aflak.bluetooth.interfaces.DeviceCallback
 import me.aflak.bluetooth.interfaces.DiscoveryCallback
 
+@Suppress("DEPRECATION")
 class BluetoothFragment : DialogFragment() {
 
     private var _binding: FragmentBluetoothBinding? = null
@@ -471,7 +472,6 @@ class BluetoothFragment : DialogFragment() {
             requestGPSActivation()
         } else {
             Log.d(TAG, "GPS está activado")
-            logger.log("checkGPSStatus: GPS está activado")
         }
     }
 
@@ -488,7 +488,6 @@ class BluetoothFragment : DialogFragment() {
         task.addOnSuccessListener { locationSettingsResponse ->
             // GPS está activado o el usuario acaba de activarlo
             Log.d(TAG, "GPS activado exitosamente")
-            logger.log("requestGPSActivation: GPS activado exitosamente")
         }
 
         task.addOnFailureListener { exception ->
@@ -574,12 +573,10 @@ class BluetoothFragment : DialogFragment() {
             when (resultCode) {
                 Activity.RESULT_OK -> {
                     Log.d(TAG, "El usuario activó el GPS")
-                    logger.log("onActivityResult: El usuario activó el GPS")
                     // El GPS fue activado, puedes continuar con tu lógica aquí
                 }
                 Activity.RESULT_CANCELED -> {
                     Log.d(TAG, "El usuario no activó el GPS")
-                    logger.log("onActivityResult: El usuario no activó el GPS")
                     // El usuario decidió no activar el GPS, puedes manejarlo aquí
                 }
             }

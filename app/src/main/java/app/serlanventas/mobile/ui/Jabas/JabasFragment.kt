@@ -59,6 +59,7 @@ import app.serlanventas.mobile.ui.Jabas.ManagerPost.updateListPesos
 import app.serlanventas.mobile.ui.Services.Logger
 import app.serlanventas.mobile.ui.Services.PreLoading
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice.getDeviceId
+import app.serlanventas.mobile.ui.Utilidades.Constants
 import app.serlanventas.mobile.ui.Utilidades.NetworkChangeReceiver
 import app.serlanventas.mobile.ui.ViewModel.SharedViewModel
 import app.serlanventas.mobile.ui.ViewModel.TabViewModel
@@ -246,9 +247,10 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
 
 
-
+        val isProduction = Constants.obtenerEstadoModo(requireContext())
+        val baseUrl = Constants.getBaseUrl(isProduction)
         // Obtener los nombres de los nucleos y llenar el spinner
-        getNucleos { nucleos ->
+        getNucleos(baseUrl) { nucleos ->
             nucleos?.let {
                 showLoading()
                 // Preparar nombres de los nucleos con elemento por defecto
@@ -272,7 +274,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     Log.d("JabasFragment", "Iniciando carga de galpones para nucleo: $idNucleo")
                     Log.d("JabasFragment", "GalponIdToSelect: $galponIdToSelect")
 
-                    getSelectGalpon(idNucleo) { galpones ->
+
+                    getSelectGalpon(idNucleo, baseUrl) { galpones ->
                         galpones?.let {
                             galponesList = it
                             Log.d("JabasFragment", "Galpones cargados: ${it.map { galpon -> "${galpon.idGalpon}: ${galpon.nombre}" }}")
@@ -727,13 +730,11 @@ class JabasFragment : Fragment(), OnItemClickListener {
             }
         }
 
-
-
         binding.inputNumeroJabas.setText("10")
         binding.inputCantPollos.setText("0")
         binding.inputNumeroJabas.isEnabled = true
         binding.inputCantPollos.isEnabled = false
-        binding.inputPesoKg.isEnabled = false
+        binding.inputPesoKg.isEnabled = true
 
         if (!dataDetaPesoPollosJson.isNullOrBlank()){
             sharedViewModel.setBtnTrue()
@@ -984,8 +985,10 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
     private fun updateSpinnerPesosIdGalpon(idNucleo : Int, idGalpon: Int) {
         val idDevice = getDeviceId(requireContext())
+        val isProduction = Constants.obtenerEstadoModo(requireContext())
+        val baseUrl = Constants.getBaseUrl(isProduction)
         // Obtener los pesos guardados en la base de datos
-        ManagerPost.getListPesosByIdGalpon(idGalpon, idNucleo, idDevice) { fetchedPesosList ->
+        ManagerPost.getListPesosByIdGalpon(baseUrl, idGalpon, idNucleo, idDevice) { fetchedPesosList ->
             if (fetchedPesosList != null && fetchedPesosList.isNotEmpty()) {
                 // Actualizar la lista global
                 pesosList = fetchedPesosList
@@ -1273,14 +1276,20 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 val jsonParam = JSONObject()
                 jsonParam.put("numeroDocumento", numeroCliente)
 
-                ManagerPost.BuscarCliente(jsonParam.toString()) { nombreCompleto ->
+                // Obtener el estado del modo
+                val isProduction = Constants.obtenerEstadoModo(requireContext())
+                // Construir la URL base según el estado del modo
+                val baseUrl = Constants.getBaseUrl(isProduction)
+
+                // Llamar a la función BuscarCliente con la URL adecuada
+                ManagerPost.BuscarCliente(baseUrl, jsonParam.toString()) { nombreCompleto ->
                     val inputNombreCliente = dialogView.findViewById<EditText>(R.id.inputNombreCliente)
                     inputNombreCliente?.setText(nombreCompleto ?: "")
                     preLoading.hidePreCarga()
-                    if (nombreCompleto.isNullOrBlank()){
+                    if (nombreCompleto.isNullOrBlank()) {
                         botonGuardar.isEnabled = false
                         showCustomToast(requireContext(), "No se encontró el cliente, Ingrese un nombre manualmente", "info")
-                    }else{
+                    } else {
                         botonGuardar.isEnabled = true
                     }
                 }

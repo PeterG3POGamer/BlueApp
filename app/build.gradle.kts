@@ -5,13 +5,12 @@ plugins {
 
 android {
     compileSdk = 34
-
     defaultConfig {
         applicationId = "app.serlanventas.mobile"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
-        versionName = "1.12.5"
+        versionName = "1.13.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         namespace = "app.serlanventas.mobile"
     }
@@ -31,6 +30,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        dataBinding = true
     }
 
     packagingOptions {
@@ -93,6 +93,7 @@ dependencies {
     implementation(libs.androidx.foundation.android)
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.play.services.location)
+    implementation(libs.androidx.core.animation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
