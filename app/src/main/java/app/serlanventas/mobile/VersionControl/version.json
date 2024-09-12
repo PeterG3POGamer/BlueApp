@@ -6,7 +6,7 @@
     {"type": "Nuevo", "description": "Sistema de autenticación."},
     {"type": "Nuevo", "description": "Sección de Núcleos y Galpones"},
     {"type": "Mejorado", "description": "Correcciones y mejoras importantes."},
-    {"type": "Fix", "description": "Cierre inesperado con versiones anteriores."}
+    {"type": "Arreglado", "description": "Cierre inesperado con versiones anteriores."}
   ],
   "inherit": true
 }
