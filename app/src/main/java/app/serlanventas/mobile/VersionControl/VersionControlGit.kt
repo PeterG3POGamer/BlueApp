@@ -111,6 +111,7 @@ class UpdateChecker(private val context: Context) {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_update_version, null)
         val dialog = AlertDialog.Builder(context, R.style.CustomAlertDialog)
             .setView(dialogView)
+            .setCancelable(false)
             .create()
 
         val versionInfoTextView = dialogView.findViewById<TextView>(R.id.update_info)

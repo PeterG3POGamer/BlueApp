@@ -47,7 +47,7 @@
         android:id="@+id/changes_title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Cambios en esta versión:"
+        android:text="Contenido:"
         android:textSize="18sp"
         android:textStyle="bold"
         android:textColor="#333333"
@@ -80,6 +80,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/btn_download"
         android:layout_marginEnd="8dp"
+        android:visibility="gone"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
 
     <com.google.android.material.button.MaterialButton

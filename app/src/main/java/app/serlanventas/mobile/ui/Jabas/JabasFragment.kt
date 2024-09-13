@@ -734,7 +734,9 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.inputCantPollos.setText("0")
         binding.inputNumeroJabas.isEnabled = true
         binding.inputCantPollos.isEnabled = false
-        binding.inputPesoKg.isEnabled = true
+
+        val isProductionMode = Constants.obtenerEstadoModo(requireContext())
+        binding.inputPesoKg.isEnabled = !isProductionMode
 
         if (!dataDetaPesoPollosJson.isNullOrBlank()){
             sharedViewModel.setBtnTrue()

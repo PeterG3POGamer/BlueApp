@@ -5,10 +5,16 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import app.serlanventas.mobile.VersionControl.UpdateChecker
 import app.serlanventas.mobile.ui.login.LoginFragment
+import kotlinx.coroutines.launch
+
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
+    private val updateChecker by lazy { UpdateChecker(this) }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +36,9 @@ class LoginActivity : AppCompatActivity() {
             if (savedInstanceState == null) {
                 showLoginFragment()
             }
+        }
+        lifecycleScope.launch {
+            updateChecker.checkAndDownloadUpdate()
         }
     }
 
