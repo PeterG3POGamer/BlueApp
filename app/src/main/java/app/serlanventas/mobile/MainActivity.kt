@@ -342,19 +342,13 @@ class MainActivity : AppCompatActivity() {
         val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, flags)
 
         alarmManager.cancel(pendingIntent)
-        sharedPreferences = this.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-        var idRol = sharedPreferences.getString("tipo_usuario", "2")
-        var isProduction = Constants.obtenerEstadoModo(this)
-
-        if (idRol == "3"){
-            isProduction = false
-        }
+//        sharedPreferences = this.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         sharedPreferences = this.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
 
         // Borra los datos del usuario en SharedPreferences
         sharedPreferences.edit().clear().apply()
         sharedPreferences.edit().putBoolean("isLoggedIn", false).apply()
-        sharedPreferences.edit().putBoolean("isProduction", isProduction).apply()
+        sharedPreferences.edit().putBoolean("isProduction", true).apply()
 
         val loginIntent = Intent(this, LoginActivity::class.java)
         loginIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -362,6 +356,7 @@ class MainActivity : AppCompatActivity() {
         finish()
     }
 
+    @SuppressLint("SetTextI18n")
     private fun updateAppVersion(navView: NavigationView) {
         val context = navView.context
         val packageManager = context.packageManager
@@ -379,7 +374,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val versionTextView: TextView? = navView.findViewById(R.id.nav_version)
-        versionTextView?.text = "Versión $versionName"
+        versionTextView?.text = "Versión: v$versionName"
     }
 
     private fun updateNavViewMenu(menu: Menu, destination: NavDestination) {

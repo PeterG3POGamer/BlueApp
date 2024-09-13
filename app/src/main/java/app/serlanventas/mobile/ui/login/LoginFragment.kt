@@ -2,9 +2,12 @@ package app.serlanventas.mobile.ui.login
 
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -44,6 +47,7 @@ class LoginFragment : Fragment() {
         sharedPreferences = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
 
         setupLoadingAnimation()
+        updateAppVersion()
 
         val login = Login(requireContext())
 
@@ -61,21 +65,41 @@ class LoginFragment : Fragment() {
             val username = binding.editTextUsername.text.toString()
             val password = binding.editTextPassword.text.toString()
 
+            var hasError = false
+
+            // Verificar campo de usuario
             if (username.isEmpty()) {
                 binding.editTextUsername.error = "Ingrese un usuario válido"
-                return@setOnClickListener
+                binding.editTextUsername.requestFocus()
+                hasError = true
+            } else {
+                binding.editTextUsername.error = null
             }
 
+            // Verificar campo de contraseña
             if (password.isEmpty()) {
                 binding.editTextPassword.error = "Ingrese una contraseña válida"
+                if (!hasError) {
+                    binding.editTextPassword.requestFocus()
+                }
+                hasError = true
+            } else {
+                binding.editTextPassword.error = null
+            }
+
+            if (hasError) {
                 return@setOnClickListener
             }
 
+            // Ocultar teclado
             val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             imm.hideSoftInputFromWindow(requireView().windowToken, 0)
+
+            // Iniciar animación de carga y realizar login
             startLoadingAnimation()
             viewModel.login(username, password)
         }
+
 
         viewModel.loginResult.observe(viewLifecycleOwner) { success ->
             if (success) {
@@ -141,6 +165,27 @@ class LoginFragment : Fragment() {
         val intent = Intent(requireActivity(), MainActivity::class.java)
         startActivity(intent)
         requireActivity().finish()
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun updateAppVersion() {
+        val context = requireContext()
+        val packageManager = context.packageManager
+        val packageName = context.packageName
+        val versionName = try {
+            val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getPackageInfo(packageName, 0)
+            }
+            packageInfo.versionName
+        } catch (e: PackageManager.NameNotFoundException) {
+            "Desconocida"
+        }
+
+        val versionTextView = binding.version
+        versionTextView.text = "Versión: v$versionName"
     }
 
     override fun onDestroyView() {

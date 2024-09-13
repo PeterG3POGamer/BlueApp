@@ -106,7 +106,7 @@ class UpdateChecker(private val context: Context) {
 
     }
 
-    @SuppressLint("MissingInflatedId")
+    @SuppressLint("MissingInflatedId", "SetTextI18n")
     private fun showUpdateDialog(versionInfo: VersionInfo) {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_update_version, null)
         val dialog = AlertDialog.Builder(context, R.style.CustomAlertDialog)

@@ -735,8 +735,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.inputNumeroJabas.isEnabled = true
         binding.inputCantPollos.isEnabled = false
 
-        val isProductionMode = Constants.obtenerEstadoModo(requireContext())
-        binding.inputPesoKg.isEnabled = !isProductionMode
+        binding.inputPesoKg.isEnabled = false
 
         if (!dataDetaPesoPollosJson.isNullOrBlank()){
             sharedViewModel.setBtnTrue()
@@ -1283,8 +1282,9 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 // Construir la URL base según el estado del modo
                 val baseUrl = Constants.getBaseUrl(isProduction)
 
+                var baseUrlCliente = "${baseUrl}app/controllers/FuncionesController/buscarCliente.php"
                 // Llamar a la función BuscarCliente con la URL adecuada
-                ManagerPost.BuscarCliente(baseUrl, jsonParam.toString()) { nombreCompleto ->
+                ManagerPost.BuscarCliente(baseUrlCliente, jsonParam.toString()) { nombreCompleto ->
                     val inputNombreCliente = dialogView.findViewById<EditText>(R.id.inputNombreCliente)
                     inputNombreCliente?.setText(nombreCompleto ?: "")
                     preLoading.hidePreCarga()
