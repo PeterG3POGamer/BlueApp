@@ -3,7 +3,7 @@
     android:id="@+id/frameLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#801FF62A"
+    android:background="@color/orange2"
     android:padding="16dp">
 
     <LinearLayout
@@ -16,7 +16,7 @@
             android:id="@+id/iconoCarga"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            app:srcCompat="@drawable/ic_loading_anim"
+            app:srcCompat="@drawable/ic_loading"
             app:tint="@android:color/black" />
 
         <TextView

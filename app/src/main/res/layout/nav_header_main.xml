@@ -104,7 +104,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:text="@string/name_rol"
-                    android:textColor="@android:color/darker_gray"
+                    android:textColor="@color/black_2"
                     android:textSize="14sp" />
             </LinearLayout>
 
@@ -114,7 +114,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:visibility="gone"
+                android:textColor="@color/black_2"
                 android:textSize="14sp" />
+
 
         </LinearLayout>
 
