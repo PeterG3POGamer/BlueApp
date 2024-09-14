@@ -120,7 +120,7 @@
             android:layout_width="60dp"
             android:layout_height="43dp"
             android:orientation="horizontal"
-            android:visibility="visible"
+            android:visibility="gone"
             android:gravity="center"
             app:layout_constraintBottom_toBottomOf="@id/buttonLogin"
             app:layout_constraintEnd_toEndOf="@id/buttonLogin"
