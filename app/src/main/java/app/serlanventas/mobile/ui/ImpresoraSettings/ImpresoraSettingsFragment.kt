@@ -46,8 +46,8 @@ class ImpresoraSettingsFragment : Fragment() {
             binding.btnGuardar.text = "Actualizar"
             binding.btnGuardar.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.colorAccent))
         } else {
-            binding.etIp.text.clear()
-            binding.etPuerto.text.clear()
+            binding.etIp.text?.clear()
+            binding.etPuerto.text?.clear()
             binding.btnGuardar.text = "Guardar"
             binding.btnGuardar.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.purple_500))
         }

@@ -9,7 +9,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.ImageButton
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -30,6 +29,7 @@ import app.serlanventas.mobile.ui.Jabas.ManagerPost.sendDataToServer
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice
 import app.serlanventas.mobile.ui.ViewModel.SharedViewModel
 import app.serlanventas.mobile.ui.ViewModel.TabViewModel
+import com.google.android.material.button.MaterialButton
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -58,8 +58,8 @@ class FragmentPreliminar : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_peso_preliminar, container, false)
-        val boton_Volver = view.findViewById<ImageButton>(R.id.boton_Volver)
-        val boton_Procesar = view.findViewById<ImageButton>(R.id.boton_Procesar)
+        val boton_Volver = view.findViewById<MaterialButton>(R.id.boton_Volver)
+        val boton_Procesar = view.findViewById<MaterialButton>(R.id.boton_Procesar)
         reportesAdapter = ReportesAdapter()
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerViewReportes)

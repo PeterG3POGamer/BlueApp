@@ -14,7 +14,10 @@ class LogoutReceiver : BroadcastReceiver() {
     private lateinit var sharedPreferences: SharedPreferences
 
     override fun onReceive(context: Context, intent: Intent) {
+        sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         sharedPreferences.edit().clear().apply()
+        sharedPreferences.edit().putBoolean("isLoggedIn", false).apply()
+        sharedPreferences.edit().putBoolean("isProduction", true).apply()
         showNotification(context)
     }
 

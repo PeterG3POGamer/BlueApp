@@ -243,6 +243,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
         if (!dataPesoPollosJson.isNullOrEmpty()) {
             val dataPesoPollos = JSONObject(dataPesoPollosJson)
             distribuirDatosEnInputs(dataPesoPollos)
+            toggleAcordionisGone()
         }
 
 
@@ -254,7 +255,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
             nucleos?.let {
                 showLoading()
                 // Preparar nombres de los nucleos con elemento por defecto
-                val nombresNucleos = mutableListOf("Seleccione Establecimiento")
+                val nombresNucleos = mutableListOf("Núcleos")
                 nombresNucleos.addAll(it.map { nucleo -> nucleo.nombre })
 
                 val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, nombresNucleos)
@@ -281,8 +282,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
                             Log.d("JabasFragment", "Galpones cargados: ${it.map { galpon -> "${galpon.idGalpon}: ${galpon.nombre}" }}")
 
                             if (it.isNotEmpty()) {
-                                val nombresGalpones = mutableListOf("Seleccione Galpon")
-                                galponIdMap = mutableMapOf(0 to "Seleccione Galpon")
+                                val nombresGalpones = mutableListOf("Galpones")
+                                galponIdMap = mutableMapOf(0 to "Galpones")
 
                                 // Añadir los galpones manteniendo el ID como clave
                                 it.forEach { galpon ->
@@ -306,13 +307,13 @@ class JabasFragment : Fragment(), OnItemClickListener {
                                         binding.selectGalpon.setSelection(0)
                                     }
                                 } else {
-                                    Log.d("JabasFragment", "No hay galponIdToSelect. Seleccionando 'Seleccione Galpon'.")
+                                    Log.d("JabasFragment", "No hay galponIdToSelect. Seleccionando 'Galpones'.")
                                     binding.selectGalpon.setSelection(0)
                                 }
                                 idGalpoListaPesos = ""
                             } else {
                                 Log.w("SelectGalpon", "La lista de galpones está vacía para el nucleo $idNucleo")
-                                val emptyAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, listOf("Seleccione Galpon"))
+                                val emptyAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, listOf("Galpones"))
                                 emptyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                                 binding.selectGalpon.adapter = emptyAdapter
 
@@ -354,7 +355,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
                                     limpiarCampos()
                                 }
                             }
-                            val emptyAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, listOf("Seleccione Galpon"))
+                            val emptyAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, listOf("Galpones"))
                             emptyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                             binding.selectGalpon.adapter = emptyAdapter
                         } else {
@@ -410,21 +411,16 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 // Opcional: maneja el caso cuando no se selecciona nada
             }
         }
-
-        binding.botonReloadPeso.setOnClickListener{
-            val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
-            val idNucleo = binding.selectEstablecimiento.selectedItemPosition
-            val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
-
-            updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
-
-            // Cancelar el Toast actual si está visible
-            currentToast?.cancel()
-
-            // Mostrar un nuevo Toast
-            currentToast = Toast.makeText(requireContext(), "Se actualizó la lista de pesos", Toast.LENGTH_SHORT)
-            currentToast?.show()
+        binding.accordionHeader.setOnClickListener {
+            if (binding.accordionContent.visibility == View.GONE) {
+                binding.accordionContent.visibility = View.VISIBLE
+                binding.arrow.setImageResource(R.drawable.ic_arrow_up)
+            } else {
+                binding.accordionContent.visibility = View.GONE
+                binding.arrow.setImageResource(R.drawable.ic_arrow_down)
+            }
         }
+
         binding.selectListpesos.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_UP -> {
@@ -442,8 +438,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 Log.d("JabasFragment", "Posición seleccionada en selectListpesos: $position")
                 when (position) {
                     0 -> {
-                        // "Seleccione Pesos" seleccionado
-                        Log.d("JabasFragment", "Opción 'Seleccione Pesos' seleccionada")
+                        // "Lista de Pesos" seleccionado
+                        Log.d("JabasFragment", "Opción 'Lista de Pesos' seleccionada")
                         // Limpiar los campos o realizar alguna acción por defecto
                         if (jabasList.isEmpty()){
                             if (idPesoShared != 0) {
@@ -735,7 +731,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.inputNumeroJabas.isEnabled = true
         binding.inputCantPollos.isEnabled = false
 
-        binding.inputPesoKg.isEnabled = false
+        binding.inputPesoKg.isEnabled = true // pesotrue
 
         if (!dataDetaPesoPollosJson.isNullOrBlank()){
             sharedViewModel.setBtnTrue()
@@ -754,8 +750,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
         }else{
             binding.botonEnviar.backgroundTintList  = ContextCompat.getColorStateList(requireContext(), R.color.your_greed)
             binding.botonEnviar.setImageResource(R.drawable.baseline_content_paste_go_24)
+            binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
             binding.botonGuardar.isEnabled = true
-            binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.teal_200)
         }
 
         binding.botonEnviar.isEnabled = valor
@@ -765,16 +761,16 @@ class JabasFragment : Fragment(), OnItemClickListener {
             if (isChecked) {
                 var nJabas = sharedViewModel.getContadorJabas()
                 if (nJabas == 0){
-                    binding.botonGuardar.isEnabled = false
                     binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.gray)
+                    binding.botonGuardar.isEnabled = false
                     showCustomToast(requireContext(), "No te quedan Jabas para usar", "warning")
                 } else if (nJabas!! < 0){
-                    binding.botonGuardar.isEnabled = false
                     binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.gray)
+                    binding.botonGuardar.isEnabled = false
                     showCustomToast(requireContext(), "Te faltan ${nJabas} Jabas por registrar", "error")
                 }else{
+                    binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
                     binding.botonGuardar.isEnabled = true
-                    binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.teal_200)
                 }
 
                 binding.inputNumeroJabas.setText("4")
@@ -782,8 +778,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 binding.inputCantPollos.isEnabled = true
                 binding.inputCantPollos.setText("")
             } else {
+                binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
                 binding.botonGuardar.isEnabled = true
-                binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.teal_200)
                 binding.inputNumeroJabas.setText("10")
                 binding.inputCantPollos.isEnabled = false
                 binding.inputCantPollos.setText("0")
@@ -878,17 +874,19 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 var idEstablecimiento = binding.selectEstablecimiento.selectedItemPosition
                 var precio =  dataPesoPollos.PKPollo.toDoubleOrNull()
                 if (idEstablecimiento == 0){
-                    showCustomToast(requireContext(), "¡Seleccione un establecimiento!", "info")
+                    showCustomToast(requireContext(), "¡Seleccione un Núcleo!", "info")
                     fetchData(500)
+                    toggleAcordionisGone()
 
                 }else if (dataPesoPollos.idGalpon == "0" || dataPesoPollos.idGalpon.isBlank()){
                     showCustomToast(requireContext(), "¡Seleccione un galpón!", "info")
                     fetchData(500)
+                    toggleAcordionisGone()
 
                 }else if (dataPesoPollos.numeroDocCliente == "" && dataPesoPollos.nombreCompleto == ""){
                     showCustomToast(requireContext(), "¡Registre un cliente!", "info")
                     fetchData(500)
-
+                    toggleAcordionisGone()
                 }else if (dataDetaPesoPollos.isEmpty()) {
                     showCustomToast(requireContext(), "¡La tabla esta vacía, por favor registre datos antes de enviar!", "info")
                     fetchData(500)
@@ -904,6 +902,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
 //                    binding.PrecioKilo.error = "¡El precio por kilo no puede ser 0!"
 //                    fetchData(500)
                 }else{
+                    toggleAcordionnotGone()
                     Log.d("JabasFragment", "$dataDetaPesoPollos")
                     Log.d("JabasFragment", "$dataPesoPollos")
 
@@ -995,7 +994,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 pesosList = fetchedPesosList
 
                 // Crear items para el spinner
-                val spinnerItems = mutableListOf("Seleccione Pesos")
+                val spinnerItems = mutableListOf("Lista de Pesos")
                 spinnerItems.addAll(pesosList.map { "${it.id}: ${it.numeroDocCliente}/${it.nombreCompleto}" })
 
                 // Actualizar el spinner en el hilo principal
@@ -1019,7 +1018,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     if (positionToSelect != -1) {
                         binding.selectListpesos.setSelection(positionToSelect)
                     } else {
-                        // Si no se encuentra el ID, seleccionar "Seleccione Pesos"
+                        // Si no se encuentra el ID, seleccionar "Lista de Pesos"
                         binding.selectListpesos.setSelection(0)
                     }
                 }
@@ -1029,7 +1028,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
                 // Actualizar el spinner en el hilo principal
                 CoroutineScope(Dispatchers.Main).launch {
-                    val spinnerItems = listOf("Seleccione Pesos", "No hay datos guardados")
+                    val spinnerItems = listOf("Lista de Pesos", "No hay datos guardados")
                     val adapter = object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_item, spinnerItems) {
                         override fun isEnabled(position: Int): Boolean {
                             // Deshabilitar el segundo ítem (posición 1)
@@ -1127,8 +1126,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.botonEnviar.isEnabled = false
         binding.botonEnviar.backgroundTintList  = ContextCompat.getColorStateList(requireContext(), R.color.gray)
         binding.botonEnviar.setImageResource(R.drawable.null_24)
+        binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
         binding.botonGuardar.isEnabled = true
-        binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.teal_200)
 
         sharedViewModel.setDataPesoPollosJson("")
         sharedViewModel.setDataDetaPesoPollosJson("")
@@ -1744,7 +1743,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.botonGuardar.isEnabled = isEnabled
         binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(
             requireContext(),
-            if (isEnabled) R.color.teal_200 else R.color.gray
+            if (isEnabled) R.color.purple_500 else R.color.gray
         )
     }
 
@@ -1819,6 +1818,19 @@ class JabasFragment : Fragment(), OnItemClickListener {
             val progressBar = binding.progressBar.findViewById<ProgressBar>(R.id.progressBar)
             overlay.visibility = View.GONE
             progressBar.visibility = View.GONE
+        }
+    }
+
+    fun toggleAcordionisGone(){
+        if (binding.accordionContent.visibility == View.GONE) {
+            binding.accordionContent.visibility = View.VISIBLE
+            binding.arrow.setImageResource(R.drawable.ic_arrow_up)
+        }
+    }
+    fun toggleAcordionnotGone(){
+        if (binding.accordionContent.visibility != View.GONE) {
+            binding.accordionContent.visibility = View.GONE
+            binding.arrow.setImageResource(R.drawable.ic_arrow_down)
         }
     }
 

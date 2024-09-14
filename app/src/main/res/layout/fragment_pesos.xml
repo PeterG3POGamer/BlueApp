@@ -8,600 +8,531 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:fillViewport="true">
 
         <LinearLayout
             android:id="@+id/fragment_pesos"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="16dp"
-            tools:context=".ui.Jabas.JabasFragment">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"/>
+            android:orientation="vertical"
+            android:padding="16dp">
 
+            <!-- Botón para expandir/contraer el acordeón completo -->
             <LinearLayout
+                android:id="@+id/accordion_header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center">
+                android:gravity="center_vertical"
+                android:padding="10dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true">
 
                 <TextView
-                    android:id="@+id/device_connected"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:padding="10dp"
-                    android:background="@drawable/button_background_inactive"
-                    android:text="CONECTADO A: "
-                    android:tooltipText="Información del dispositivo conectado a bluetooth" />
+                    android:text="DATOS DEL NÚCLEO Y CLIENTE"
+                    android:textStyle="bold"
+                    android:textColor="@color/purple_500"
+                    android:textSize="18sp"
+                    android:layout_weight="1"/>
 
-                <Spinner
-                    android:id="@+id/select_listpesos"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:entries="@array/galpones_array"
-                    android:padding="12dp"
-                    android:prompt="@string/select_pesos_prompt"
-                    android:tooltipText="Datos de lista de pesos disponibles"
-                    class="app.serlanventas.mobile.ui.Jabas.CustomSpinner"/>
-
-                <ImageButton
-                    android:id="@+id/boton_reload_peso"
+                <ImageView
+                    android:id="@+id/arrow"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:elevation="8dp"
-                    android:padding="20dp"
-                    app:backgroundTint="@color/gray"
-                    android:tooltipText="Recargar lista de pesos"
-                    app:srcCompat="@drawable/baseline_refresh_24"
-                    android:visibility="gone"/>
-
+                    android:src="@drawable/ic_arrow_down"/>
             </LinearLayout>
-            <TextView
-                android:id="@+id/seccion_nucelo"
-                style="@style/Titulo_Diseño"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/purple_500"
-                android:text="DATOS DEL NUCLEO" />
-            <!-- Sección 1: Selector y Datos del Cliente -->
+
+            <!-- Contenido del acordeón -->
             <LinearLayout
+                android:id="@+id/accordion_content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:backgroundTint="@color/purple_500"
+                android:visibility="visible">
 
-                <LinearLayout
+                <!-- Sección de Datos del Núcleo -->
+                <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="4dp">
 
-                    <!-- Parte izquierda con botones -->
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="horizontal"
-                        android:gravity="start">
+                        android:orientation="vertical"
+                        android:padding="16dp">
 
-                        <!-- Selector -->
-                        <Spinner
-                            android:id="@+id/select_establecimiento"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:padding="12dp"
-                            android:entries="@array/galpones_array"
-                            android:prompt="@string/select_galpon_prompt"
-                            android:tooltipText="Datos de Nucleos disponibles"/>
-
-                    </LinearLayout>
-
-                    <!-- Parte central con botones -->
-
-                    <!-- Parte derecha con botones -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="horizontal"
-                        android:gravity="end">
-
-                        <!-- Selector -->
-                        <Spinner
-                            android:id="@+id/select_galpon"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:padding="12dp"
-                            android:entries="@array/galpones_array"
-                            android:prompt="@string/select_galpon_prompt"
-                            android:tooltipText="Datos de galpones disponibles"/>
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-                <!-- Título Datos del Cliente -->
-                <TextView
-                    style="@style/Titulo_Diseño"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@color/purple_500"
-                    android:text="DATOS DEL CLIENTE"/>
-
-                <!-- Datos del cliente en fila con ImageButton al costado -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <!-- Datos del cliente -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <!-- Fila 1: Número de Documento -->
-                        <LinearLayout
-                            android:layout_width="306dp"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="N° Documento: "
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                android:tooltipText="Número de documento del cliente"/>
-
-                            <TextView
-                                android:id="@+id/textDocCli"
-                                android:layout_width="693dp"
-                                android:layout_height="wrap_content"
-                                android:text=""
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                android:tooltipText="Nombre del cliente"/>
-
-                        </LinearLayout>
-
-                        <!-- Fila 2: Razón Social -->
+                        <!-- Contenedor para DATOS DEL NÚCLEO y device_connected -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:layout_marginTop="8dp">
+                            android:gravity="center"
+                            android:layout_marginBottom="8dp">
 
+                            <!-- Título de la sección -->
                             <TextView
+                                android:id="@+id/seccion_nucleo"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Razón Social: "
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/textNomCli"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text=""
-                                android:textSize="16sp"
-                                android:textStyle="bold"/>
-
+                                android:textColor="@color/purple_700"
+                                android:text="DATOS DEL NÚCLEO"
+                                android:textStyle="bold"
+                                android:textSize="18sp"
+                                android:layout_weight="1"/>
                         </LinearLayout>
 
+                        <!-- Spinners en una línea horizontal -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="12dp">
+
+                            <Spinner
+                                android:id="@+id/select_establecimiento"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:entries="@array/galpones_array"
+                                android:prompt="@string/select_nucleo_prompt"
+                                android:layout_marginEnd="8dp"
+                                android:spinnerMode="dropdown"
+                                android:dropDownWidth="match_parent"
+                                android:popupBackground="@color/color_orange_low"
+                                android:dropDownVerticalOffset="8dp"
+                                android:dropDownHorizontalOffset="8dp"
+                                android:dropDownSelector="@android:color/transparent"/>
+
+                            <Spinner
+                                android:id="@+id/select_galpon"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:entries="@array/galpones_array"
+                                android:prompt="@string/select_galpon_prompt"
+                                android:spinnerMode="dropdown"
+                                android:dropDownWidth="match_parent"
+                                android:popupBackground="@color/color_orange_low"
+                                android:dropDownVerticalOffset="8dp"
+                                android:dropDownHorizontalOffset="8dp"
+                                android:dropDownSelector="@android:color/transparent"/>
+                        </LinearLayout>
+
+                        <!-- Spinner para seleccionar pesos -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <Spinner
+                                android:id="@+id/select_listpesos"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:entries="@array/galpones_array"
+                                android:prompt="@string/select_pesos_prompt"
+                                android:spinnerMode="dropdown"
+                                android:dropDownWidth="match_parent"
+                                android:popupBackground="@color/color_orange_low"
+                                android:dropDownVerticalOffset="8dp"
+                                android:dropDownHorizontalOffset="8dp"
+                                android:dropDownSelector="@android:color/transparent"/>
+                        </LinearLayout>
                     </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
-                    <!-- ImageButton al costado -->
-                    <ImageButton
-                        android:id="@+id/boton_Cliente"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:elevation="8dp"
-                        android:padding="20dp"
-                        app:backgroundTint="@color/your_blue"
-                        app:srcCompat="@drawable/baseline_supervised_user_circle_24"
-                        android:layout_gravity="center_vertical"
-                        android:layout_marginStart="16dp"
-                        android:tooltipText="Ingresar datos del cliente"/>
-
-                </LinearLayout>
-
-
-            </LinearLayout>
-
-            <TextView
-                style="@style/Titulo_Diseño"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/purple_500"
-                android:text="DATOS DEL PESAJE"/>
-
-            <!-- Sección 2: Datos del Pesaje -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <!-- Sección 2: Inputs en una fila -->
-                <LinearLayout
-                    android:id="@+id/viewPesoMayor"
+                <!-- Sección de Datos del Cliente -->
+                <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="4dp">
 
-                    <!-- EditText "N° Jabas" con margen inferior ajustado -->
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="@drawable/border_shape"
                         android:orientation="vertical"
-                        android:padding="8dp"
-                        android:layout_margin="0dp">
+                        android:padding="16dp">
 
-                        <!-- Primer LinearLayout para el título y los iconos de jabas -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="DATOS DEL CLIENTE"
+                            android:textColor="@color/purple_500"
+                            android:textStyle="bold"
+                            android:textSize="18sp"
+                            android:layout_marginBottom="8dp"/>
+
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="10dp"
-                                android:layout_marginBottom="0dp"
-                                android:text="Jabas Registradas"
-                                android:textSize="16sp" />
+                            android:orientation="horizontal">
 
                             <LinearLayout
-                                android:layout_width="wrap_content"
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:layout_marginBottom="10dp"
-                                android:gravity="center_vertical">
-
-                                <ImageView
-                                    android:id="@+id/imagen_paquete"
-                                    android:layout_width="40dp"
-                                    android:layout_height="40dp"
-                                    android:src="@drawable/jabadepollo"
-                                    android:layout_marginEnd="0dp"
-                                    android:tooltipText="N° de Jabas totales disponibles"/>
+                                android:layout_weight="1"
+                                android:orientation="vertical">
 
                                 <TextView
-                                    android:id="@+id/contador_jabas"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="= 0"
-                                    android:textColor="@color/design_default_color_primary_dark"
-                                    android:textSize="18sp" />
+                                    android:text="N° Documento: "
+                                    android:textStyle="bold"/>
+
+                                <TextView
+                                    android:id="@+id/textDocCli"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginBottom="8dp"/>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Razón Social: "
+                                    android:textStyle="bold"/>
+
+                                <TextView
+                                    android:id="@+id/textNomCli"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"/>
                             </LinearLayout>
-                        </LinearLayout>
 
-                        <!-- Segundo LinearLayout para el input de número de jabas -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:layout_marginTop="0dp">
-
-                            <TextView
+                            <ImageButton
+                                android:id="@+id/boton_Cliente"
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="N° Jabas"
-                                android:textSize="16sp" />
-
-                            <EditText
-                                android:id="@+id/input_numero_jabas"
-                                android:layout_width="match_parent"
-                                android:layout_height="40dp"
-                                android:hint=""
-                                android:inputType="number"
-                                android:maxLength="4"
-                                android:tooltipText="Valor para la cantidad de jabas"/>
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <!-- LinearLayout para CheckBox y EditText "N° Pollos" -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="@drawable/border_shape"
-                        android:orientation="vertical"
-                        android:padding="8dp"
-                        android:layout_marginLeft="-4dp">
-
-                        <!-- Primer LinearLayout para el CheckBox -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:layout_marginBottom="18dp">
-
-                            <CheckBox
-                                android:id="@+id/checkbox_con_pollos"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="start"
-                                android:checked="false"
-                                android:text="JABAS CON POLLOS"
-                                android:tooltipText="Valor para pesar con pollos o sin pollos"/>
-
-                        </LinearLayout>
-
-                        <!-- Segundo LinearLayout para el input de número de pollos -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="5dp"
-                                android:layout_marginBottom="5dp"
-                                android:text="N° Pollos"
-                                android:textSize="16sp" />
-
-                            <EditText
-                                android:id="@+id/input_cant_pollos"
-                                android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:hint=""
-                                android:inputType="number"
-                                android:maxLength="4"
-                                android:tooltipText="Valor para la cantidad de pollos"/>
+                                android:padding="16dp"
+                                app:srcCompat="@drawable/baseline_supervised_user_circle_24"
+                                app:backgroundTint="@color/your_blue"/>
                         </LinearLayout>
                     </LinearLayout>
-
-                    <!-- LinearLayout para EditText "Precio x Kilo" y "Peso Kg" -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="@drawable/border_shape"
-                        android:gravity="center_vertical"
-                        android:orientation="vertical"
-                        android:padding="8dp"
-                        android:layout_marginLeft="-4dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="0dp"
-                            android:text="Precio x Kilo"
-                            android:textSize="16sp" />
-                        <!-- EditText "Precio x Kilo" -->
-                        <EditText
-                            android:id="@+id/PrecioKilo"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:paddingBottom="15dp"
-                            android:hint=""
-                            android:inputType="numberDecimal"
-                            android:tooltipText="Valor para el Precio por Kilo"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="5dp"
-                            android:text="Peso Kg"
-                            android:textSize="16sp" />
-                        <!-- EditText "Peso Kg" -->
-                        <EditText
-                            android:id="@+id/input_peso_kg"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:hint=""
-                            android:inputType="numberDecimal"
-                            android:tooltipText="Valor para el Peso obtenido"
-                            android:textColor="@android:color/black"/>
-                    </LinearLayout>
-
-                    <!-- ImageButton -->
-                    <ImageButton
-                        android:id="@+id/boton_guardar"
-                        android:layout_width="wrap_content"
-                        android:layout_height="121dp"
-                        android:elevation="8dp"
-                        android:padding="15dp"
-                        android:layout_marginLeft="20dp"
-                        android:layout_marginRight="20dp"
-                        app:backgroundTint="@color/teal_200"
-                        app:srcCompat="@drawable/baseline_add_24"
-                        android:tooltipText="Guardar Jabas y/o Pollos pesados a la tabla"/>
-
-                </LinearLayout>
-
-
+                </androidx.cardview.widget.CardView>
             </LinearLayout>
 
-            <!-- Sección 3: Botones con íconos divididos en tres partes -->
+            <!-- Sección de Datos del Pesaje -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:layout_marginBottom="8dp">
+
+                        <!-- Título de la sección -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="DATOS DEL PESAJE"
+                            android:textStyle="bold"
+                            android:textColor="@color/purple_500"
+                            android:textSize="18sp"
+                            android:layout_weight="1"/>
+
+                        <!-- Device Connected TextView -->
+                        <TextView
+                            android:id="@+id/device_connected"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="CONECTADO A: "
+                            android:background="@drawable/button_background_inactive"
+                            android:padding="10dp"
+                            android:textColor="@android:color/black"
+                            android:layout_gravity="center_vertical"/>
+                    </LinearLayout>
+
+                    <!-- Sección con la imagen, contador y Switch en una sola línea -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp"
+                        android:gravity="center">
+
+                        <!-- Imagen del paquete -->
+                        <ImageView
+                            android:id="@+id/imagen_paquete"
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:src="@drawable/jabadepollo"
+                            android:layout_marginEnd="8dp" />
+
+                        <!-- Contador de jabas -->
+                        <TextView
+                            android:id="@+id/contador_jabas"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="= 0"
+                            android:textSize="20sp"
+                            android:textColor="@color/design_default_color_primary_dark"
+                            android:layout_marginEnd="8dp"
+                            android:layout_gravity="center_vertical"/>
+
+                        <!-- Switch para Jabas con Pollos -->
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/checkboxConPollos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="JABAS CON POLLOS"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="8dp"/>
+                    </LinearLayout>
+
+                    <!-- Grid para organizar las secciones en columnas -->
+                    <GridLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:columnCount="2"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp"
+                        android:layout_gravity="center_horizontal">
+
+                        <!-- Input N° Jabas usando Material Design -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_columnWeight="1"
+                            android:hint="N° Jabas">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/input_numero_jabas"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="number"
+                                android:maxLength="4" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- Input Precio x Kilo usando Material Design -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_columnWeight="1"
+                            android:hint="Precio x Kilo">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/PrecioKilo"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="numberDecimal" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- Input N° Pollos usando Material Design (desactivado por defecto) -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/input_layout_pollos"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_columnWeight="1"
+                            android:hint="N° Pollos">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/input_cant_pollos"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="number"
+                                android:maxLength="4" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- Input Peso Kg usando Material Design -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_columnWeight="1"
+                            android:hint="Peso Kg">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/input_peso_kg"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="numberDecimal" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </GridLayout>
+
+                    <!-- Botón Guardar -->
+                    <Button
+                        android:id="@+id/boton_guardar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Añadir"
+                        android:layout_gravity="end"
+                        android:paddingStart="25dp"
+                        android:paddingEnd="25dp"
+                        android:paddingTop="15dp"
+                        android:paddingBottom="15dp"
+                        android:textSize="15dp"
+                        android:backgroundTint="@color/purple_500"
+                        android:textColor="@android:color/white" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+
+            <!-- Sección de Acciones -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
 
-                <!-- Parte izquierda con botones -->
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="horizontal"
-                    android:gravity="start">
+                    android:orientation="horizontal">
 
                     <ImageButton
                         android:id="@+id/boton_Limpiar"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:elevation="8dp"
                         android:padding="20dp"
-                        app:backgroundTint="@color/your_color"
                         app:srcCompat="@drawable/baseline_cleaning_services_24"
-                        android:tooltipText="Limpiar"/>
+                        app:backgroundTint="@color/your_color"
+                        android:layout_marginEnd="8dp"/>
 
                     <ImageButton
                         android:id="@+id/boton_guardar_peso"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:elevation="8dp"
                         android:padding="20dp"
-                        android:layout_marginStart="10dp"
-
-                        app:backgroundTint="@color/purple_500"
                         app:srcCompat="@drawable/baseline_add_24"
-                        android:tooltipText="Guardar Peso / Editar Peso" />
+                        app:backgroundTint="@color/yellow"
+                        android:layout_marginEnd="8dp"/>
 
                     <ImageButton
                         android:id="@+id/boton_delete_peso"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:elevation="8dp"
                         android:padding="20dp"
-                        android:layout_marginStart="10dp"
-                        app:backgroundTint="@color/purple_200"
                         app:srcCompat="@drawable/null_24"
-                        android:visibility="visible"
-                        android:tooltipText="Eliminar peso guardado"/>
+                        app:backgroundTint="@color/purple_200"
+                        android:visibility="visible"/>
 
                     <TextView
                         android:id="@+id/idListPeso"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="40dp"
                         android:inputType="number"
                         android:visibility="gone"/>
-
                 </LinearLayout>
 
-                <!-- Parte derecha con botones -->
-                <LinearLayout
-                    android:layout_width="0dp"
+                <ImageButton
+                    android:id="@+id/boton_Enviar"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="horizontal"
-                    android:gravity="end">
-
-                    <ImageButton
-                        android:id="@+id/boton_Enviar"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:elevation="8dp"
-                        android:padding="20dp"
-                        app:backgroundTint="@color/your_greed"
-                        app:srcCompat="@drawable/baseline_content_paste_go_24" />
-
-                </LinearLayout>
-
+                    android:padding="20dp"
+                    app:srcCompat="@drawable/baseline_content_paste_go_24"
+                    app:backgroundTint="@color/your_greed"/>
             </LinearLayout>
 
-            <!-- Encabezados del RecyclerView -->
-            <LinearLayout
-                android:id="@+id/header_layout"
+            <!-- Sección de Tabla de Datos -->
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="4dp"
-                android:background="@color/purple_500"
-                android:elevation="4dp"
-                android:layout_margin="2dp"
-                android:gravity="center"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp">
 
-                <TextView
-                    android:id="@+id/id_jabas"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="0.3"
-                    android:gravity="center"
-                    android:padding="8dp"
-                    android:text="#"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
-                    android:background="@color/purple_500"
-                    android:layout_marginEnd="2dp" />
+                    android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/numero_jabas"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.8"
-                    android:gravity="center"
-                    android:padding="8dp"
-                    android:text="N° Jabas"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
-                    android:background="@color/purple_500"
-                    android:layout_marginEnd="2dp" />
+                    <!-- Encabezados del RecyclerView -->
+                    <LinearLayout
+                        android:id="@+id/header_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="8dp"
+                        android:background="@color/purple_500">
 
-                <TextView
-                    android:id="@+id/numero_pollos"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.8"
-                    android:gravity="center"
-                    android:padding="8dp"
-                    android:text="N° Pollos"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
-                    android:background="@color/purple_500"
-                    android:layout_marginEnd="2dp" />
+                        <TextView
+                            android:id="@+id/id_jabas"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0.3"
+                            android:gravity="center"
+                            android:text="#"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"
+                            android:textSize="14sp"/>
 
-                <TextView
-                    android:id="@+id/peso_kg"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.8"
-                    android:gravity="center"
-                    android:padding="8dp"
-                    android:text="Peso Kg."
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
-                    android:background="@color/purple_500"
-                    android:layout_marginEnd="2dp" />
+                        <TextView
+                            android:id="@+id/numero_jabas"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0.8"
+                            android:gravity="center"
+                            android:text="N° Jabas"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"
+                            android:textSize="14sp"/>
 
-                <TextView
-                    android:id="@+id/con_pollos"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:padding="8dp"
-                    android:text="Estado"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
-                    android:background="@color/purple_500" />
-            </LinearLayout>
+                        <TextView
+                            android:id="@+id/numero_pollos"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0.8"
+                            android:gravity="center"
+                            android:text="N° Pollos"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"
+                            android:textSize="14sp"/>
 
+                        <TextView
+                            android:id="@+id/peso_kg"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0.8"
+                            android:gravity="center"
+                            android:text="Peso Kg."
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"
+                            android:textSize="14sp"/>
 
-            <!-- RecyclerView -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewJabas"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:layout_marginTop="0dp"
-                android:gravity="center"
-                android:padding="2dp" />
+                        <TextView
+                            android:id="@+id/con_pollos"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="Estado"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"
+                            android:textSize="14sp"/>
+                    </LinearLayout>
+
+                    <!-- RecyclerView -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recyclerViewJabas"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:padding="8dp"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
         </LinearLayout>
     </ScrollView>
+
     <!-- Fondo semitransparente -->
     <View
         android:id="@+id/overlay"
@@ -610,8 +541,7 @@
         android:background="#80000000"
         android:visibility="gone"
         android:clickable="true"
-        android:focusable="true"
-        android:valueType="floatType"/>
+        android:focusable="true"/>
 
     <!-- ProgressBar centrado -->
     <ProgressBar
@@ -619,7 +549,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:visibility="gone"
-        android:valueType="floatType"/>
+        android:visibility="gone"/>
 
 </FrameLayout>

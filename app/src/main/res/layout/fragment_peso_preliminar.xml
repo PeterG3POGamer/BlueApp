@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -6,418 +5,357 @@
     android:layout_height="match_parent"
     android:fillViewport="true">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="16dp"
-        tools:context=".MainActivity">
+        android:layout_height="wrap_content"
+        android:padding="16dp">
 
-        <TextView
-            style="@style/Titulo_Diseño"
+        <!-- Client Data Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/clientDataCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/purple_500"
-            android:text="DATOS DEL CLIENTE"/>
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- DNI CLIENTE -->
-        <LinearLayout
-            android:padding="2dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
-
-            <EditText
-                android:id="@+id/idListPesos2"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:inputType="number"
-                android:layout_weight="1"
-                android:textStyle="bold"
-                tools:ignore="Autofill"
-                android:visibility="gone"/>
-
-            <TextView
-                android:layout_width="152dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:gravity="center_vertical"
-                android:text="N° de Documento:"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <EditText
-                android:id="@+id/inputDniCliente"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal"
-                android:layout_weight="1"
-                android:textStyle="bold"
-                tools:ignore="Autofill" />
-        </LinearLayout>
-
-        <!-- RAZON SOCIAL CLIENTE -->
-        <LinearLayout
-            android:padding="2dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:gravity="center_vertical"
-                android:text="Razón Social:"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <EditText
-                android:id="@+id/inputNomCliente"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal"
-                android:layout_weight="1"
-                android:textStyle="bold"
-                tools:ignore="Autofill" />
-        </LinearLayout>
-
-        <TextView
-            style="@style/Titulo_Diseño"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/purple_500"
-            android:text="RESUMEN DE CÁLCULO"/>
-
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <!-- Contenedor principal para las dos columnas -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:baselineAligned="false">
+                android:orientation="vertical"
+                android:padding="16dp">
 
-                <!-- Columna izquierda: Sección de datos de cálculo -->
-                <LinearLayout
-                    android:layout_width="0dp"
+                <TextView
+                    style="@style/TextAppearance.MaterialComponents.Headline6"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginEnd="8dp">
+                    android:text="DATOS DEL CLIENTE"
+                    android:gravity="center"
+                    android:textColor="@color/purple_500"
+                    android:layout_marginBottom="8dp"/>
 
-                    <LinearLayout
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/inputDniCliente"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="8dp">
+                        android:inputType="numberDecimal"
+                        android:hint="N° de Documento"
+                        android:textColor="@color/orange2"
+                        android:textStyle="bold"
+                        android:enabled="false"/>
+                </com.google.android.material.textfield.TextInputLayout>
 
-                        <TextView
-                            android:layout_width="120dp"
-                            android:layout_height="wrap_content"
-                            android:text="C. DE POLLO:"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-                        <EditText
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/inputNomCliente"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:hint="Razón Social"
+                        android:textColor="@color/orange2"
+                        android:textStyle="bold"
+                        android:enabled="false"/>
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Calculation Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/calculationCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:layout_constraintTop_toBottomOf="@id/clientDataCard"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    style="@style/TextAppearance.MaterialComponents.Headline6"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="RESUMEN DE CÁLCULO"
+                    android:gravity="center"
+                    android:textColor="@color/purple_500"
+                    android:layout_marginBottom="16dp"/>
+
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2"
+                    android:rowCount="6"
+                    android:alignmentMode="alignBounds"
+                    android:useDefaultMargins="true">
+
+                    <!-- C. DE POLLO -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                        <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/inputCantPollo"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="numberDecimal"
+                            android:hint="C. DE POLLO"
+                            android:textColor="@color/orange2"
                             android:textStyle="bold"
-                            tools:ignore="Autofill" />
-                    </LinearLayout>
+                            android:enabled="false" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <!-- NETO -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="8dp">
-
-                        <TextView
-                            android:layout_width="120dp"
-                            android:layout_height="wrap_content"
-                            android:text="PESO BRUTO:"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <EditText
-                            android:id="@+id/inputPesoBruto"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="numberDecimal"
-                            android:textStyle="bold"
-                            tools:ignore="Autofill" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="8dp">
-
-                        <TextView
-                            android:layout_width="120dp"
-                            android:layout_height="wrap_content"
-                            android:text="TARA:"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <EditText
-                            android:id="@+id/inputTara"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="numberDecimal"
-                            android:textStyle="bold"
-                            tools:ignore="Autofill" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <!-- Columna derecha: Sección de datos adicionales -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="8dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="8dp">
-
-                        <TextView
-                            android:layout_width="120dp"
-                            android:layout_height="wrap_content"
-                            android:text="NETO:"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <EditText
+                        android:layout_columnWeight="1"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                        <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/inputNeto"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="numberDecimal"
+                            android:hint="NETO"
+                            android:textColor="@color/orange2"
                             android:textStyle="bold"
-                            tools:ignore="Autofill" />
-                    </LinearLayout>
+                            android:enabled="false"/>
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <!-- PESO BRUTO -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="8dp">
-
-                        <TextView
-                            android:layout_width="120dp"
+                        android:layout_columnWeight="1"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/inputPesoBruto"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="PRECIO X KG:"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
+                            android:inputType="numberDecimal"
+                            android:hint="PESO BRUTO"
+                            android:textColor="@color/orange2"
+                            android:textStyle="bold"
+                            android:enabled="false"/>
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                        <EditText
+                    <!-- PRECIO X KG -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                        <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/inputKlPollo"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="numberDecimal"
+                            android:hint="PRECIO X KG"
+                            android:textColor="@color/orange2"
                             android:textStyle="bold"
-                            tools:ignore="Autofill" />
-                    </LinearLayout>
+                            android:enabled="false"/>
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                    <LinearLayout
-                        style="@style/Input_Diseño"
-                        android:layout_width="match_parent"
+                    <!-- TARA -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="8dp">
-
-                        <TextView
-                            android:layout_width="120dp"
+                        android:layout_columnWeight="1"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/inputTara"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="T. A PAGAR:"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
+                            android:inputType="numberDecimal"
+                            android:hint="TARA"
+                            android:textColor="@color/orange2"
+                            android:textStyle="bold"
+                            android:enabled="false"/>
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                        <EditText
+                    <!-- T. A PAGAR -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                        <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/inputTotalPagar"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="numberDecimal"
+                            android:hint="T. A PAGAR"
+                            android:textColor="@color/orange2"
                             android:textStyle="bold"
-                            tools:ignore="Autofill" />
-                    </LinearLayout>
-                </LinearLayout>
-            </LinearLayout>
+                            android:enabled="false"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+                </GridLayout>
 
-            <!-- Fila adicional para el Peso Promedio -->
+                <!-- PESO PROMEDIO -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/inputPesoPromedioPollo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="numberDecimal"
+                        android:hint="PESO PROMEDIO"
+                        android:textColor="@color/orange2"
+                        android:textStyle="bold"
+                        android:enabled="false"/>
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Buttons -->
+        <LinearLayout
+            android:id="@+id/buttonLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/calculationCard"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/boton_Volver"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Volver"
+                app:icon="@drawable/baseline_assignment_return_24"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_marginEnd="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/boton_Procesar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Procesar"
+                app:icon="@drawable/baseline_assignment_turned_in_24"
+                style="@style/Widget.MaterialComponents.Button"/>
+        </LinearLayout>
+
+        <!-- Registro de Pesos Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/registroPesosCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:layout_constraintTop_toBottomOf="@id/buttonLayout"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp">
+                android:orientation="vertical"
+                android:padding="16dp">
 
                 <TextView
-                    android:layout_width="150dp"
+                    style="@style/TextAppearance.MaterialComponents.Headline6"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="PESO PROMEDIO:"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:text="REGISTRO DE PESOS"
+                    android:textColor="@color/purple_500"
+                    android:layout_marginBottom="8dp"/>
 
-                <EditText
-                    android:id="@+id/inputPesoPromedioPollo"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:inputType="numberDecimal"
-                    android:textStyle="bold"
-                    tools:ignore="Autofill" />
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <LinearLayout
+                        android:id="@+id/header_layout"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:background="@color/purple_500"
+                        android:padding="8dp">
+
+                        <TextView
+                            android:id="@+id/id_jabas"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="#"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"
+                            android:padding="8dp"
+                            android:minWidth="50dp"/>
+
+                        <TextView
+                            android:id="@+id/numero_jabas"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="N° Jabas"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"
+                            android:padding="8dp"
+                            android:minWidth="100dp"/>
+
+                        <TextView
+                            android:id="@+id/numero_pollos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="N° Pollos"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"
+                            android:padding="8dp"
+                            android:minWidth="100dp"/>
+
+                        <TextView
+                            android:id="@+id/peso_kg"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Peso Kg."
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"
+                            android:padding="8dp"
+                            android:minWidth="100dp"/>
+
+                        <TextView
+                            android:id="@+id/con_pollos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:minWidth="100dp"
+                            android:padding="8dp"
+                            android:text="Estado"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewReportes"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:layout_marginTop="8dp"
+                    tools:listitem="@layout/item_detapp"/>
             </LinearLayout>
-        </LinearLayout>
-        <!-- Sección 3: Botones con íconos divididos en tres partes -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <!-- Parte derecha con botones -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:gravity="end">
-
-                <ImageButton
-                    android:id="@+id/boton_Volver"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:elevation="8dp"
-                    android:padding="20dp"
-                    app:backgroundTint="#F44336"
-                    app:srcCompat="@drawable/baseline_assignment_return_24"
-                    android:layout_marginEnd="16dp" />
-
-                <!-- Botón de Insertar -->
-                <ImageButton
-                    android:id="@+id/boton_Procesar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:elevation="8dp"
-                    android:padding="20dp"
-                    app:backgroundTint="@color/your_greed"
-                    app:srcCompat="@drawable/baseline_assignment_turned_in_24" />
-            </LinearLayout>
-
-        </LinearLayout>
-
-
-        <TextView
-            style="@style/Titulo_Diseño"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/purple_500"
-            android:text="REGISTRO DE PESOS"/>
-        <!-- Encabezados del RecyclerView -->
-        <LinearLayout
-            android:id="@+id/header_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="4dp"
-            android:background="@color/purple_500"
-            android:elevation="4dp"
-            android:layout_margin="2dp"
-            android:gravity="center"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <TextView
-                android:id="@+id/id_jabas"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.3"
-                android:gravity="center"
-                android:padding="8dp"
-                android:text="#"
-                android:textColor="@android:color/white"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:background="@color/purple_500"
-                android:layout_marginEnd="2dp" />
-
-            <TextView
-                android:id="@+id/numero_jabas"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.8"
-                android:gravity="center"
-                android:padding="8dp"
-                android:text="N° Jabas"
-                android:textColor="@android:color/white"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:background="@color/purple_500"
-                android:layout_marginEnd="2dp" />
-
-            <TextView
-                android:id="@+id/numero_pollos"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.8"
-                android:gravity="center"
-                android:padding="8dp"
-                android:text="N° Pollos"
-                android:textColor="@android:color/white"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:background="@color/purple_500"
-                android:layout_marginEnd="2dp" />
-
-            <TextView
-                android:id="@+id/peso_kg"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.8"
-                android:gravity="center"
-                android:padding="8dp"
-                android:text="Peso Kg."
-                android:textColor="@android:color/white"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:background="@color/purple_500"
-                android:layout_marginEnd="2dp" />
-
-            <TextView
-                android:id="@+id/con_pollos"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:padding="8dp"
-                android:text="Estado"
-                android:textColor="@android:color/white"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:background="@color/purple_500" />
-        </LinearLayout>
-        <!-- RecyclerView para mostrar reportes -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewReportes"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginTop="0dp"
-            android:layout_weight="1"
-            tools:listitem="@layout/item_detapp" />
-
-    </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

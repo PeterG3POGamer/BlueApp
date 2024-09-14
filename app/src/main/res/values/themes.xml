@@ -51,10 +51,6 @@
         <item name="android:layout_margin">4dp</item>
     </style>
 
-
-
-
-
     <style name="Theme.BlueApp.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="Theme.BlueApp.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />

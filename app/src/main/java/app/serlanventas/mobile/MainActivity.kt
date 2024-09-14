@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity() {
         performLogout()
     }
     private var logoutTime: Long = 0L
-//    private val INACTIVITY_TIMEOUT: Long = 60000
+//    private val INACTIVITY_TIMEOUT: Long = 10000
     private val INACTIVITY_TIMEOUT: Long = 60 * 60 * 1000
     private var hasLoggedExpiration = false
     private val logHandler = Handler(Looper.getMainLooper())
