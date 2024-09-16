@@ -731,7 +731,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.inputNumeroJabas.isEnabled = true
         binding.inputCantPollos.isEnabled = false
 
-        binding.inputPesoKg.isEnabled = false // pesotrue
+        binding.inputPesoKg.isEnabled = true // pesotrue
 
         if (!dataDetaPesoPollosJson.isNullOrBlank()){
             sharedViewModel.setBtnTrue()

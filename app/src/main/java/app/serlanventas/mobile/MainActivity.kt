@@ -40,6 +40,9 @@ import app.serlanventas.mobile.ui.login.LogoutReceiver
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
 
@@ -75,6 +78,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            // Guardar el error en un archivo de texto
+            guardarLogError(throwable)
+        }
 
         // Inicializar SharedPreferences
         sharedPreferences = getSharedPreferences("app_prefs", MODE_PRIVATE)
@@ -324,6 +332,18 @@ class MainActivity : AppCompatActivity() {
             // Para versiones anteriores a Android 8.0, llevar al usuario a la configuración de seguridad
             val intent = Intent(Settings.ACTION_SECURITY_SETTINGS)
             startActivity(intent)
+        }
+    }
+
+    private fun guardarLogError(throwable: Throwable) {
+        try {
+            val logFile = File(filesDir, "crash_log.txt")
+            val fileWriter = FileWriter(logFile, true)
+            fileWriter.append("Error capturado: ${throwable.message}\n")
+            fileWriter.append(throwable.stackTraceToString() + "\n\n")
+            fileWriter.close()
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
     }
 

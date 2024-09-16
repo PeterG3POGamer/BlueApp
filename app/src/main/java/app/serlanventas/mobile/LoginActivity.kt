@@ -12,6 +12,9 @@ import androidx.lifecycle.lifecycleScope
 import app.serlanventas.mobile.VersionControl.UpdateChecker
 import app.serlanventas.mobile.ui.login.LoginFragment
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
 
 
 class LoginActivity : AppCompatActivity() {
@@ -22,6 +25,11 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            // Guardar el error en un archivo de texto
+            guardarLogError(throwable)
+        }
 
         // Inicializar SharedPreferences
         sharedPreferences = getSharedPreferences("app_prefs", MODE_PRIVATE)
@@ -39,6 +47,18 @@ class LoginActivity : AppCompatActivity() {
             if (savedInstanceState == null) {
                 showLoginFragment()
             }
+        }
+    }
+
+    private fun guardarLogError(throwable: Throwable) {
+        try {
+            val logFile = File(filesDir, "crash_log.txt")
+            val fileWriter = FileWriter(logFile, true)
+            fileWriter.append("Error capturado: ${throwable.message}\n")
+            fileWriter.append(throwable.stackTraceToString() + "\n\n")
+            fileWriter.close()
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
     }
 
