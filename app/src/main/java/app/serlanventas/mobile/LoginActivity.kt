@@ -1,9 +1,12 @@
 package app.serlanventas.mobile
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
+import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import app.serlanventas.mobile.VersionControl.UpdateChecker
@@ -37,6 +40,37 @@ class LoginActivity : AppCompatActivity() {
                 showLoginFragment()
             }
         }
+    }
+
+    private fun checkAndRequestInstallPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Si el permiso aún no está habilitado
+            if (!this.packageManager.canRequestPackageInstalls()) {
+                // Mostrar un diálogo que el usuario no puede cancelar
+                AlertDialog.Builder(this)
+                    .setTitle("Permiso requerido")
+                    .setMessage("Para descargar e instalar actualizaciones, necesitamos que habilites la opción de 'Instalar aplicaciones de fuentes desconocidas'.")
+                    .setCancelable(false) // Impide que el diálogo sea cancelado
+                    .setPositiveButton("Habilitar") { dialog, _ ->
+                        // Redirigir a la configuración para habilitar el permiso
+                        val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                            data = Uri.parse("package:$packageName")
+                        }
+                        startActivity(intent)
+                        dialog.dismiss()
+                    }
+                    .show()
+            }else{
+                downloadUpdate()
+            }
+        } else {
+            // Para versiones anteriores a Android 8.0, llevar al usuario a la configuración de seguridad
+            val intent = Intent(Settings.ACTION_SECURITY_SETTINGS)
+            startActivity(intent)
+        }
+    }
+
+    private fun downloadUpdate() {
         lifecycleScope.launch {
             updateChecker.checkAndDownloadUpdate()
         }
@@ -48,18 +82,8 @@ class LoginActivity : AppCompatActivity() {
             .commit()
     }
 
-    fun onLoginSuccess() {
-        // Guardar el estado de autenticación en SharedPreferences
-        sharedPreferences.edit().putBoolean("isLoggedIn", true).apply()
-
-        // Redirigir a la MainActivity después de la autenticación exitosa
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
-        finish()
-    }
-
-    fun onLoginFailed() {
-        // Mostrar mensaje de error si la autenticación falla
-        Toast.makeText(this, "Error en el inicio de sesión", Toast.LENGTH_SHORT).show()
+    override fun onResume() {
+        super.onResume()
+        checkAndRequestInstallPermission()
     }
 }

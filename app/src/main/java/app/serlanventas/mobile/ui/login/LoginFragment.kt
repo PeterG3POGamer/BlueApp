@@ -39,13 +39,13 @@ class LoginFragment : Fragment() {
     ): View {
         _binding = FragmentLoginBinding.inflate(inflater, container, false)
         return binding.root
+
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         sharedPreferences = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-
         setupLoadingAnimation()
         updateAppVersion()
 
@@ -60,6 +60,7 @@ class LoginFragment : Fragment() {
                 throw IllegalArgumentException("Unknown ViewModel class")
             }
         }).get(LoginViewModel::class.java)
+
 
         binding.buttonLogin.setOnClickListener {
             val username = binding.editTextUsername.text.toString()
