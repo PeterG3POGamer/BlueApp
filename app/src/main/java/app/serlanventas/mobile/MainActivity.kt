@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -41,8 +42,11 @@ import com.google.android.material.navigation.NavigationView
 import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.FileWriter
-import java.io.IOException
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -79,10 +83,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            // Guardar el error en un archivo de texto
-            guardarLogError(throwable)
-        }
+        setupExceptionHandler()
 
         // Inicializar SharedPreferences
         sharedPreferences = getSharedPreferences("app_prefs", MODE_PRIVATE)
@@ -335,18 +336,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun guardarLogError(throwable: Throwable) {
-        try {
-            val logFile = File(filesDir, "crash_log.txt")
-            val fileWriter = FileWriter(logFile, true)
-            fileWriter.append("Error capturado: ${throwable.message}\n")
-            fileWriter.append(throwable.stackTraceToString() + "\n\n")
-            fileWriter.close()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-    }
-
     private fun downloadUpdate() {
         lifecycleScope.launch {
             updateChecker.checkAndDownloadUpdate()
@@ -524,6 +513,36 @@ class MainActivity : AppCompatActivity() {
                     Log.d("StatusLog", "Error al cambiar el estado del peso")
                 }
             }
+        }
+    }
+
+    private fun setupExceptionHandler() {
+        val defaultExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            val stackTrace = StringWriter()
+            throwable.printStackTrace(PrintWriter(stackTrace))
+
+            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val filename = "crash_$timestamp.txt"
+
+            val file = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), filename)
+            } else {
+                @Suppress("DEPRECATION")
+                (File(
+        Environment.getExternalStorageDirectory(),
+        "files/crashLogs/$filename"
+    ))
+            }
+
+            try {
+                file.parentFile?.mkdirs()
+                file.writeText("Timestamp: $timestamp\n\n$stackTrace")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            defaultExceptionHandler?.uncaughtException(thread, throwable)
         }
     }
 }

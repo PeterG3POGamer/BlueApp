@@ -12,7 +12,6 @@ import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
-import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
@@ -47,7 +46,7 @@ data class VersionInfo(
     val version_name: String,
     val download_url: String,
     var file_size: Long,
-    val changes: List<Change>? // Cambiado a nullable
+    val changes: List<Change>?
 )
 
 interface GithubApi {
@@ -317,18 +316,38 @@ class UpdateManager(private val context: Context) {
         intent.setDataAndType(downloadedApk, "application/vnd.android.package-archive")
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
         context.startActivity(intent)
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            cleanDownloadFolder()
+        }, 5000)
     }
 
     private fun getDownloadFolder(): File {
-        return context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: context.filesDir
+//        return context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: context.filesDir
+        // Crear o acceder a la carpeta "Update Versions"
+        val folder = File(context.getExternalFilesDir(null), "Update")
+
+        // Si la carpeta no existe, crearla
+        if (!folder.exists()) {
+            folder.mkdirs()
+        }
+
+        return folder
     }
 
     fun cleanDownloadFolder() {
         val folder = getDownloadFolder()
+
+        // Borrar todos los archivos APK en la carpeta "Update Versions"
         folder.listFiles()?.forEach { file ->
             if (file.name.endsWith(".apk")) {
                 file.delete()
             }
+        }
+
+        // Eliminar la carpeta si está vacía
+        if (folder.listFiles()?.isEmpty() == true) {
+            folder.delete()
         }
     }
 }
