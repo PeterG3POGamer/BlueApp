@@ -12,11 +12,9 @@ import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
-import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,8 +22,6 @@ import android.view.animation.LinearInterpolator
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -51,7 +47,7 @@ data class VersionInfo(
     val version_name: String,
     val download_url: String,
     var file_size: Long,
-    val changes: List<Change>?
+    val changes: List<Change>? // Cambiado a nullable
 )
 
 interface GithubApi {
@@ -59,6 +55,7 @@ interface GithubApi {
     suspend fun getLatestVersion(): VersionInfo
 }
 
+@Suppress("UNUSED_EXPRESSION")
 class UpdateChecker(private val context: Context) {
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://raw.githubusercontent.com/")
@@ -76,6 +73,7 @@ class UpdateChecker(private val context: Context) {
                 .getPackageInfo(context.packageName, 0).versionName
 
             if (latestVersion.version_name != currentVersionCode) {
+                latestVersion
                 val fileSize = getFileSizeFromUrl(latestVersion.download_url)
                 latestVersion.copy(file_size = fileSize)
             } else {
@@ -105,6 +103,7 @@ class UpdateChecker(private val context: Context) {
                 showUpdateDialog(it)
             }
         }
+
     }
 
     @SuppressLint("MissingInflatedId", "SetTextI18n")
@@ -127,17 +126,7 @@ class UpdateChecker(private val context: Context) {
         changesRecyclerView.adapter = ChangesAdapter(versionInfo.changes ?: emptyList())
 
         downloadButton.setOnClickListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                if (!context.packageManager.canRequestPackageInstalls()) {
-                    val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
-                    intent.data = Uri.parse("package:${context.packageName}")
-                    (context as? AppCompatActivity)?.startActivityForResult(intent, REQUEST_INSTALL_PERMISSION)
-                } else {
-                    updateManager.downloadUpdate(versionInfo)
-                }
-            } else {
-                updateManager.downloadUpdate(versionInfo)
-            }
+            updateManager.downloadUpdate(versionInfo)
             dialog.dismiss()
         }
 
@@ -146,10 +135,6 @@ class UpdateChecker(private val context: Context) {
         }
 
         dialog.show()
-    }
-
-    companion object {
-        const val REQUEST_INSTALL_PERMISSION = 1001
     }
 }
 
@@ -171,10 +156,12 @@ class ChangesAdapter(private val changes: List<Change>) : RecyclerView.Adapter<C
         holder.changeType.text = change.type
         holder.changeDescription.text = change.description
 
+        // Set background color and border based on change type
         val backgroundColor = getColorForChangeType(change.type)
         val borderColor = darkenColor(backgroundColor, 0.7f)
         holder.changeType.setBackgroundColor(backgroundColor)
 
+        // Create a drawable with background color and border
         val drawable = GradientDrawable().apply {
             setColor(backgroundColor)
             setStroke(0, borderColor)
@@ -182,6 +169,7 @@ class ChangesAdapter(private val changes: List<Change>) : RecyclerView.Adapter<C
         }
         holder.changeType.background = drawable
 
+        // Set text color as a darker version of the background color
         holder.changeType.setTextColor(borderColor)
     }
 
@@ -189,11 +177,11 @@ class ChangesAdapter(private val changes: List<Change>) : RecyclerView.Adapter<C
 
     private fun getColorForChangeType(type: String): Int {
         return when (type.lowercase(Locale.getDefault())) {
-            "actualizado" -> Color.parseColor("#f5b169")
-            "nuevo" -> Color.parseColor("#69fa6e")
-            "mejorado" -> Color.parseColor("#7abcfa")
-            "arreglado" -> Color.parseColor("#faacac")
-            else -> Color.parseColor("#9E9E9E")
+            "actualizado" -> Color.parseColor("#f5b169")  // Orange
+            "nuevo" -> Color.parseColor("#69fa6e")  // Green
+            "mejorado" -> Color.parseColor("#7abcfa")  // Blue
+            "arreglado" -> Color.parseColor("#faacac")  // Red
+            else -> Color.parseColor("#9E9E9E")  // Grey
         }
     }
 
@@ -282,21 +270,23 @@ class UpdateManager(private val context: Context) {
                     val bytesTotal = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
 
                     if (bytesTotal > 0) {
-                        val progress = ((bytesDownloaded * 100) / bytesTotal).toInt()
+                        val progress = (bytesDownloaded * 100 / bytesTotal).toInt()
                         animateProgress(currentProgress, progress)
                         currentProgress = progress
                     }
 
                     val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
-                    when (status) {
-                        DownloadManager.STATUS_FAILED -> {
+                    if (status != DownloadManager.STATUS_SUCCESSFUL) {
+                        handler.postDelayed(this, 1000)
+                    } else {
+                        // Asegurarse de que el progreso llegue al 100%
+                        animateProgress(currentProgress, 100)
+                        // Esperar un momento antes de cerrar el diálogo y continuar
+                        handler.postDelayed({
                             progressDialog.dismiss()
-                            Toast.makeText(context, "Descarga fallida", Toast.LENGTH_LONG).show()
-                        }
-                        DownloadManager.STATUS_SUCCESSFUL -> {
-                            // No hacemos nada aquí, el BroadcastReceiver se encargará de esto
-                        }
-                        else -> handler.postDelayed(this, 500)
+                            val file = File(getDownloadFolder(), fileName)
+                            installUpdate(file)
+                        }, 2000) // Espera 2 segundos en 100%
                     }
                 }
 

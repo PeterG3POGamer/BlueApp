@@ -9,41 +9,35 @@
     android:padding="10dp">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginTop="25dp">
+        android:layout_marginTop="30dp">
 
         <ImageView
             android:id="@+id/appLogo"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:src="@mipmap/ic_launcher"
             android:layout_marginEnd="10dp"/>
 
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="vertical"
+            android:gravity="center_vertical"
             android:layout_weight="1">
 
             <TextView
                 android:id="@+id/appName"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:text="@string/app_name"
                 android:textColor="@android:color/white"
-                android:textSize="20sp"
+                android:textSize="25sp"
                 android:textStyle="bold"/>
 
-            <TextView
-                android:id="@+id/appSlogan"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Bienvenido"
-                android:textColor="@android:color/white"
-                android:textSize="13sp"/>
         </LinearLayout>
     </LinearLayout>
 
@@ -51,7 +45,7 @@
         android:id="@+id/userInfoCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="13dp"
+        android:layout_marginTop="8dp"
         app:cardCornerRadius="16dp"
         app:cardElevation="4dp"
         app:cardBackgroundColor="@android:color/white">
@@ -60,7 +54,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:padding="10dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
