@@ -3,11 +3,7 @@
   "version_name": "1.13.6",
   "download_url": "https://github.com/PeterG3POGamer/BlueApp/releases/download/v.0.1-beta/app-debug.apk",
   "changes": [
-    {"type": "Nuevo", "description": "Sistema de autenticación."},
-    {"type": "Nuevo", "description": "Sección de Núcleos y Galpones"},
     {"type": "Mejorado", "description": "Actualizacion de Interfaz (Update UX)"},
-    {"type": "Arreglado", "description": "Cierre inesperado con versiones anteriores."},
-    {"type": "Mejorado", "description": "Correcciones y mejoras importantes."}
   ],
   "inherit": true
 }
