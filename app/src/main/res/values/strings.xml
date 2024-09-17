@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Serlan Ventas</string>
+    <string name="app_name">Serlan App</string>
 
     <string-array name="galpones_array">
         <item>Sin datos</item>

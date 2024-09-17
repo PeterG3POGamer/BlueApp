@@ -12,6 +12,7 @@ import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
@@ -21,6 +22,7 @@ import android.view.animation.LinearInterpolator
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -54,7 +56,6 @@ interface GithubApi {
     suspend fun getLatestVersion(): VersionInfo
 }
 
-@Suppress("UNUSED_EXPRESSION")
 class UpdateChecker(private val context: Context) {
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://raw.githubusercontent.com/")
@@ -202,7 +203,7 @@ class UpdateManager(private val context: Context) {
     private var currentProgress = 0
     private var onDownloadComplete: BroadcastReceiver? = null
 
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    @RequiresApi(Build.VERSION_CODES.O)
     fun downloadUpdate(versionInfo: VersionInfo) {
         cleanDownloadFolder()
         showProgressDialog()
@@ -234,12 +235,31 @@ class UpdateManager(private val context: Context) {
             }
         }
 
-        context.registerReceiver(
-            onDownloadComplete,
+        registerReceiverCompat(
+            onDownloadComplete!!,
             IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
         )
 
         updateProgress()
+    }
+
+    private fun registerReceiverCompat(receiver: BroadcastReceiver, filter: IntentFilter) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(
+                receiver,
+                filter,
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            context.registerReceiver(receiver, filter)
+        }
+    }
+
+    fun cleanup() {
+        onDownloadComplete?.let {
+            context.unregisterReceiver(it)
+            onDownloadComplete = null
+        }
     }
 
     private fun showProgressDialog() {
@@ -281,11 +301,12 @@ class UpdateManager(private val context: Context) {
                         // Asegurarse de que el progreso llegue al 100%
                         animateProgress(currentProgress, 100)
                         // Esperar un momento antes de cerrar el diálogo y continuar
-                        handler.postDelayed({
+                        Handler(Looper.getMainLooper()).postDelayed({
                             progressDialog.dismiss()
                             val file = File(getDownloadFolder(), fileName)
                             installUpdate(file)
-                        }, 2000) // Espera 2 segundos en 100%
+                            cleanup()
+                        }, 1000)
                     }
                 }
 

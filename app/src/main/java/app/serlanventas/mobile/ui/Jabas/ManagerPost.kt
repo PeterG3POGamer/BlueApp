@@ -4,6 +4,9 @@ import NetworkUtils
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.text.Editable
 import android.text.InputFilter
 import android.text.InputType
@@ -12,9 +15,11 @@ import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
+import android.view.WindowManager
+import android.view.animation.AnimationUtils
 import android.widget.EditText
 import android.widget.ImageView
-import android.widget.LinearLayout
+import android.widget.PopupWindow
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -151,59 +156,73 @@ object ManagerPost {
 
     @SuppressLint("InflateParams", "SetTextI18n")
     var lastToast: Toast? = null
+    var lastPopupWindow: PopupWindow? = null
 
+    @SuppressLint("ResourceType")
     fun showCustomToast(context: Context, message: String, type: String) {
         val layoutInflater = LayoutInflater.from(context)
         val layout = layoutInflater.inflate(R.layout.toast_custom, null)
 
-        // Configurar el icono, el mensaje y el texto adicional
+        // Configurar el icono y el mensaje
         val toastIcon = layout.findViewById<ImageView>(R.id.toast_icon)
         val toastMessage = layout.findViewById<TextView>(R.id.toast_message)
-        val toastType = layout.findViewById<TextView>(R.id.toast_type)
-        val toastHeader = layout.findViewById<LinearLayout>(R.id.toast_header)
-        val toastFooter = layout.findViewById<LinearLayout>(R.id.toast_footer)
 
+        // Configurar el estilo y el icono en función del tipo de Toast
         when (type) {
             "success" -> {
-                toastIcon.setImageResource(R.drawable.ic_info)
-                toastType.text = "ÉXITO"
-                toastHeader.background = ContextCompat.getDrawable(context, R.drawable.toast_h_background_success)
-                toastFooter.background = ContextCompat.getDrawable(context, R.drawable.toast_f_background)
+                toastIcon.setImageResource(R.drawable.ic_success) // Icono de éxito
+                layout.background = ContextCompat.getDrawable(context, R.drawable.toast_background_success) // Fondo personalizado para éxito
             }
             "info" -> {
-                toastIcon.setImageResource(R.drawable.ic_info)
-                toastType.text = "INFO"
-                toastHeader.background = ContextCompat.getDrawable(context, R.drawable.toast_h_background_info)
-                toastFooter.background = ContextCompat.getDrawable(context, R.drawable.toast_f_background)
+                toastIcon.setImageResource(R.drawable.ic_info) // Icono de información
+                layout.background = ContextCompat.getDrawable(context, R.drawable.toast_background_info) // Fondo personalizado para info
             }
             "error" -> {
-                toastIcon.setImageResource(R.drawable.ic_info)
-                toastType.text = "ERROR"
-                toastHeader.background = ContextCompat.getDrawable(context, R.drawable.toast_h_background_error)
-                toastFooter.background = ContextCompat.getDrawable(context, R.drawable.toast_f_background)
+                toastIcon.setImageResource(R.drawable.ic_error) // Icono de error
+                layout.background = ContextCompat.getDrawable(context, R.drawable.toast_background_error) // Fondo personalizado para error
             }
             "warning" -> {
-                toastIcon.setImageResource(R.drawable.ic_info)
-                toastType.text = "ADVERTENCIA"
-                toastHeader.background = ContextCompat.getDrawable(context, R.drawable.toast_h_background_warning)
-                toastFooter.background = ContextCompat.getDrawable(context, R.drawable.toast_f_background)
+                toastIcon.setImageResource(R.drawable.ic_warning) // Icono de advertencia
+                layout.background = ContextCompat.getDrawable(context, R.drawable.toast_background_warning) // Fondo personalizado para advertencia
             }
             else -> {
-                toastIcon.visibility = View.GONE
+                toastIcon.visibility = View.GONE // Ocultar icono si no es un tipo válido
+                layout.background = ContextCompat.getDrawable(context, R.drawable.toast_background_default) // Fondo predeterminado
             }
         }
 
+        // Establecer el mensaje
         toastMessage.text = message
 
-        // Cancelar el último Toast si está activo
-        lastToast?.cancel()
+        // Si hay un PopupWindow activo, cerrarlo antes de mostrar el nuevo
+        lastPopupWindow?.dismiss()
 
-        // Crear y mostrar el nuevo Toast
-        lastToast = Toast(context).apply {
-            duration = Toast.LENGTH_SHORT
-            setGravity(Gravity.CENTER, 0, 0)
-            view = layout
-            show()
+        // Crear un PopupWindow en lugar de un Toast
+        val popupWindow = PopupWindow(layout, WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)
+
+        // Mostrar el PopupWindow en la parte superior de la pantalla
+        popupWindow.showAtLocation(layout, Gravity.TOP, 0, 0)
+
+        // Guardar este PopupWindow como el último mostrado
+        lastPopupWindow = popupWindow
+
+        // Cargar la animación desde el archivo XML
+        val slideDown = AnimationUtils.loadAnimation(context, R.animator.slide_down)
+
+        // Aplicar la animación al layout
+        layout.startAnimation(slideDown)
+
+        // Ocultar el PopupWindow después de un tiempo (similar a la duración del Toast)
+        layout.postDelayed({
+            popupWindow.dismiss()
+        }, 2000) // El tiempo puede ajustarse a la duración que desees
+
+        // Vibración al mostrar el Toast personalizado
+        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE)) // 300ms de vibración
+        } else {
+            vibrator.vibrate(300) // Para versiones anteriores a Android O
         }
     }
 
