@@ -36,6 +36,7 @@
     <string name="login">CONECTARSE</string>
     <string name="mode_production">PRODUCCIÓN</string>
     <string name="mode_testing">PRUEBA</string>
+    <string name="title_activity_splash">SplashActivity</string>
 
 
 </resources>

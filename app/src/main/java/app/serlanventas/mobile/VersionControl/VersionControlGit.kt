@@ -66,6 +66,8 @@ class UpdateChecker(private val context: Context) {
     private val updateManager = UpdateManager(context)
     private val okHttpClient = OkHttpClient()
 
+    private var isDialogShowing = false
+
     suspend fun checkForUpdate(): VersionInfo? {
         return try {
             val latestVersion = githubApi.getLatestVersion()
@@ -108,6 +110,10 @@ class UpdateChecker(private val context: Context) {
 
     @SuppressLint("MissingInflatedId", "SetTextI18n")
     private fun showUpdateDialog(versionInfo: VersionInfo) {
+        if (isDialogShowing) return
+
+        isDialogShowing = true
+
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_update_version, null)
         val dialog = AlertDialog.Builder(context, R.style.CustomAlertDialog)
             .setView(dialogView)
@@ -126,14 +132,18 @@ class UpdateChecker(private val context: Context) {
         changesRecyclerView.adapter = ChangesAdapter(versionInfo.changes ?: emptyList())
 
         downloadButton.setOnClickListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                updateManager.downloadUpdate(versionInfo)
-            }
+            updateManager.downloadUpdate(versionInfo)
             dialog.dismiss()
+            isDialogShowing = false
         }
 
         cancelButton.setOnClickListener {
             dialog.dismiss()
+            isDialogShowing = false
+        }
+
+        dialog.setOnDismissListener {
+            isDialogShowing = false
         }
 
         dialog.show()
@@ -199,7 +209,7 @@ class ChangesAdapter(private val changes: List<Change>) : RecyclerView.Adapter<C
 class UpdateManager(private val context: Context) {
     private var downloadId: Long = 0
     private val fileName = "app-debug.apk"
-    private var progressDialog: AlertDialog? = null
+    private lateinit var progressDialog: AlertDialog
     private lateinit var progressBar: ProgressBar
     private lateinit var percentageText: TextView
     private var currentProgress = 0
@@ -228,7 +238,7 @@ class UpdateManager(private val context: Context) {
                 if (id == downloadId) {
                     animateProgress(currentProgress, 100)
                     Handler(Looper.getMainLooper()).postDelayed({
-                        progressDialog?.dismiss()
+                        progressDialog.dismiss()
                         val file = File(getDownloadFolder(), fileName)
                         installUpdate(file)
                         cleanup()
@@ -262,12 +272,9 @@ class UpdateManager(private val context: Context) {
             context.unregisterReceiver(it)
             onDownloadComplete = null
         }
-        dismissProgressDialog()
     }
 
     private fun showProgressDialog() {
-        dismissProgressDialog()
-
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_download_progress, null)
         progressBar = dialogView.findViewById(R.id.progressBar)
         percentageText = dialogView.findViewById(R.id.percentageText)
@@ -277,12 +284,7 @@ class UpdateManager(private val context: Context) {
             .setCancelable(false)
             .create()
 
-        progressDialog?.show()
-    }
-
-    private fun dismissProgressDialog() {
-        progressDialog?.dismiss()
-        progressDialog = null
+        progressDialog.show()
     }
 
     private fun updateProgress() {
@@ -308,11 +310,8 @@ class UpdateManager(private val context: Context) {
                     if (status != DownloadManager.STATUS_SUCCESSFUL) {
                         handler.postDelayed(this, 1000)
                     } else {
-                        // Asegurarse de que el progreso llegue al 100%
                         animateProgress(currentProgress, 100)
-                        // Esperar un momento antes de cerrar el diálogo y continuar
                         handler.postDelayed({
-                            dismissProgressDialog()
                             val file = File(getDownloadFolder(), fileName)
                             installUpdate(file)
                         }, 2000)

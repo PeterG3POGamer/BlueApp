@@ -207,7 +207,7 @@ object ManagerPost {
         lastPopupWindow = popupWindow
 
         // Cargar la animación desde el archivo XML
-        val slideDown = AnimationUtils.loadAnimation(context, R.animator.slide_down)
+        val slideDown = AnimationUtils.loadAnimation(context, R.anim.slide_down)
 
         // Aplicar la animación al layout
         layout.startAnimation(slideDown)
