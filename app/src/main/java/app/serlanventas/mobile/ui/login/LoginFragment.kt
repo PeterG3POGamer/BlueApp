@@ -106,6 +106,7 @@ class LoginFragment : Fragment() {
             if (success) {
                 binding.buttonLogin.postDelayed({
                     sharedPreferences.edit().putBoolean("isLoggedIn", true).apply()
+                    sharedPreferences.edit().putBoolean("isProduction", true).apply()
                     navigateToMainActivity()
                 }, 2000)
             } else {

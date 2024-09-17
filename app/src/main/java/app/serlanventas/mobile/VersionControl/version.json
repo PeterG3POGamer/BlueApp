@@ -1,6 +1,6 @@
 {
   "version_code": 2,
-  "version_name": "1.13.13",
+  "version_name": "1.13.14",
   "download_url": "https://github.com/PeterG3POGamer/BlueApp/releases/download/v.0.1-beta/app-debug.apk",
   "changes": [
     {"type": "Arreglado", "description": "Cierre inesperado en versiones actuales de android."},
