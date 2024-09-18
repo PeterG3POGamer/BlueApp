@@ -10,8 +10,8 @@ import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import app.serlanventas.mobile.LoginActivity
 import app.serlanventas.mobile.R
+import app.serlanventas.mobile.SplashActivity
 
 class LogoutReceiver : BroadcastReceiver() {
     private lateinit var sharedPreferences: SharedPreferences
@@ -41,7 +41,7 @@ class LogoutReceiver : BroadcastReceiver() {
         }
 
         // Crear un PendingIntent para abrir la actividad de login
-        val intent = Intent(context, LoginActivity::class.java).apply {
+        val intent = Intent(context, SplashActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
