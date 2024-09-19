@@ -14,6 +14,7 @@
     <color name="your_color">#DC5050</color>
     <color name="your_blue">#2C81FF</color>
     <color name="your_greed">#79FF5A</color>
+    <color name="color_gree_low">#8BFF6F</color>
     <color name="colorAccent">#FF4081</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorPrimary">#3F51B5</color>
@@ -23,6 +24,7 @@
     <color name="colorSelectedRow">#FFFF00</color>
     <color name="orange">#FFA500</color>
     <color name="orange2">#FB8C00</color>
+    <color name="red1">#FF5762</color>
     <color name="green">#008000</color>
     <color name="nav_item_border_color">#FF4081</color>
 </resources>
