@@ -26,7 +26,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:padding="10dp"
-                android:background="@color/color_orange_low"
+                android:background="@color/color_gray_low"
                 android:clickable="true">
 
                 <TextView
@@ -34,7 +34,7 @@
                     android:layout_height="wrap_content"
                     android:text="DATOS DEL NÚCLEO Y CLIENTE"
                     android:textStyle="bold"
-                    android:textColor="@color/purple_500"
+                    android:textColor="@color/orange2"
                     android:textSize="18sp"
                     android:layout_weight="1"/>
 
@@ -52,7 +52,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="10dp"
-                android:background="@color/color_orange_low"
+                android:background="@color/color_gray_low"
                 android:visibility="visible">
 
                 <!-- Sección de Datos del Núcleo -->
@@ -277,6 +277,12 @@
                             android:textSize="18sp"
                             android:layout_weight="1"/>
 
+                        <ImageView
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:contentDescription="Icono de balanza"
+                            android:src="@drawable/balanza"
+                            android:layout_gravity="center_vertical"/>
                         <!-- Device Connected TextView -->
                         <TextView
                             android:id="@+id/device_connected"
