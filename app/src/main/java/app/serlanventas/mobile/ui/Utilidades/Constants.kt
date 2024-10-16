@@ -11,8 +11,8 @@ object Constants {
     const val WEB_URL_VENTAS_DEV = "https://emprender.guru/VentaPollos/views/index.php?action=VentasApp"
 
     const val BASE_URL_PRODUCCION = "https://emprender.guru/sp_20393514630/"
-    const val WEB_URL_GUIA_PRODUCCION = "https://emprender.guru/sp_20393514630/app/views/index.php?action=NucleoGalpon"
-    const val WEB_URL_VENTAS_PRODUCCION = "https://emprender.guru/sp_20393514630/app/views/index.php?action=VentasApp"
+    const val WEB_URL_GUIA_PRODUCCION = "https://emprender.guru/sp_20393514630/views/index.php?action=NucleoGalpon"
+    const val WEB_URL_VENTAS_PRODUCCION = "https://emprender.guru/sp_20393514630/views/index.php?action=VentasApp"
 
     fun getBaseUrl(isProduction: Boolean): String {
         return if (isProduction) BASE_URL_PRODUCCION else BASE_URL_DEV

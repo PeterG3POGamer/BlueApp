@@ -153,6 +153,11 @@ class VentasWebFragment : Fragment() {
                         if (boton) {
                             boton.style.display = 'none';
                         }
+                        
+                        var navbar = document.querySelector('.iq-navbar');
+                        if (navbar) {
+                            navbar.style.display = 'none';
+                        }
                     })()
                 """.trimIndent(), null)
 
