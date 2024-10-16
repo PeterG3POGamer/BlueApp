@@ -1349,7 +1349,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 // Construir la URL base según el estado del modo
                 val baseUrl = Constants.getBaseUrl(isProduction)
 
-                var baseUrlCliente = "${baseUrl}app/controllers/FuncionesController/buscarCliente.php"
+                var baseUrlCliente = "${baseUrl}controllers/FuncionesController/buscarCliente.php"
                 // Llamar a la función BuscarCliente con la URL adecuada
                 ManagerPost.BuscarCliente(baseUrlCliente, jsonParam.toString()) { nombreCompleto ->
                     val inputNombreCliente = dialogView.findViewById<EditText>(R.id.inputNombreCliente)

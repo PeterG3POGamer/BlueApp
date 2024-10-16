@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 
 object Constants {
-    private const val LOGIN_PATH = "app/controllers/LoginControllerApp.php?op=verificar"
+    private const val LOGIN_PATH = "controllers/LoginControllerApp.php?op=verificar"
 
     const val BASE_URL_DEV = "https://emprender.guru/VentaPollos/"
     const val WEB_URL_GUIA_DEV = "https://emprender.guru/VentaPollos/views/index.php?action=NucleoGalpon"

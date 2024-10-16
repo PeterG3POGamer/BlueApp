@@ -254,7 +254,7 @@ object ManagerPost {
 
         val isProduction = Constants.obtenerEstadoModo(context)
         val baseUrl = Constants.getBaseUrl(isProduction)
-        val urlString = "${baseUrl}app/controllers/PesoPollosController.php?op=InsertarDataPesoPollos"
+        val urlString = "${baseUrl}controllers/PesoPollosController.php?op=InsertarDataPesoPollos"
         val url = URL(urlString)
         val conn = url.openConnection() as HttpURLConnection
 
@@ -743,7 +743,7 @@ object ManagerPost {
     // =============================================
 
     fun getSelectGalpon(idNucleo: String, baseUrl: String, callback: (List<GalponEntity>?) -> Unit) {
-        val urlString = "${baseUrl}app/controllers/PesoPollosController.php?op=getSelectGalpon&idNucleo=$idNucleo"
+        val urlString = "${baseUrl}controllers/PesoPollosController.php?op=getSelectGalpon&idNucleo=$idNucleo"
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -806,7 +806,7 @@ object ManagerPost {
     }
 
     fun getNucleos(baseUrl: String, callback: (List<NucleoEntity>?) -> Unit) {
-        val urlString = "${baseUrl}app/controllers/PesoPollosController.php?op=getNucleo"
+        val urlString = "${baseUrl}controllers/PesoPollosController.php?op=getNucleo"
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -873,7 +873,7 @@ object ManagerPost {
     // =============================================
 
     fun getListPesosByIdGalpon(baseUrl: String, idGalpon: Int, idEstablecimiento: Int, diviceName: String, callback: (List<PesosEntity>?) -> Unit) {
-        val urlString = "${baseUrl}app/controllers/TempPesoPollosController.php?op=getListPesosByIdGalpon&idGalpon=$idGalpon&idEstablecimiento=${idEstablecimiento}&diviceName=$diviceName"
+        val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=getListPesosByIdGalpon&idGalpon=$idGalpon&idEstablecimiento=${idEstablecimiento}&diviceName=$diviceName"
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -942,7 +942,7 @@ object ManagerPost {
 
 
     fun getListPesosId(idPeso: Int, callback: (List<PesosEntity>?, List<DataDetaPesoPollosEntity>?) -> Unit) {
-        val urlString = "${Constants.BASE_URL_DEV}app/controllers/TempPesoPollosController.php?op=getListPesosByIdPeso&idPeso=$idPeso"
+        val urlString = "${Constants.BASE_URL_DEV}controllers/TempPesoPollosController.php?op=getListPesosByIdPeso&idPeso=$idPeso"
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -1023,7 +1023,7 @@ object ManagerPost {
     ): Boolean = withContext(Dispatchers.IO) {
         val isProduction = Constants.obtenerEstadoModo(context)
         val baseUrl = Constants.getBaseUrl(isProduction)
-        val urlString = "${baseUrl}app/controllers/TempPesoPollosController.php?op=insertar"
+        val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=insertar"
 
         try {
             val url = URL(urlString)
@@ -1096,7 +1096,7 @@ object ManagerPost {
     ): Boolean = withContext(Dispatchers.IO) {
         val isProduction = Constants.obtenerEstadoModo(context)
         val baseUrl = Constants.getBaseUrl(isProduction)
-        val urlString = "${baseUrl}app/controllers/TempPesoPollosController.php?op=insertar&idPesoShared=${idPesoShared}"
+        val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=insertar&idPesoShared=${idPesoShared}"
 
         try {
             val url = URL(urlString)
@@ -1168,7 +1168,7 @@ object ManagerPost {
     ) {
         val isProduction = Constants.obtenerEstadoModo(context)
         val baseUrl = Constants.getBaseUrl(isProduction)
-        val urlString = "${baseUrl}app/controllers/TempPesoPollosController.php?op=removeByIdPeso&idPeso=$idPeso"
+        val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=removeByIdPeso&idPeso=$idPeso"
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -1216,7 +1216,7 @@ object ManagerPost {
     ) {
         val isProduction = Constants.obtenerEstadoModo(context)
         val baseUrl = Constants.getBaseUrl(isProduction)
-        val urlString = "${baseUrl}app/controllers/TempPesoPollosController.php?op=$status&idPeso=$idPeso&diviceName=$diviceName"
+        val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=$status&idPeso=$idPeso&diviceName=$diviceName"
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -1258,7 +1258,7 @@ object ManagerPost {
     ) {
         val isProduction = Constants.obtenerEstadoModo(context)
         val baseUrl = Constants.getBaseUrl(isProduction)
-        val urlString = "${baseUrl}app/controllers/TempPesoPollosController.php?op=getStatusPeso&idPeso=$idPeso"
+        val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=getStatusPeso&idPeso=$idPeso"
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
