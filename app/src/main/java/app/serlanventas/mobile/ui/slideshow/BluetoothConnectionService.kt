@@ -140,6 +140,8 @@ class BluetoothConnectionService(
 
             socket?.let {
                 try {
+//                    50:DA:D6:B4:39:14
+//                    Redmi Note 11
                     dividename = device.name.toString()
                     it.connect()
                     connected(it)

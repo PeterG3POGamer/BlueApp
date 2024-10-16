@@ -71,6 +71,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.DecimalFormat
 
 //JabasFragment.kt // INTERACTURA CON LA UI
 class JabasFragment : Fragment(), OnItemClickListener {
@@ -731,7 +732,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.inputNumeroJabas.isEnabled = true
         binding.inputCantPollos.isEnabled = false
 
-        binding.inputPesoKg.isEnabled = false // pesotrue
+        binding.inputPesoKg.isEnabled = true // pesotrue
 
         if (!dataDetaPesoPollosJson.isNullOrBlank()){
             sharedViewModel.setBtnTrue()
@@ -786,11 +787,22 @@ class JabasFragment : Fragment(), OnItemClickListener {
             }
         }
 
+        binding.PrecioKilo.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                calcularTotalPagar()
+            }
+        })
+
         // esto esta en el JabasFragment.kt
         binding.botonGuardar.setOnClickListener {
             val numeroJabas = binding.inputNumeroJabas.text.toString()
             val numeroPollos = binding.inputCantPollos.text.toString()
             val pesoKg = binding.inputPesoKg.text.toString()
+            val precioKilo = binding.PrecioKilo.text.toString()
             val conPollos = if (binding.checkboxConPollos.isChecked) "JABAS CON POLLOS" else "JABAS SIN POLLOS"
 
             var isValid = true
@@ -823,6 +835,30 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
             // Si todos los campos son válidos, agregar el nuevo item
             if (isValid) {
+                val pesoKgDouble = pesoKg.toDouble()
+                var totalAPagar: Double? = null
+
+                // Calcular el total solo si se proporciona un precio
+                if (precioKilo.isNotBlank() && precioKilo.toDoubleOrNull() != null && precioKilo.toDouble() > 0) {
+                    totalAPagar = pesoKgDouble * precioKilo.toDouble()
+
+                    // Si es con pollos y se proporciona un precio por pollo, añadir al total
+                    if (conPollos == "JABAS CON POLLOS" && binding.PrecioKilo.text.toString().isNotBlank()) {
+                        val precioPollo = binding.PrecioKilo.text.toString().toDoubleOrNull()
+                        if (precioPollo != null && precioPollo > 0) {
+                            totalAPagar += numeroPollos.toInt() * precioPollo
+                        }
+                    }
+
+                    // Actualizar el campo totalPagarPreview
+                    val df = DecimalFormat("#.##")
+                    df.minimumFractionDigits = 2
+                    binding.totalPagarPreview.setText(df.format(totalAPagar))
+                } else {
+                    // Si no se proporciona precio, limpiar el campo de total
+                    binding.totalPagarPreview.setText("")
+                }
+
                 val newItem = JabasItem(
                     id = jabasList.size + 1,
                     numeroJabas = numeroJabas.toInt(),
@@ -919,6 +955,38 @@ class JabasFragment : Fragment(), OnItemClickListener {
             }
         }
         return root
+    }
+
+    private fun calcularTotalPagar() {
+        val pesoKg = binding.inputPesoKg.text.toString()
+        val precioKilo = binding.PrecioKilo.text.toString()
+        val numeroPollos = binding.inputCantPollos.text.toString()
+        val conPollos = if (binding.checkboxConPollos.isChecked) "JABAS CON POLLOS" else "JABAS SIN POLLOS"
+
+        var totalAPagar: Double? = null
+
+        if (pesoKg.isNotBlank() && precioKilo.isNotBlank()) {
+            val pesoKgDouble = pesoKg.toDoubleOrNull()
+            val precioKiloDouble = precioKilo.toDoubleOrNull()
+
+            if (pesoKgDouble != null && precioKiloDouble != null && pesoKgDouble > 0 && precioKiloDouble > 0) {
+                totalAPagar = pesoKgDouble * precioKiloDouble
+
+                if (conPollos == "JABAS CON POLLOS" && numeroPollos.isNotBlank()) {
+                    val numeroPallosInt = numeroPollos.toIntOrNull()
+                    val precioPollo = binding.PrecioKilo.text.toString().toDoubleOrNull()
+                    if (numeroPallosInt != null && precioPollo != null && numeroPallosInt > 0 && precioPollo > 0) {
+                        totalAPagar += numeroPallosInt * precioPollo
+                    }
+                }
+
+                binding.totalPagarPreview.setText(String.format("%.2f", totalAPagar))
+            } else {
+                binding.totalPagarPreview.setText("")
+            }
+        } else {
+            binding.totalPagarPreview.setText("")
+        }
     }
 
     private fun showDisconnectDialog() {

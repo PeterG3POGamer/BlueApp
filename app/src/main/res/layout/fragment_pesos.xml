@@ -405,20 +405,46 @@
 
                     </GridLayout>
 
-                    <!-- Botón Guardar -->
-                    <Button
-                        android:id="@+id/boton_guardar"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Añadir"
-                        android:layout_gravity="end"
-                        android:paddingStart="25dp"
-                        android:paddingEnd="25dp"
-                        android:paddingTop="15dp"
-                        android:paddingBottom="15dp"
-                        android:textSize="15dp"
-                        android:backgroundTint="@color/purple_500"
-                        android:textColor="@android:color/white" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:hint="Total a Pagar S/.">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/totalPagarPreview"
+                                android:layout_width="200dp"
+                                android:layout_height="wrap_content"
+                                android:inputType="text"
+                                android:background="@drawable/row_background"
+                                android:textColor="@color/black"
+                                android:enabled="false"
+                                android:text="0.00"
+                                android:maxLength="4" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- Botón Guardar -->
+                        <Button
+                            android:id="@+id/boton_guardar"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:backgroundTint="@color/purple_500"
+                            android:layout_marginStart="30dp"
+                            android:paddingStart="25dp"
+                            android:paddingTop="15dp"
+                            android:paddingEnd="25dp"
+                            android:paddingBottom="15dp"
+                            android:text="Añadir"
+                            android:textColor="@android:color/white"
+                            android:textSize="15sp" />
+                    </LinearLayout>
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

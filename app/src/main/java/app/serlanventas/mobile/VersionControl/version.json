@@ -1,9 +1,10 @@
 {
   "version_code": 2,
-  "version_name": "1.14.1",
+  "version_name": "1.14.2",
   "download_url": "https://github.com/PeterG3POGamer/BlueApp/releases/download/v.0.1-beta/app-debug.apk",
   "changes": [
     {"type": "Actualizado", "description": "Mejoras de diseño (UX Update)."},
+    {"type": "Actualizado", "description": "Nueva Interfaz Reportes (UX Update Web)"},
     {"type": "Arreglado", "description": "Mejoras y corrección de errores importantes."}
   ],
   "inherit": true

@@ -7,8 +7,8 @@ object Constants {
     private const val LOGIN_PATH = "app/controllers/LoginControllerApp.php?op=verificar"
 
     const val BASE_URL_DEV = "https://emprender.guru/VentaPollos/"
-    const val WEB_URL_GUIA_DEV = "https://emprender.guru/VentaPollos/app/views/index.php?action=NucleoGalpon"
-    const val WEB_URL_VENTAS_DEV = "https://emprender.guru/VentaPollos/app/views/index.php?action=VentasApp"
+    const val WEB_URL_GUIA_DEV = "https://emprender.guru/VentaPollos/views/index.php?action=NucleoGalpon"
+    const val WEB_URL_VENTAS_DEV = "https://emprender.guru/VentaPollos/views/index.php?action=VentasApp"
 
     const val BASE_URL_PRODUCCION = "https://emprender.guru/sp_20393514630/"
     const val WEB_URL_GUIA_PRODUCCION = "https://emprender.guru/sp_20393514630/app/views/index.php?action=NucleoGalpon"
