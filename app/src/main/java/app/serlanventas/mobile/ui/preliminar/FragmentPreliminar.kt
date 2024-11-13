@@ -274,6 +274,8 @@ class FragmentPreliminar : Fragment() {
             totalPesoJabas = jsonObject.optString("_PP_totalPesoJabas"),
             totalNeto = jsonObject.optString("_PP_totalNeto"),
             TotalPagar = jsonObject.optString("_PP_TotalPagar"),
+            idUsuario = jsonObject.optString("_PP_idUsuario"),
+            idEstablecimiento = jsonObject.optString("_PP_idEstablecimiento"),
 
         )
     }

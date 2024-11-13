@@ -133,7 +133,9 @@ object ManagerPost {
         PKPollo: String,
         totalPesoJabas: String,
         totalNeto: String,
-        totalPagar: String
+        totalPagar: String,
+        idUsuario: String,
+        idEstablecimiento: String
     ): DataPesoPollosEntity {
         return DataPesoPollosEntity(
             id = id,
@@ -150,7 +152,9 @@ object ManagerPost {
             PKPollo = PKPollo,
             totalPesoJabas = totalPesoJabas,
             totalNeto = totalNeto,
-            TotalPagar = totalPagar
+            TotalPagar = totalPagar,
+            idUsuario = idUsuario,
+            idEstablecimiento = idEstablecimiento
         )
     }
 

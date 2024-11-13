@@ -1,12 +1,10 @@
 package app.serlanventas.mobile.ui.DataBase.Entities
 
 import org.json.JSONObject
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 data class DataPesoPollosEntity(
     val id: Int,
-    val serie: String = "1234",
+    val serie: String = "",
     val fecha: String = "",
     var totalJabas: String,
     var totalPollos: String,
@@ -19,7 +17,9 @@ data class DataPesoPollosEntity(
     val PKPollo: String,
     val totalPesoJabas: String,
     val totalNeto: String,
-    val TotalPagar: String
+    val TotalPagar: String,
+    val idUsuario: String,
+    val idEstablecimiento: String
 ) {
     fun toJson(): JSONObject {
         val json = JSONObject()
@@ -37,6 +37,8 @@ data class DataPesoPollosEntity(
         json.put("_PP_totalPesoJabas", totalPesoJabas)
         json.put("_PP_totalNeto", totalNeto)
         json.put("_PP_TotalPagar", TotalPagar)
+        json.put("_PP_idUsuario", idUsuario)
+        json.put("_PP_idEstablecimiento", idEstablecimiento)
         nombreCompleto?.let {
             json.put("_PP_nombreCompleto", it)
         }

@@ -18,7 +18,7 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
 
     companion object {
         private const val DATABASE_NAME = "blueapp2.db"
-        private const val DATABASE_VERSION = 7  // Incrementamos la versión de la base de datos para reflejar el cambio
+        private const val DATABASE_VERSION = 8  // Incrementamos la versión de la base de datos para reflejar el cambio
 
         // Table names
         private const val TABLE_DETA_PESO_POLLOS = "DataDetaPesoPollos"
@@ -53,7 +53,8 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         private const val KEY_TOTAL_PESOJABAS = "totalPesoJabas"
         private const val KEY_TOTAL_NETO = "totalNeto"
         private const val KEY_TOTAL_PAGAR = "TotalPagar"
-
+        private const val KEY_DNI_USUARIO = "idUsuario"
+        private const val KEY_ID_ESTABLECIMIENTO = "idEstablecimiento"
         // Cliente Table - column names
         private const val KEY_FECHA_REGISTRO = "fechaRegistro"
 
@@ -285,6 +286,8 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
                     totalPesoJabas = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PESOJABAS)),
                     totalNeto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_NETO)),
                     TotalPagar = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PAGAR)),
+                    idUsuario = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DNI_USUARIO)),
+                    idEstablecimiento = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTABLECIMIENTO)),
                 )
                 dataList.add(data)
             } while (cursor.moveToNext())

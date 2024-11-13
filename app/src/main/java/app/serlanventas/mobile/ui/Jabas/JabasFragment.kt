@@ -2,12 +2,10 @@ package app.serlanventas.mobile.ui.Jabas
 
 import NetworkUtils
 import android.annotation.SuppressLint
-import android.app.Dialog
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.graphics.drawable.AnimatedVectorDrawable
 import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
@@ -23,9 +21,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Button
 import android.widget.EditText
-import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -38,12 +34,10 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat
 import app.serlanventas.mobile.R
 import app.serlanventas.mobile.databinding.FragmentPesosBinding
 import app.serlanventas.mobile.ui.BluetoothView.BluetoothFragment
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
-import app.serlanventas.mobile.ui.DataBase.Entities.ClienteEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.GalponEntity
@@ -71,7 +65,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
-import java.text.DecimalFormat
 
 //JabasFragment.kt // INTERACTURA CON LA UI
 class JabasFragment : Fragment(), OnItemClickListener {
@@ -118,9 +111,6 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
     private lateinit var jabasAdapter: JabasAdapter
     private val jabasList = mutableListOf<JabasItem>()
-    private lateinit var dialog: AlertDialog
-    private lateinit var botonGuardar: Button
-    private lateinit var botonCancelar: Button
     private val sharedViewModel: SharedViewModel by activityViewModels()
     private lateinit var sharedTabViewModel: TabViewModel
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
@@ -239,12 +229,16 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
                 jabasAdapter.addItem(newItem)
             }
+            calcularTotalPagar()
         }
         // Segunda condición: Procesamiento si dataPesoPollosJson no está vacío
         if (!dataPesoPollosJson.isNullOrEmpty()) {
             val dataPesoPollos = JSONObject(dataPesoPollosJson)
             distribuirDatosEnInputs(dataPesoPollos)
             toggleAcordionisGone()
+            binding.botonCliente.isEnabled = false
+            binding.textDocCli.isEnabled = false
+            binding.textNomCli.isEnabled = false
         }
 
 
@@ -691,7 +685,9 @@ class JabasFragment : Fragment(), OnItemClickListener {
                         PKPollo = binding.PrecioKilo.text.toString(),
                         totalPesoJabas = "",
                         totalNeto = "",
-                        totalPagar = ""
+                        totalPagar = "",
+                        idUsuario = "",
+                        idEstablecimiento = ""
                     )
 
                     dataPesoPollosJson = dataPesoPollos.toJson().toString()
@@ -778,12 +774,17 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 binding.inputNumeroJabas.isEnabled = true
                 binding.inputCantPollos.isEnabled = true
                 binding.inputCantPollos.setText("")
+                binding.inputCantPollos.requestFocus()
+                val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                inputMethodManager.showSoftInput(binding.inputCantPollos, InputMethodManager.SHOW_IMPLICIT)
             } else {
                 binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
                 binding.botonGuardar.isEnabled = true
                 binding.inputNumeroJabas.setText("10")
                 binding.inputCantPollos.isEnabled = false
                 binding.inputCantPollos.setText("0")
+                val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                inputMethodManager.hideSoftInputFromWindow(binding.inputCantPollos.windowToken, 0)
             }
         }
 
@@ -835,30 +836,6 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
             // Si todos los campos son válidos, agregar el nuevo item
             if (isValid) {
-                val pesoKgDouble = pesoKg.toDouble()
-                var totalAPagar: Double? = null
-
-                // Calcular el total solo si se proporciona un precio
-                if (precioKilo.isNotBlank() && precioKilo.toDoubleOrNull() != null && precioKilo.toDouble() > 0) {
-                    totalAPagar = pesoKgDouble * precioKilo.toDouble()
-
-                    // Si es con pollos y se proporciona un precio por pollo, añadir al total
-                    if (conPollos == "JABAS CON POLLOS" && binding.PrecioKilo.text.toString().isNotBlank()) {
-                        val precioPollo = binding.PrecioKilo.text.toString().toDoubleOrNull()
-                        if (precioPollo != null && precioPollo > 0) {
-                            totalAPagar += numeroPollos.toInt() * precioPollo
-                        }
-                    }
-
-                    // Actualizar el campo totalPagarPreview
-                    val df = DecimalFormat("#.##")
-                    df.minimumFractionDigits = 2
-                    binding.totalPagarPreview.setText(df.format(totalAPagar))
-                } else {
-                    // Si no se proporciona precio, limpiar el campo de total
-                    binding.totalPagarPreview.setText("")
-                }
-
                 val newItem = JabasItem(
                     id = jabasList.size + 1,
                     numeroJabas = numeroJabas.toInt(),
@@ -870,6 +847,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
                 // Limpiar los campos de entrada después de agregar el item
                 binding.inputPesoKg.text?.clear()
+                calcularTotalPagar()
+
             }
         }
 
@@ -878,13 +857,119 @@ class JabasFragment : Fragment(), OnItemClickListener {
         }
 
         binding.botonCliente.setOnClickListener {
-            // Formulario Cliente
-            modalCliente()
+            val establecimientoSeleccionado = binding.selectEstablecimiento.selectedItemPosition != 0
+            val galponSeleccionado = binding.selectGalpon.selectedItemPosition != 0
+
+            if (!establecimientoSeleccionado || !galponSeleccionado) {
+                // Si alguno no está seleccionado, mostrar un mensaje y no hacer la búsqueda
+                showCustomToast(requireContext(), "Por favor, seleccione un Establecimiento y un Galpón", "warning")
+                return@setOnClickListener
+            }
+
+            val preLoading = PreLoading(requireContext())
+            preLoading.showPreCarga()
+
+            val numeroCliente = binding.textDocCli.text.toString()
+
+            // Validar número de cliente
+            if (numeroCliente.length < 8 || numeroCliente.length > 11 || !numeroCliente.matches("[0-9]+".toRegex())) {
+                binding.textDocCli.error = "Ingrese un número válido (8-11 dígitos)"
+                preLoading.hidePreCarga()
+                return@setOnClickListener
+            }
+
+            Log.d("JabasFragment", "Cliente a Buscar: $numeroCliente")
+
+            // Verificar disponibilidad de internet
+            if (NetworkUtils.isNetworkAvailable(requireContext())) {
+                val jsonParam = JSONObject()
+                jsonParam.put("numeroDocumento", numeroCliente)
+
+                // Obtener el estado del modo
+                val isProduction = Constants.obtenerEstadoModo(requireContext())
+                // Construir la URL base según el estado del modo
+                val baseUrl = Constants.getBaseUrl(isProduction)
+
+                var baseUrlCliente = "${baseUrl}controllers/FuncionesController/buscarCliente.php"
+                // Llamar a la función BuscarCliente con la URL adecuada
+                ManagerPost.BuscarCliente(baseUrlCliente, jsonParam.toString()) { nombreCompleto ->
+                    // Actualizar la vista con el nombre del cliente
+                    binding.textNomCli.setText(nombreCompleto ?: "")
+
+                    preLoading.hidePreCarga()
+                    if (nombreCompleto.isNullOrBlank()) {
+                        showCustomToast(requireContext(), "No se encontró el cliente, Ingrese un nombre manualmente", "info")
+                        binding.textDocCli.isEnabled = true
+                        binding.textNomCli.isEnabled = true
+                        binding.botonCliente.isEnabled = true
+                    }else{
+                        binding.textDocCli.isEnabled = false
+                        binding.textNomCli.isEnabled = false
+                        binding.botonCliente.isEnabled = false
+                    }
+                }
+            } else {
+                // Si no hay conexión a internet, buscar en la base de datos local
+                val db = AppDatabase(requireContext())
+                val cliente = db.getClienteById(numeroCliente)
+
+                if (cliente != null) {
+                    // Actualizar la vista con los datos del cliente desde la base de datos
+                    binding.textNomCli.setText(cliente.nombreCompleto)
+                    preLoading.hidePreCarga()
+                } else {
+                    Toast.makeText(requireContext(), "Cliente no encontrado localmente", Toast.LENGTH_SHORT).show()
+                    preLoading.hidePreCarga()
+                }
+            }
         }
+
+        // Configuración del botón Limpiar
+        binding.botonLimpiar.setOnClickListener {
+            val builder = AlertDialog.Builder(requireContext())
+            builder.setTitle("¿Qué deseas hacer?")
+
+            // Establecer los botones en el diálogo
+            builder.setPositiveButton("Limpiar") { dialog, which ->
+                // Limpiar los campos de entrada
+                binding.textDocCli.setText("")
+                binding.textNomCli.setText("")
+                binding.textDocCli.isEnabled = true
+                binding.textNomCli.isEnabled = true
+                binding.botonCliente.isEnabled = true
+
+                // Colocar el foco en el campo Número de Documento
+                binding.textDocCli.requestFocus()
+
+                // Abrir el teclado
+                Handler(Looper.getMainLooper()).postDelayed({
+                    val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                    inputMethodManager.showSoftInput(binding.textDocCli, InputMethodManager.SHOW_IMPLICIT)
+                }, 100)
+            }
+
+            builder.setNeutralButton("Editar") { dialog, which ->
+                // Habilitar solo el campo de Razón Social (Nombre)
+                binding.textNomCli.isEnabled = true
+            }
+
+            builder.setNegativeButton("Cancelar") { dialog, which ->
+                // Cerrar el diálogo sin realizar ninguna acción
+                dialog.dismiss()
+            }
+
+            // Crear y mostrar el diálogo
+            val dialog = builder.create()
+            dialog.show()
+        }
+
 
         binding.botonEnviar.setOnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
                 showLoading()
+                val sharedPreferences = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                val dni = sharedPreferences.getString("dni", "") ?: ""
+                val idEsta = sharedPreferences.getString("idEstablecimiento", "") ?: ""
 
                 val dataDetaPesoPollos = ManagerPost.captureData(jabasList)
                 val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
@@ -905,7 +990,9 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     PKPollo = binding.PrecioKilo.text.toString(),
                     totalPesoJabas = "",
                     totalNeto = "",
-                    totalPagar = ""
+                    totalPagar = "",
+                    idUsuario = dni,
+                    idEstablecimiento = idEsta
                 )
                 var idEstablecimiento = binding.selectEstablecimiento.selectedItemPosition
                 var precio =  dataPesoPollos.PKPollo.toDoubleOrNull()
@@ -934,9 +1021,6 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 }else if (precio == null || dataPesoPollos.PKPollo.isBlank()) {
                     binding.PrecioKilo.error = "¡Para calcular el Total a Pagar necesitamos saber el precio por kilo!"
                     fetchData(500)
-//                }else if (precio <= 0) {
-//                    binding.PrecioKilo.error = "¡El precio por kilo no puede ser 0!"
-//                    fetchData(500)
                 }else{
                     toggleAcordionnotGone()
                     Log.d("JabasFragment", "$dataDetaPesoPollos")
@@ -950,7 +1034,6 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
                     navegationTrue = true
                     findNavController().navigate(R.id.nav_initPreliminar)
-//                    sharedTabViewModel.setNavigateToTab(2)
                 }
             }
         }
@@ -958,34 +1041,32 @@ class JabasFragment : Fragment(), OnItemClickListener {
     }
 
     private fun calcularTotalPagar() {
-        val pesoKg = binding.inputPesoKg.text.toString()
-        val precioKilo = binding.PrecioKilo.text.toString()
-        val numeroPollos = binding.inputCantPollos.text.toString()
-        val conPollos = if (binding.checkboxConPollos.isChecked) "JABAS CON POLLOS" else "JABAS SIN POLLOS"
+        val precioKiloText = binding.PrecioKilo.text.toString()
 
-        var totalAPagar: Double? = null
+        if (precioKiloText.isNotBlank()) {
+            val precioKilo = precioKiloText.toDoubleOrNull()
 
-        if (pesoKg.isNotBlank() && precioKilo.isNotBlank()) {
-            val pesoKgDouble = pesoKg.toDoubleOrNull()
-            val precioKiloDouble = precioKilo.toDoubleOrNull()
+            if (precioKilo != null) {
+                var totalPesoPollos = 0.0
+                var totalPesoJabas = 0.0
 
-            if (pesoKgDouble != null && precioKiloDouble != null && pesoKgDouble > 0 && precioKiloDouble > 0) {
-                totalAPagar = pesoKgDouble * precioKiloDouble
-
-                if (conPollos == "JABAS CON POLLOS" && numeroPollos.isNotBlank()) {
-                    val numeroPallosInt = numeroPollos.toIntOrNull()
-                    val precioPollo = binding.PrecioKilo.text.toString().toDoubleOrNull()
-                    if (numeroPallosInt != null && precioPollo != null && numeroPallosInt > 0 && precioPollo > 0) {
-                        totalAPagar += numeroPallosInt * precioPollo
+                jabasList.forEach { jaba ->
+                    if (jaba.conPollos == "JABAS CON POLLOS") {
+                        totalPesoPollos += jaba.pesoKg
+                    } else {
+                        totalPesoJabas += jaba.pesoKg
                     }
                 }
 
-                binding.totalPagarPreview.setText(String.format("%.2f", totalAPagar))
+                val neto = totalPesoPollos - totalPesoJabas
+                val TotalPagar = neto * precioKilo
+
+                binding.totalPagarPreview.setText(String.format("%.2f", TotalPagar))
             } else {
-                binding.totalPagarPreview.setText("")
+                binding.totalPagarPreview.setText("0.00")
             }
         } else {
-            binding.totalPagarPreview.setText("")
+            binding.totalPagarPreview.setText("0.00")
         }
     }
 
@@ -1188,14 +1269,18 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.idListPeso.text = ""
         idGalpoListaPesos = ""
         binding.inputPesoKg.text?.clear()
-        binding.textDocCli.text = ""
-        binding.textNomCli.text = ""
+        binding.textDocCli.setText("")
+        binding.textNomCli.setText("")
+        binding.textDocCli.isEnabled = true
+        binding.textNomCli.isEnabled = true
+        binding.totalPagarPreview.setText("")
         binding.checkboxConPollos.isChecked = false
         binding.botonEnviar.isEnabled = false
         binding.botonEnviar.backgroundTintList  = ContextCompat.getColorStateList(requireContext(), R.color.gray)
         binding.botonEnviar.setImageResource(R.drawable.null_24)
         binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
         binding.botonGuardar.isEnabled = true
+        binding.botonCliente.isEnabled = true
 
         sharedViewModel.setDataPesoPollosJson("")
         sharedViewModel.setDataDetaPesoPollosJson("")
@@ -1245,251 +1330,9 @@ class JabasFragment : Fragment(), OnItemClickListener {
         dialog.show()
     }
 
-    private fun modalCliente() {
-        // Inflar el layout del modal
-        val dialogView = layoutInflater.inflate(R.layout.modal_cliente, null)
-
-        // Configurar el AlertDialog
-        dialog = configurarDialogo(dialogView)
-
-        // Obtener referencias a los elementos de entrada
-        val inputNumeroCliente = dialogView.findViewById<EditText>(R.id.inputNumeroCliente)
-        val inputNombreCliente = dialogView.findViewById<EditText>(R.id.inputNombreCliente)
-
-        // Obtener referencia al botón Buscar
-        val botonBuscar = dialogView.findViewById<Button>(R.id.botonBuscar)
-
-        // Configurar el botón de búsqueda
-        configurarBotonBuscar(botonBuscar, inputNumeroCliente, inputNombreCliente)
-
-        // Obtener referencias a los botones Guardar y Cancelar
-        botonGuardar = dialogView.findViewById(R.id.botonGuardar)
-        botonCancelar = dialogView.findViewById(R.id.botonCancelar)
-        botonGuardar.isEnabled = false
-        // Obtener textos de los TextViews y verificar si están vacíos o nulos
-        val numeroDocumentoTextView = binding.textDocCli.text?.toString()?.trim()
-        val apellidoNombreTextView = binding.textNomCli.text?.toString()?.trim()
-
-        // Auto completar campos si hay datos disponibles en los TextViews
-        val numeroDocumento = numeroDocumentoTextView ?: ""
-        val apellidoNombre = apellidoNombreTextView ?: ""
-
-        // Verificar si hay datos disponibles para auto completar
-        if (numeroDocumento.isNotBlank() && apellidoNombre.isNotBlank()) {
-            inputNumeroCliente.setText(numeroDocumento)
-            inputNombreCliente.setText(apellidoNombre)
-        }
-
-        // Configurar listeners de los botones
-        configurarBotones(inputNumeroCliente, inputNombreCliente)
-
-        val textWatcher = object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-                // No se necesita implementar
-            }
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                // No se necesita implementar
-            }
-            override fun afterTextChanged(s: Editable?) {
-                // Verificar si inputNumeroCliente tiene exactamente 8 o 11 dígitos
-                val numeroClienteValido = inputNumeroCliente.text.toString().length == 8 ||
-                        inputNumeroCliente.text.toString().length == 11
-
-                // Verificar si inputNombreCliente no está vacío
-                val nombreClienteValido = inputNombreCliente.text.toString().length >= 5
-
-                // Habilitar o deshabilitar el botón Guardar en función de las condiciones
-                botonGuardar.isEnabled = numeroClienteValido && nombreClienteValido
-            }
-        }
-        inputNumeroCliente.addTextChangedListener(textWatcher)
-        inputNombreCliente.addTextChangedListener(textWatcher)
-
-        // Mostrar el AlertDialog
-        dialog.show()
-
-        // Personalización adicional para mantener el diálogo abierto al hacer clic fuera del modal
-        dialog.setCanceledOnTouchOutside(false) // Evitar el cierre al hacer clic fuera del modal
-    }
-
-
-    private fun configurarDialogo(dialogView: View): AlertDialog {
-        return AlertDialog.Builder(requireContext())
-            .setTitle("Datos del Cliente")
-            .setView(dialogView)
-            .setCancelable(false) // No se puede cerrar al hacer clic fuera del modal
-            .create()
-    }
-
-    // Configurar el botón de búsqueda JabasFragment.kt
-    private fun configurarBotonBuscar(botonBuscar: Button, inputNumeroCliente: EditText, dialogView: View) {
-        botonBuscar.setOnClickListener {
-            val preLoading = PreLoading(requireContext())
-            preLoading.showPreCarga()
-
-            val numeroCliente = inputNumeroCliente.text.toString()
-
-            // Validar número de cliente
-            if (numeroCliente.length < 8 || numeroCliente.length > 11 || !numeroCliente.matches("[0-9]+".toRegex())) {
-                inputNumeroCliente.error = "Ingrese un número válido (8-11 dígitos)"
-                preLoading.hidePreCarga()
-                return@setOnClickListener
-            }
-
-            Log.d("JabasFragment", "Cliente a Buscar: $numeroCliente")
-
-            // Verificar disponibilidad de internet
-            if (NetworkUtils.isNetworkAvailable(requireContext())) {
-                val jsonParam = JSONObject()
-                jsonParam.put("numeroDocumento", numeroCliente)
-
-                // Obtener el estado del modo
-                val isProduction = Constants.obtenerEstadoModo(requireContext())
-                // Construir la URL base según el estado del modo
-                val baseUrl = Constants.getBaseUrl(isProduction)
-
-                var baseUrlCliente = "${baseUrl}controllers/FuncionesController/buscarCliente.php"
-                // Llamar a la función BuscarCliente con la URL adecuada
-                ManagerPost.BuscarCliente(baseUrlCliente, jsonParam.toString()) { nombreCompleto ->
-                    val inputNombreCliente = dialogView.findViewById<EditText>(R.id.inputNombreCliente)
-                    inputNombreCliente?.setText(nombreCompleto ?: "")
-                    preLoading.hidePreCarga()
-                    if (nombreCompleto.isNullOrBlank()) {
-                        botonGuardar.isEnabled = false
-                        showCustomToast(requireContext(), "No se encontró el cliente, Ingrese un nombre manualmente", "info")
-                    } else {
-                        botonGuardar.isEnabled = true
-                    }
-                }
-            } else {
-                val db = AppDatabase(requireContext())
-                val cliente = db.getClienteById(numeroCliente)
-
-                if (cliente != null) {
-                    val inputNombreCliente = dialogView.findViewById<EditText>(R.id.inputNombreCliente)
-                    inputNombreCliente.setText(cliente.nombreCompleto)
-                    preLoading.hidePreCarga()
-                    botonGuardar.isEnabled = true
-
-                } else {
-                    Toast.makeText(requireContext(), "Cliente no encontrado localmente", Toast.LENGTH_SHORT).show()
-                    preLoading.hidePreCarga()
-                }
-            }
-        }
-    }
-
-    private fun configurarBotones(inputNumeroCliente: EditText, inputNombreCliente: EditText) {
-        // Configurar el botón "Guardar"
-        botonGuardar.setOnClickListener {
-            guardarCli(inputNumeroCliente, inputNombreCliente)
-        }
-
-        // Configurar el botón "Cancelar"
-        botonCancelar.setOnClickListener {
-            cancelarCli()
-        }
-    }
-
-    private fun guardarCli(inputNumeroCliente: EditText, inputNombreCliente: EditText) {
-        val numeroCliente = inputNumeroCliente.text.toString()
-        val nombreCliente = inputNombreCliente.text.toString()
-
-
-        // Validar que el documento sea RUC (11 dígitos) o DNI (8 dígitos)
-        if (numeroCliente.length != 8 && numeroCliente.length != 11) {
-            inputNumeroCliente.error = "El documento debe ser un DNI (8 dígitos) o RUC (11 dígitos)"
-            return
-        }
-
-        // Validar que los campos no estén vacíos
-        if (numeroCliente.isBlank()) {
-            inputNumeroCliente.error = "Ingrese el número de cliente"
-            return
-        }
-        if (nombreCliente.isBlank()) {
-            inputNombreCliente.error = "Ingrese el nombre del cliente"
-            return
-        }
-        if (!nombreCliente.matches("[A-ZÑÁÉÍÓÚÜ\\s.]+".toRegex())) {
-            inputNombreCliente.error = "Ingrese solo letras"
-            return
-        }
-
-        val db = AppDatabase(requireContext())
-
-        val existingCliente = db.getClienteById(numeroCliente)
-        if (existingCliente == null){
-            val nuevoCliente = ClienteEntity(
-                id = 0,
-                numeroDocCliente = numeroCliente,
-                nombreCompleto = nombreCliente,
-                fechaRegistro = ""
-            )
-            val insertResult = db.insertCliente(nuevoCliente)
-            if (insertResult != -1L) {
-                Toast.makeText(
-                    requireContext(),
-                    "Cliente guardado exitosamente",
-                    Toast.LENGTH_SHORT
-                ).show()
-            } else {
-                Toast.makeText(requireContext(), "Error al guardar el cliente", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        // Mostrar los datos en el Logcat al presionar "Guardar"
-        Log.d("JabasFragment", "Guardado - Número Cliente: $numeroCliente")
-        Log.d("JabasFragment", "Guardado - Nombre Cliente: $nombreCliente")
-
-        // Mostrar los datos en los TextViews
-        binding.textDocCli.text = "$numeroCliente"
-        binding.textNomCli.text = "$nombreCliente"
-
-        dialog.dismiss() // Cerrar el modal después de cancelar
-    }
-
-    private fun cancelarCli() {
-        val inputNumeroCliente = dialog.findViewById<EditText>(R.id.inputNumeroCliente)
-        val inputNombreCliente = dialog.findViewById<EditText>(R.id.inputNombreCliente)
-
-        // Limpiar campos al presionar "Cancelar"
-        inputNumeroCliente?.text?.clear()
-        inputNombreCliente?.text?.clear()
-
-        dialog.dismiss() // Cerrar el modal después de cancelar
-    }
-
-    fun showPreCarga(context: Context) {
-        val dialogPreCarga = Dialog(context)
-        dialogPreCarga.apply {
-            setContentView(R.layout.layout_barra_desplazable)
-            window?.setBackgroundDrawableResource(android.R.color.transparent)
-            setCancelable(false)
-
-            val iconoCarga = findViewById<ImageView>(R.id.iconoCarga)
-            val textoCarga = findViewById<TextView>(R.id.textoCarga)
-
-            val drawable = ContextCompat.getDrawable(context, R.drawable.ic_loading_anim)
-            val rocketAnimation = when (drawable) {
-                is AnimatedVectorDrawableCompat -> drawable as AnimatedVectorDrawable
-                is AnimatedVectorDrawable -> drawable
-                else -> throw IllegalArgumentException("Unsupported drawable type")
-            }
-            iconoCarga.setImageDrawable(rocketAnimation)
-
-            rocketAnimation.start()
-
-            textoCarga.text = "Cargando..."
-
-            show()
-        }
-    }
-
     private fun distribuirDatosEnInputs(dataPesoPollos: JSONObject) {
-        binding.textDocCli.text = dataPesoPollos.optString("_PP_docCliente", "")
-        binding.textNomCli.text = dataPesoPollos.optString("_PP_nombreCompleto", "")
+        binding.textDocCli.setText(dataPesoPollos.optString("_PP_docCliente", ""))
+        binding.textNomCli.setText(dataPesoPollos.optString("_PP_nombreCompleto", ""))
         binding.PrecioKilo.setText(dataPesoPollos.optString("_PP_PKPollo", ""))
     }
 
@@ -1665,7 +1508,9 @@ class JabasFragment : Fragment(), OnItemClickListener {
                         PKPollo = binding.PrecioKilo.text.toString(),
                         totalPesoJabas = "",
                         totalNeto = "",
-                        totalPagar = ""
+                        totalPagar = "",
+                        idUsuario = "",
+                        idEstablecimiento = ""
                     )
 
                     dataPesoPollosJson = dataPesoPollos.toJson().toString()
@@ -1715,7 +1560,9 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 PKPollo = binding.PrecioKilo.text.toString(),
                 totalPesoJabas = "",
                 totalNeto = "",
-                totalPagar = ""
+                totalPagar = "",
+                idUsuario = "",
+                idEstablecimiento = ""
             )
 
             dataPesoPollosJson = dataPesoPollos.toJson().toString()
