@@ -22,7 +22,6 @@ import android.view.animation.LinearInterpolator
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -215,7 +214,6 @@ class UpdateManager(private val context: Context) {
     private var currentProgress = 0
     private var onDownloadComplete: BroadcastReceiver? = null
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun downloadUpdate(versionInfo: VersionInfo) {
         cleanDownloadFolder()
         showProgressDialog()
