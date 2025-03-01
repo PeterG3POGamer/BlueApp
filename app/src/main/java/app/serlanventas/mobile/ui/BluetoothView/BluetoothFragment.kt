@@ -3,6 +3,7 @@ package app.serlanventas.mobile.ui.BluetoothView
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
@@ -75,8 +76,6 @@ class BluetoothFragment : DialogFragment() {
     private lateinit var logger: Logger
 
     private lateinit var bluetoothAdapter: BluetoothAdapter
-//    private val bluetoothDevices = mutableListOf<BluetoothDevice>()
-//    private lateinit var devicesAdapter: DevicesAdapter
 
     private var bluetooth: Bluetooth? = null
     private var devicesAdapter: DeviceListAdapter? = null
@@ -100,14 +99,6 @@ class BluetoothFragment : DialogFragment() {
         )
     }
 
-    private val requestMultiplePermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-        if (permissions.all { it.value }) {
-            initializeBluetoothAdapterAndServer()
-        } else {
-            showToast("Se requieren permisos para usar Bluetooth")
-        }
-    }
-
     private val requestEnableBluetooth = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == AppCompatActivity.RESULT_OK) {
             initializeBluetoothAdapterAndServer()
@@ -128,11 +119,9 @@ class BluetoothFragment : DialogFragment() {
                             devicesAdapter?.notifyDataSetChanged()
                         }
                     }
-                    // Ocultar ProgressBar cuando se encuentra un dispositivo
                     binding.progressBar.visibility = View.GONE
                 }
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
-                    // Ocultar ProgressBar cuando finaliza la búsqueda
                     binding.progressBar.visibility = View.GONE
                     showToast("Búsqueda de dispositivos finalizada")
                 }
@@ -140,9 +129,11 @@ class BluetoothFragment : DialogFragment() {
                     when (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {
                         BluetoothAdapter.STATE_OFF -> {
                             showToast("Bluetooth desactivado")
+                            updateUIForBluetoothOff()
                         }
                         BluetoothAdapter.STATE_ON -> {
                             showToast("Bluetooth activado")
+                            updateUIForBluetoothOn()
                             startDiscovery()
                         }
                     }
@@ -166,6 +157,7 @@ class BluetoothFragment : DialogFragment() {
     private lateinit var tabViewModel: TabViewModel
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var checkProgressBarRunnable: Runnable
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -204,7 +196,6 @@ class BluetoothFragment : DialogFragment() {
         binding.progressBar.visibility = View.VISIBLE
 
         setupRecyclerView()
-        checkBluetoothPermissions()
         setupBluetoothCallbacks()
         setupUI()
     }
@@ -277,7 +268,7 @@ class BluetoothFragment : DialogFragment() {
                 showToast("Conectado a ${device.name}")
                 Log.d(TAG, "Device connected: ${device.name}")
                 logger.log("setDeviceCallback: Device connected: ${device.name}")
-                updateUIForConnectedState()
+                updateUIForBluetoothOn()
             }
 
             @SuppressLint("MissingPermission")
@@ -285,7 +276,7 @@ class BluetoothFragment : DialogFragment() {
                 showToast("Desconectado de ${device.name}")
                 Log.d(TAG, "Device disconnected: ${device.name}. Message: $message")
                 logger.log("setDeviceCallback: Device disconnected: ${device.name}. Message: $message")
-                updateUIForDisconnectedState()
+                updateUIForBluetoothOff()
             }
 
             override fun onMessage(message: ByteArray) {
@@ -325,22 +316,19 @@ class BluetoothFragment : DialogFragment() {
             toggleBluetooth()
         }
 
-//        binding.listDevices.setOnItemClickListener { _, _, position, _ ->
-//            val device = bluetoothDevices[position]
-//            if (device != null) {
-//                connectToDevice(device)
-//            }
-//        }
-
         // Verificar el estado del Bluetooth al configurar la UI
         updateUIForBluetoothState()
     }
 
     private fun checkBluetoothPermissions() {
-        if (hasBluetoothPermissions()) {
-            initializeBluetoothAdapterAndServer()
+        if (isAdded && context != null) {
+            if (hasBluetoothPermissions()) {
+                initializeBluetoothAdapterAndServer()
+            } else {
+                requestBluetoothPermissions()
+            }
         } else {
-            requestMultiplePermissions.launch(bluetoothPermissions)
+            Log.e("BluetoothFragment", "Fragmento no adjunto a una actividad")
         }
     }
 
@@ -350,6 +338,46 @@ class BluetoothFragment : DialogFragment() {
             ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
         }
     }
+
+    private val requestMultiplePermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        if (permissions.all { it.value }) {
+            initializeBluetoothAdapterAndServer()
+        } else {
+            showToast("Se requieren permisos para usar Bluetooth")
+        }
+    }
+
+    private fun requestBluetoothPermissions() {
+        if (isAdded && context != null) {
+            if (!hasBluetoothPermissions()) {
+                // Mostrar un diálogo explicando por qué se necesitan los permisos de Bluetooth
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Permisos de Bluetooth Requeridos")
+                    .setMessage("Esta aplicación necesita permisos de Bluetooth para funcionar correctamente. ¿Desea concederlos?")
+                    .setPositiveButton("Conceder") { _, _ ->
+                        // Solicitar permisos de Bluetooth
+                        requestMultiplePermissions.launch(bluetoothPermissions)
+                    }
+                    .setNegativeButton("Cancelar") { dialog, _ ->
+                        // Manejar la negativa del usuario
+                        showToast("Permisos de Bluetooth no concedidos")
+                        dialog?.dismiss()
+                    }
+                    .setOnDismissListener {
+                        // Manejar el cierre del diálogo
+                        showToast("Diálogo de permisos cerrado")
+                    }
+                    .setCancelable(false)
+                    .show()
+            } else {
+                // Permisos ya concedidos, proceder con la inicialización de Bluetooth
+                initializeBluetoothAdapterAndServer()
+            }
+        } else {
+            Log.e("BluetoothFragment", "Fragmento no adjunto a una actividad")
+        }
+    }
+
 
     private fun initializeBluetoothAdapterAndServer() {
         val bluetoothManager = requireActivity().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
@@ -375,7 +403,7 @@ class BluetoothFragment : DialogFragment() {
                 handleReceivedMessage(message)
             }
             bluetoothConnectionService.startServer()
-        startDiscovery()
+            startDiscovery()
         }
     }
 
@@ -516,20 +544,37 @@ class BluetoothFragment : DialogFragment() {
     }
 
     private fun toggleBluetooth() {
-        if (bluetooth!!.isEnabled) {
-            bluetooth!!.disable()
-        } else {
-            bluetooth!!.enable()
+        if (isAdded && context != null) {
+            if (bluetooth!!.isEnabled) {
+                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+                    bluetooth!!.disable()
+                } else {
+                    requestBluetoothPermissions()
+                }
+            } else {
+                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+                    bluetooth!!.enable()
+                } else {
+                    requestBluetoothPermissions()
+                }
+            }
         }
     }
 
+
     private fun updateUIForBluetoothState() {
-        if (bluetooth!!.isEnabled) {
-            updateUIForBluetoothOn()
+        if (hasBluetoothPermissions()) {
+            if (bluetooth!!.isEnabled) {
+                updateUIForBluetoothOn()
+            } else {
+                updateUIForBluetoothOff()
+            }
         } else {
-            updateUIForBluetoothOff()
+            // Si no se tienen los permisos, solicitar permisos
+            requestBluetoothPermissions()
         }
     }
+
 
     private fun updateUIForBluetoothOn() {
         if (isAdded) {
@@ -547,16 +592,6 @@ class BluetoothFragment : DialogFragment() {
             bluetoothDevices.clear()
             devicesAdapter?.notifyDataSetChanged()
         }
-    }
-
-    private fun updateUIForConnectedState() {
-        binding.btnScan.isEnabled = false
-        // Aquí puedes agregar más cambios en la UI para el estado conectado
-    }
-
-    private fun updateUIForDisconnectedState() {
-        binding.btnScan.isEnabled = true
-        // Aquí puedes agregar más cambios en la UI para el estado desconectado
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -595,21 +630,31 @@ class BluetoothFragment : DialogFragment() {
 
     override fun onStart() {
         super.onStart()
-        var dialog = dialog
+        checkGPSStatus()
+        // Usamos un Handler para agregar un retraso
+        val dialog = dialog
         if (dialog != null) {
             val displayMetrics = DisplayMetrics()
             dialog.window?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
-            val heightInDp = 600 // Aquí pones el alto en dp que deseas
+            val heightInDp = 600
             val heightInPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, heightInDp.toFloat(), displayMetrics).toInt()
 
             val layoutParams = dialog.window?.attributes
-            layoutParams?.width = ViewGroup.LayoutParams.WRAP_CONTENT  // Mantener el ancho como está
-            layoutParams?.height = heightInPx // Ajustar el alto en píxeles
+            layoutParams?.width = ViewGroup.LayoutParams.WRAP_CONTENT
+            layoutParams?.height = heightInPx
             dialog.window?.attributes = layoutParams
+
+            // Mostrar el diálogo después de ajustar sus atributos y verificar permisos
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (hasBluetoothPermissions()) {
+                    dialog.show()
+                }
+            }, 2000) // Retraso de 2 segundos (2000 ms)
         }
+
         val closeButton: ImageButton? = view?.findViewById(R.id.btn_close_modal)
         closeButton?.setOnClickListener {
-            dialog?.dismiss()// Cierra el diálogo
+            dialog?.dismiss() // Cierra el diálogo
         }
     }
 }

@@ -1,5 +1,6 @@
 package app.serlanventas.mobile
 
+import NetworkUtils
 import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.AlertDialog
@@ -32,7 +33,9 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import app.serlanventas.mobile.VersionControl.UpdateChecker
 import app.serlanventas.mobile.databinding.ActivityMainBinding
+import app.serlanventas.mobile.ui.DataSyncManager.DataSyncManager
 import app.serlanventas.mobile.ui.Jabas.ManagerPost
+import app.serlanventas.mobile.ui.Jabas.ManagerPost.showCustomToast
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice
 import app.serlanventas.mobile.ui.Utilidades.Constants
 import app.serlanventas.mobile.ui.ViewModel.SharedViewModel
@@ -63,13 +66,14 @@ class MainActivity : AppCompatActivity() {
         performLogout()
     }
     private var logoutTime: Long = 0L
-//    private val INACTIVITY_TIMEOUT: Long = 10000
+
+    //    private val INACTIVITY_TIMEOUT: Long = 10000
     private val INACTIVITY_TIMEOUT: Long = 60 * 60 * 1000
     private var hasLoggedExpiration = false
     private val logHandler = Handler(Looper.getMainLooper())
     private val logRunnable = object : Runnable {
         override fun run() {
-            if (hasLoggedExpiration == false){
+            if (hasLoggedExpiration == false) {
                 logRemainingTime()
                 logHandler.postDelayed(this, 1000) // Ejecutar nuevamente después de 1 segundo
             }
@@ -82,6 +86,73 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        val isProduction = Constants.obtenerEstadoModo(this)
+        val baseUrl = Constants.getBaseUrl(isProduction)
+        val dataSyncManager = DataSyncManager(this)
+
+        // Primero, verificar si es necesario sincronizar los datos
+        if (NetworkUtils.isNetworkAvailable(this)) {
+            dataSyncManager.sincronizarData(
+                baseUrl,
+                callback = { success ->
+                    if (!success) {
+                        // Error al verificar los datos
+                        dataSyncManager.showErrorDialog { retry ->
+                            if (retry) {
+                                dataSyncManager.sincronizarData(baseUrl,
+                                    callback = { successRetry ->
+                                        if (successRetry) {
+                                            dataSyncManager.showSuccessDialog()
+                                        } else {
+                                            dataSyncManager.showErrorDialog(null)
+                                        }
+                                    },
+                                    isSincronizar = { _ -> }
+                                )
+                            }
+                        }
+                    }
+                },
+                isSincronizar = { necesitaSincronizar ->
+                    if (necesitaSincronizar) {
+                        // Mostrar el diálogo solo si es necesario sincronizar
+                        dataSyncManager.showSyncConfirmationDialog { shouldSync ->
+                            if (shouldSync) {
+                                dataSyncManager.sincronizarData(baseUrl,
+                                    callback = { success ->
+                                        if (success) {
+                                            dataSyncManager.showSuccessDialog()
+                                        } else {
+                                            dataSyncManager.showErrorDialog { retry ->
+                                                if (retry) {
+                                                    dataSyncManager.sincronizarData(baseUrl,
+                                                        callback = { successRetry ->
+                                                            if (successRetry) {
+                                                                dataSyncManager.showSuccessDialog()
+                                                            } else {
+                                                                dataSyncManager.showErrorDialog(null)
+                                                            }
+                                                        },
+                                                        isSincronizar = { _ -> }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    },
+                                    isSincronizar = { _ -> }
+                                )
+                            } else {
+                                showCustomToast(this, "No se sincronizarán los datos.", "info")
+                            }
+                        }
+                    } else {
+                        // No es necesario sincronizar, mostrar mensaje informativo
+                        showCustomToast(this, "No hay datos que sincronizar.", "success")
+                    }
+                }
+            )
+        }
 
         setupExceptionHandler()
 
@@ -134,6 +205,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_initReporteGuias,
                 R.id.nav_initNucleoGalpon,
                 R.id.nav_initReporteVentasApp,
+                R.id.nav_initLocalData,
                 R.id.nav_impresoraConfig
             ),
             drawerLayout
@@ -176,6 +248,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_initReporteGuias -> navController.navigate(R.id.nav_initReporteGuias)
                 R.id.nav_initNucleoGalpon -> navController.navigate(R.id.nav_initNucleoGalpon)
                 R.id.nav_initReporteVentasApp -> navController.navigate(R.id.nav_initReporteVentasApp)
+                R.id.nav_initLocalData -> navController.navigate(R.id.nav_initLocalData)
                 R.id.nav_impresoraConfig -> navController.navigate(R.id.nav_impresoraConfig)
                 else -> return@setNavigationItemSelectedListener false
             }
@@ -231,9 +304,6 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-
-        // Configura el contenido y el manejo de la barra lateral aquí...
-
         resetInactivityTimer()
     }
 
@@ -270,6 +340,7 @@ class MainActivity : AppCompatActivity() {
             handler.postDelayed(runnable, INACTIVITY_TIMEOUT)
         }
     }
+
     @SuppressLint("MissingPermission", "ObsoleteSdkInt")
     private fun resetLogoutTimer() {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -285,17 +356,29 @@ class MainActivity : AppCompatActivity() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
             } else {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
             }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                triggerTime,
+                pendingIntent
+            )
         } else {
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
         }
 
-        Log.d("MainActivity", "Temporizador de logout reiniciado")
+//        Log.d("MainActivity", "Temporizador de logout reiniciado")
     }
 
     @SuppressLint("NewApi")
@@ -326,7 +409,7 @@ class MainActivity : AppCompatActivity() {
                         dialog.dismiss()
                     }
                     .show()
-            }else{
+            } else {
                 downloadUpdate()
             }
         } else {
@@ -351,7 +434,7 @@ class MainActivity : AppCompatActivity() {
             val remainingMinutes = remainingTime / (1000 * 60) % 60
             val remainingHours = remainingTime / (1000 * 60 * 60)
 
-            Log.d("InactivityTimer", "Tiempo restante: $remainingHours horas, $remainingMinutes minutos, $remainingSeconds segundos")
+//            Log.d("InactivityTimer", "Tiempo restante: $remainingHours horas, $remainingMinutes minutos, $remainingSeconds segundos")
 
             // Resetear la bandera si el tiempo restante es positivo
             hasLoggedExpiration = false
@@ -405,12 +488,16 @@ class MainActivity : AppCompatActivity() {
         val packageManager = context.packageManager
         val packageName = context.packageName
         val versionName = try {
-            val packageInfo = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
-            } else {
-                @Suppress("DEPRECATION")
-                packageManager.getPackageInfo(packageName, 0)
-            }
+            val packageInfo =
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                    packageManager.getPackageInfo(
+                        packageName,
+                        PackageManager.PackageInfoFlags.of(0)
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    packageManager.getPackageInfo(packageName, 0)
+                }
             packageInfo.versionName
         } catch (e: PackageManager.NameNotFoundException) {
             "Desconocida"
@@ -438,8 +525,12 @@ class MainActivity : AppCompatActivity() {
             R.id.nav_initReportePeso -> menu.findItem(R.id.nav_initReportePeso).isChecked = true
             R.id.nav_initReporteGuias -> menu.findItem(R.id.nav_initReporteGuias).isChecked = true
             R.id.nav_initNucleoGalpon -> menu.findItem(R.id.nav_initNucleoGalpon).isChecked = true
-            R.id.nav_initReporteVentasApp -> menu.findItem(R.id.nav_initReporteVentasApp).isChecked = true
-            R.id.nav_impresoraConfig -> menu.findItem(R.id.nav_impresoraConfig).isChecked = true
+            R.id.nav_initReporteVentasApp -> menu.findItem(R.id.nav_initReporteVentasApp).isChecked =
+                true
+
+            R.id.nav_initLocalData -> menu.findItem(R.id.nav_initLocalData).isChecked = true
+            R.id.nav_initClientes -> menu.findItem(R.id.nav_initLocalData).isChecked = true
+            R.id.nav_impresoraConfig -> menu.findItem(R.id.nav_initLocalData).isChecked = true
         }
     }
 
@@ -456,9 +547,9 @@ class MainActivity : AppCompatActivity() {
         val textViewNameRole: TextView? = headerView.findViewById(R.id.userRole)
         val swMode: TextView? = headerView.findViewById(R.id.modeSwitch)
 
-        if (idRol == 3){
+        if (idRol == 3) {
             swMode?.visibility = View.VISIBLE
-        }else{
+        } else {
             swMode?.visibility = View.GONE
         }
         textViewNameUser?.text = nameUser
@@ -480,13 +571,14 @@ class MainActivity : AppCompatActivity() {
                 drawerToggle.onOptionsItemSelected(item)
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
 
     private fun restartActivity() {
-        val idPesoShared = sharedViewModel?.getIdListPesos()?: 0
-        if (idPesoShared != 0){
+        val idPesoShared = sharedViewModel?.getIdListPesos() ?: 0
+        if (idPesoShared != 0) {
             updatePesoStatus(idPesoShared, "NotUsed")
         }
         val isProduction = Constants.obtenerEstadoModo(this)
@@ -505,8 +597,9 @@ class MainActivity : AppCompatActivity() {
         finish() // Cerrar la actividad actual
         startActivity(intent) // Iniciar una nueva instancia de la actividad
     }
-    fun updatePesoStatus(id: Int, status: String){
-        if (id != 0){
+
+    fun updatePesoStatus(id: Int, status: String) {
+        if (id != 0) {
             val idDevice = getAddressMacDivice.getDeviceId(this)
             ManagerPost.setStatusUsed(this, id, "$status", idDevice) { success ->
                 if (!success) {
@@ -530,9 +623,9 @@ class MainActivity : AppCompatActivity() {
             } else {
                 @Suppress("DEPRECATION")
                 (File(
-        Environment.getExternalStorageDirectory(),
-        "files/crashLogs/$filename"
-    ))
+                    Environment.getExternalStorageDirectory(),
+                    "files/crashLogs/$filename"
+                ))
             }
 
             try {

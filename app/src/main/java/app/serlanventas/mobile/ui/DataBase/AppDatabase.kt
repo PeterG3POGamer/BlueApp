@@ -7,18 +7,22 @@ import android.database.sqlite.SQLiteOpenHelper
 import app.serlanventas.mobile.ui.DataBase.Entities.ClienteEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
+import app.serlanventas.mobile.ui.DataBase.Entities.GalponEntity
+import app.serlanventas.mobile.ui.DataBase.Entities.NucleoEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.PesosEntity
+import app.serlanventas.mobile.ui.DataBase.Entities.UsuarioEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.impresoraEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.pesoUsedEntity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+class AppDatabase(context: Context) :
+    SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        private const val DATABASE_NAME = "blueapp2.db"
-        private const val DATABASE_VERSION = 8  // Incrementamos la versión de la base de datos para reflejar el cambio
+        private const val DATABASE_NAME = "SerlanVentas.db"
+        private const val DATABASE_VERSION = 1
 
         // Table names
         private const val TABLE_DETA_PESO_POLLOS = "DataDetaPesoPollos"
@@ -27,6 +31,9 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         private const val TABLE_PESOS = "ListPesos"
         private const val TABLE_IMPRESORA = "ImpresoraConfig"
         private const val TABLE_USED_PESOS = "PesoUsado"
+        private const val TABLE_NUCLEO = "Nucleo"
+        private const val TABLE_GALPON = "Galpon"
+        private const val TABLE_USUARIO = "Usuario"
 
         // Common column names
         private const val KEY_ID = "id"
@@ -36,15 +43,15 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         private const val KEY_NUMERO_POLLOS = "numeroPollos"
         private const val KEY_PESO_KG = "pesoKg"
         private const val KEY_CON_POLLOS = "conPollos"
-        private const val KEY_ID_PESO_POLLO = "idPesoPollo"  // Actualizamos el campo
+        private const val KEY_ID_PESO_POLLO = "idPesoPollo"
 
         // DataPesoPollos Table - column names
-        private const val KEY_SERIE = "serie"  // Nuevo campo según entidad
-        private const val KEY_FECHA = "fecha"  // Nuevo campo según entidad
-        private const val KEY_TOTAL_JABAS = "totalJabas"  // Nuevo campo según entidad
-        private const val KEY_TOTAL_POLLOS = "totalPollos"  // Nuevo campo según entidad
-        private const val KEY_TOTAL_PESO = "totalPeso"  // Nuevo campo según entidad
-        private const val KEY_TIPO = "tipo"  // Actualizamos el campo
+        private const val KEY_SERIE = "serie"
+        private const val KEY_FECHA = "fecha"
+        private const val KEY_TOTAL_JABAS = "totalJabas"
+        private const val KEY_TOTAL_POLLOS = "totalPollos"
+        private const val KEY_TOTAL_PESO = "totalPeso"
+        private const val KEY_TIPO = "tipo"
         private const val KEY_NUMERO_DOC_CLIENTE = "numeroDocCliente"
         private const val KEY_ID_GALPON = "idGalpon"
         private const val KEY_ID_NUCLEO = "idNucleo"
@@ -55,6 +62,7 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         private const val KEY_TOTAL_PAGAR = "TotalPagar"
         private const val KEY_DNI_USUARIO = "idUsuario"
         private const val KEY_ID_ESTABLECIMIENTO = "idEstablecimiento"
+
         // Cliente Table - column names
         private const val KEY_FECHA_REGISTRO = "fechaRegistro"
 
@@ -67,6 +75,20 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
 
         private const val KEY_DEVICE_NAME = "deviceName"
 
+        // Nucleos Table - column names
+        private const val KEY_NUCLEO_NAME = "n_name"
+        private const val KEY_NUCLEO_EMPRESA_RUC = "n_idEmpresa"
+
+        // Galpones Table - column names
+        private const val KEY_GALPON_NAME = "g_nombre"
+        private const val KEY_GALPON_ID_ESTABLECIMIENTO = "g_idEstablecimiento"
+
+        // Usuario Table - column names
+        private const val KEY_USUARIO_NAME = "u_name"
+        private const val KEY_USUARIO_PASS = "u_Pass"
+        private const val KEY_USUARIO_ID_ROL = "u_idRol"
+        private const val KEY_USUARIO_ROLNAME = "u_rolName"
+        private const val KEY_USUARIO_ID_ESTABLECIMIENTO = "u_idEstablecimiento"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -124,6 +146,26 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
                 + "$KEY_FECHA_REGISTRO TEXT)")
         db.execSQL(CREATE_TABLE_USED_PESOS)
 
+        val TABLE_NUCLEO = ("CREATE TABLE $TABLE_NUCLEO("
+                + "$KEY_ID INTEGER PRIMARY KEY, "
+                + "$KEY_NUCLEO_NAME TEXT, "
+                + "$KEY_NUCLEO_EMPRESA_RUC TEXT)")
+        db.execSQL(TABLE_NUCLEO)
+
+        val TABLE_GALPON = ("CREATE TABLE $TABLE_GALPON("
+                + "$KEY_ID INTEGER PRIMARY KEY, "
+                + "$KEY_GALPON_NAME TEXT, "
+                + "$KEY_GALPON_ID_ESTABLECIMIENTO TEXT)")
+        db.execSQL(TABLE_GALPON)
+
+        val TABLE_USUARIO = ("CREATE TABLE $TABLE_USUARIO("
+                + "$KEY_ID INTEGER PRIMARY KEY, "
+                + "$KEY_USUARIO_NAME TEXT, "
+                + "$KEY_USUARIO_PASS TEXT, "
+                + "$KEY_USUARIO_ROLNAME TEXT, "
+                + "$KEY_USUARIO_ID_ROL TEXT, "
+                + "$KEY_USUARIO_ID_ESTABLECIMIENTO TEXT)")
+        db.execSQL(TABLE_USUARIO)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -131,10 +173,13 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
             // En caso de que la versión anterior fuera 1, añadimos los nuevos campos
             db.execSQL("DROP TABLE IF EXISTS $TABLE_DETA_PESO_POLLOS")
             db.execSQL("DROP TABLE IF EXISTS $TABLE_PESO_POLLOS")
-            db.execSQL("DROP TABLE IF EXISTS $TABLE_CLIENTE")
             db.execSQL("DROP TABLE IF EXISTS $TABLE_PESOS")
             db.execSQL("DROP TABLE IF EXISTS $TABLE_IMPRESORA")
             db.execSQL("DROP TABLE IF EXISTS $TABLE_USED_PESOS")
+            db.execSQL("DROP TABLE IF EXISTS $TABLE_NUCLEO")
+            db.execSQL("DROP TABLE IF EXISTS $TABLE_GALPON")
+            db.execSQL("DROP TABLE IF EXISTS $TABLE_USUARIO")
+            db.execSQL("DROP TABLE IF EXISTS $TABLE_CLIENTE")
             onCreate(db)
         }
     }
@@ -171,6 +216,39 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
             put(KEY_PRECIO_K_POLLO, data.PKPollo)
         }
         return db.insert(TABLE_PESO_POLLOS, null, values)
+    }
+
+    // Inserción de Nucleo
+    fun insertNucleo(nucleo: NucleoEntity): Long {
+        val db = this.writableDatabase
+        val values = ContentValues().apply {
+            put(KEY_NUCLEO_NAME, nucleo.nombre)
+            put(KEY_NUCLEO_EMPRESA_RUC, nucleo.idEmpresa)
+        }
+        return db.insert(TABLE_NUCLEO, null, values)
+    }
+
+    fun insertGalpon(galpon: GalponEntity): Long {
+        val db = this.writableDatabase
+        val values = ContentValues().apply {
+            put(KEY_GALPON_NAME, galpon.nombre)
+            put(KEY_GALPON_ID_ESTABLECIMIENTO, galpon.idEstablecimiento)
+        }
+        return db.insert(TABLE_GALPON, null, values)
+    }
+
+    // Inserción de Usuario
+    fun insertUsuario(usuario: UsuarioEntity): Long {
+        val db = this.writableDatabase
+        val values = ContentValues().apply {
+            put(KEY_ID, usuario.idUsuario)
+            put(KEY_USUARIO_NAME, usuario.userName)
+            put(KEY_USUARIO_PASS, usuario.pass)
+            put(KEY_USUARIO_ID_ROL, usuario.idRol)
+            put(KEY_USUARIO_ROLNAME, usuario.rolName)
+            put(KEY_USUARIO_ID_ESTABLECIMIENTO, usuario.idEstablecimiento)
+        }
+        return db.insert(TABLE_USUARIO, null, values)
     }
 
     // Inserción de Cliente
@@ -262,6 +340,7 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         cursor.close()
         return dataList
     }
+
     fun getAllDataPesoPollos(): List<DataPesoPollosEntity> {
         val dataList = mutableListOf<DataPesoPollosEntity>()
         val db = this.readableDatabase
@@ -278,16 +357,32 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
                     totalPollos = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_POLLOS)),  // Leemos el nuevo campo
                     totalPeso = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PESO)),  // Leemos el nuevo campo
                     tipo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TIPO)),  // Leemos el campo actualizado
-                    numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)),
+                    numeroDocCliente = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NUMERO_DOC_CLIENTE
+                        )
+                    ),
                     idGalpon = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
                     idNucleo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
-                    nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)),
+                    nombreCompleto = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NOMBRE_COMPLETO
+                        )
+                    ),
                     PKPollo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_PRECIO_K_POLLO)),
-                    totalPesoJabas = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PESOJABAS)),
+                    totalPesoJabas = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_TOTAL_PESOJABAS
+                        )
+                    ),
                     totalNeto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_NETO)),
                     TotalPagar = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PAGAR)),
                     idUsuario = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DNI_USUARIO)),
-                    idEstablecimiento = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTABLECIMIENTO)),
+                    idEstablecimiento = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_ID_ESTABLECIMIENTO
+                        )
+                    ),
                 )
                 dataList.add(data)
             } while (cursor.moveToNext())
@@ -295,6 +390,7 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         cursor.close()
         return dataList
     }
+
     fun getAllClientes(): List<ClienteEntity> {
         val clienteList = mutableListOf<ClienteEntity>()
         val db = this.readableDatabase
@@ -305,8 +401,16 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
             do {
                 val cliente = ClienteEntity(
                     id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
-                    numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)),
-                    nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)),
+                    numeroDocCliente = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NUMERO_DOC_CLIENTE
+                        )
+                    ),
+                    nombreCompleto = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NOMBRE_COMPLETO
+                        )
+                    ),
                     fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
                 )
                 clienteList.add(cliente)
@@ -315,6 +419,7 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         cursor.close()
         return clienteList
     }
+
     fun getPesosAll(): List<PesosEntity> {
         val pesosList = mutableListOf<PesosEntity>()
         val db = this.readableDatabase
@@ -327,10 +432,22 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
                     id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
                     idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
                     idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
-                    numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)),
-                    nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)),
+                    numeroDocCliente = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NUMERO_DOC_CLIENTE
+                        )
+                    ),
+                    nombreCompleto = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NOMBRE_COMPLETO
+                        )
+                    ),
                     dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)),
-                    dataDetaPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)),
+                    dataDetaPesoJson = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_DATA_DETAPESO_JSON
+                        )
+                    ),
                     fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
                 )
                 pesosList.add(pesos)
@@ -351,8 +468,16 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
                 val pesos = pesoUsedEntity(
                     idPesoUsed = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
                     devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)),
-                    dataPesoPollosJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)),
-                    dataDetaPesoPollosJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)),
+                    dataPesoPollosJson = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_DATA_PESO_JSON
+                        )
+                    ),
+                    dataDetaPesoPollosJson = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_DATA_DETAPESO_JSON
+                        )
+                    ),
                     fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
                 )
                 pesosUsedList.add(pesos)
@@ -371,7 +496,11 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         if (cursor.moveToFirst()) {
             cliente = ClienteEntity(
                 id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
-                numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)),
+                numeroDocCliente = cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        KEY_NUMERO_DOC_CLIENTE
+                    )
+                ),
                 nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)),
                 fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
             )
@@ -379,6 +508,7 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         cursor.close()
         return cliente
     }
+
     fun getImpresoraById(id: String): impresoraEntity? {
         val db = this.readableDatabase
         val selectQuery = "SELECT * FROM $TABLE_IMPRESORA WHERE $KEY_ID = ?"
@@ -396,9 +526,164 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         return impresora
     }
 
+    fun getUsuarioById(idUsuario: String): UsuarioEntity? {
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_USUARIO WHERE $KEY_ID = ?"
+        val cursor = db.rawQuery(selectQuery, arrayOf(idUsuario))
+
+        var usuario: UsuarioEntity? = null
+        if (cursor.moveToFirst()) {
+            usuario = UsuarioEntity(
+                idUsuario = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID)),
+                userName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_USUARIO_NAME)),
+                pass = cursor.getString(cursor.getColumnIndexOrThrow(KEY_USUARIO_PASS)),
+                idRol = cursor.getString(cursor.getColumnIndexOrThrow(KEY_USUARIO_ID_ROL)),
+                rolName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_USUARIO_ROLNAME)),
+                idEstablecimiento = cursor.getString(cursor.getColumnIndexOrThrow(KEY_USUARIO_ID_ESTABLECIMIENTO))
+            )
+        }
+        cursor.close()
+        return usuario
+    }
+
+
+    fun getNucleoByName(name: String): NucleoEntity? {
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_NUCLEO WHERE $KEY_NUCLEO_NAME = ?"
+        val cursor = db.rawQuery(selectQuery, arrayOf(name))
+
+        var nucleo: NucleoEntity? = null
+        if (cursor.moveToFirst()) {
+            nucleo = NucleoEntity(
+                idEstablecimiento = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID)),
+                nombre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID)),
+                idEmpresa = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID))
+            )
+        }
+        cursor.close()
+        return nucleo
+    }
+
+    fun getGalponByName(name: String): GalponEntity? {
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_GALPON WHERE $KEY_GALPON_NAME = ?"
+        val cursor = db.rawQuery(selectQuery, arrayOf(name))
+
+        var galpon: GalponEntity? = null
+        if (cursor.moveToFirst()) {
+            galpon = GalponEntity(
+                idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                nombre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_GALPON_NAME)),
+                idEstablecimiento = cursor.getString(cursor.getColumnIndexOrThrow(
+                    KEY_GALPON_ID_ESTABLECIMIENTO)),
+            )
+        }
+        cursor.close()
+        return galpon
+    }
+
+    fun getAllUsuarios(): List<UsuarioEntity> {
+        val usuarioList = mutableListOf<UsuarioEntity>()
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM ${TABLE_USUARIO}"
+        val cursor = db.rawQuery(selectQuery, null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                val usuario = UsuarioEntity(
+                    idUsuario = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID)),
+                    userName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_USUARIO_NAME)),
+                    pass = cursor.getString(cursor.getColumnIndexOrThrow(KEY_USUARIO_PASS)),
+                    idRol = cursor.getString(cursor.getColumnIndexOrThrow(KEY_USUARIO_ID_ROL)),
+                    rolName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_USUARIO_ROLNAME)),
+                    idEstablecimiento = cursor.getString(cursor.getColumnIndexOrThrow(
+                        KEY_USUARIO_ID_ESTABLECIMIENTO))
+                )
+                usuarioList.add(usuario)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return usuarioList
+    }
+
+    fun getAllNucleos(): List<NucleoEntity> {
+        val nucleosList = mutableListOf<NucleoEntity>()
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM ${TABLE_NUCLEO}"
+        val cursor = db.rawQuery(selectQuery, null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                val nucleo = NucleoEntity(
+                    idEstablecimiento = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID)),
+                    nombre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUCLEO_NAME)),
+                    idEmpresa = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUCLEO_EMPRESA_RUC))
+                )
+                nucleosList.add(nucleo)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return nucleosList
+    }
+
+    fun getAllGalpones(): List<GalponEntity> {
+        val galponList = mutableListOf<GalponEntity>()
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM ${TABLE_GALPON}"
+        val cursor = db.rawQuery(selectQuery, null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                val galpon = GalponEntity(
+                    idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                    nombre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_GALPON_NAME)),
+                    idEstablecimiento = cursor.getString(cursor.getColumnIndexOrThrow(KEY_GALPON_ID_ESTABLECIMIENTO))
+                )
+                galponList.add(galpon)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return galponList
+    }
+
+    fun getGalponesForByIdNucleo(idNucleo: String): List<GalponEntity> {
+        val galponesList = mutableListOf<GalponEntity>()
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_GALPON WHERE $KEY_GALPON_ID_ESTABLECIMIENTO = ?"
+        val cursor = db.rawQuery(selectQuery, arrayOf(idNucleo))
+
+        if (cursor.moveToFirst()) {
+            do {
+                val galpon = GalponEntity(
+                    idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                    nombre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_GALPON_NAME)),
+                    idEstablecimiento = cursor.getString(cursor.getColumnIndexOrThrow(KEY_GALPON_ID_ESTABLECIMIENTO))
+                )
+                galponesList.add(galpon)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return galponesList
+    }
+
+
     // =========================================================
     // UPDATE
     // =========================================================
+
+    fun updateCliente(cliente: ClienteEntity): Int {
+        val db = this.writableDatabase
+        val contentValues = ContentValues().apply {
+            put(KEY_NUMERO_DOC_CLIENTE, cliente.numeroDocCliente)
+            put(KEY_NOMBRE_COMPLETO, cliente.nombreCompleto)
+        }
+        return db.update(
+            TABLE_CLIENTE,
+            contentValues,
+            "$KEY_ID = ?",
+            arrayOf(cliente.id.toString())
+        )
+    }
 
     fun updateImpresora(impresora: impresoraEntity): Int {
         val db = this.writableDatabase
@@ -417,7 +702,6 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
     // =========================================================
     // DROPS
     // =========================================================
-
 
     // eliminar Peso por id:
     fun deletePesosById(id: Int): Int {
@@ -439,6 +723,11 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         db.delete(AppDatabase.TABLE_DETA_PESO_POLLOS, null, null)
         db.delete(AppDatabase.TABLE_PESO_POLLOS, null, null)
         db.delete(AppDatabase.TABLE_CLIENTE, null, null)
+        db.delete(AppDatabase.TABLE_USUARIO, null, null)
+        db.delete(AppDatabase.TABLE_NUCLEO, null, null)
+        db.delete(AppDatabase.TABLE_GALPON, null, null)
+        db.delete(AppDatabase.TABLE_IMPRESORA, null, null)
+        db.delete(AppDatabase.TABLE_PESOS, null, null)
         db.close()
     }
 

@@ -45,7 +45,8 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        sharedPreferences = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        sharedPreferences =
+            requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         setupLoadingAnimation()
         updateAppVersion()
 
@@ -63,7 +64,7 @@ class LoginFragment : Fragment() {
 
 
         binding.buttonLogin.setOnClickListener {
-            val username = binding.editTextUsername.text.toString()
+             val username = binding.editTextUsername.text.toString()
             val password = binding.editTextPassword.text.toString()
 
             var hasError = false
@@ -93,7 +94,8 @@ class LoginFragment : Fragment() {
             }
 
             // Ocultar teclado
-            val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            val imm =
+                requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             imm.hideSoftInputFromWindow(requireView().windowToken, 0)
 
             // Iniciar animación de carga y realizar login
@@ -110,7 +112,11 @@ class LoginFragment : Fragment() {
                     navigateToMainActivity()
                 }, 2000)
             } else {
-                Toast.makeText(context, "No se pudo conectar, inténtelo de nuevo o más tarde", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "No se pudo conectar, inténtelo de nuevo o más tarde",
+                    Toast.LENGTH_SHORT
+                ).show()
                 stopLoadingAnimation()
             }
         }

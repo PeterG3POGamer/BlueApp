@@ -4,13 +4,16 @@ import NetworkUtils
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
+import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -25,6 +28,8 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -38,6 +43,7 @@ import app.serlanventas.mobile.R
 import app.serlanventas.mobile.databinding.FragmentPesosBinding
 import app.serlanventas.mobile.ui.BluetoothView.BluetoothFragment
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
+import app.serlanventas.mobile.ui.DataBase.Entities.ClienteEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.GalponEntity
@@ -65,6 +71,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 //JabasFragment.kt // INTERACTURA CON LA UI
 class JabasFragment : Fragment(), OnItemClickListener {
@@ -91,6 +99,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
     private lateinit var progressBar: ProgressBar
     private lateinit var dialogFragment: DialogFragment
 
+    private lateinit var requestMultiplePermissions: ActivityResultLauncher<Array<String>>
+
     private lateinit var logger: Logger
 
     private val checkInternetRunnable = object : Runnable {
@@ -100,8 +110,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
 //                sincronizarData()
 
                 checkAndSendLocalData()
-            }else{
-                if (!NetworkUtils.isNetworkAvailable(requireContext())){
+            } else {
+                if (!NetworkUtils.isNetworkAvailable(requireContext())) {
                     // Vuelve a ejecutar después del intervalo definido
                     handler.postDelayed(this, checkInterval)
                 }
@@ -126,7 +136,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
             val dataDetaPesoPollos = db.getAllDataDetaPesoPollos()
             val dataPesoPollos = db.getAllDataPesoPollos()
 
-            if (dataDetaPesoPollos.isNotEmpty() && dataPesoPollos.isNotEmpty()){
+            if (dataDetaPesoPollos.isNotEmpty() && dataPesoPollos.isNotEmpty()) {
                 if (!NetworkUtils.isNetworkAvailable(requireContext())) {
                     withContext(Dispatchers.Main) {
                         showNoInternetDialog()
@@ -139,6 +149,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
             }
         }
     }
+
     @SuppressLint("SetTextI18n", "DefaultLocale", "ResourceType", "ClickableViewAccessibility")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -147,6 +158,9 @@ class JabasFragment : Fragment(), OnItemClickListener {
         _binding = FragmentPesosBinding.inflate(inflater, container, false)
         val root: View = binding.root
         progressBar = binding.progressBar.findViewById(R.id.progressBar)
+
+        val isProduction = Constants.obtenerEstadoModo(requireContext())
+        val baseUrl = Constants.getBaseUrl(isProduction)
 
         logger = Logger(requireContext())
 
@@ -162,34 +176,44 @@ class JabasFragment : Fragment(), OnItemClickListener {
             }
         )
         sharedViewModel.pesoValue.observe(viewLifecycleOwner) { peso ->
-            val pesoFormatted = String.format("%.2f", peso.toDoubleOrNull() ?: 0.0)
+            val pesoFormatted = BigDecimal(peso.toDoubleOrNull() ?: 0.0)
+                .setScale(2, RoundingMode.DOWN) 
+                .toString()
             binding.inputPesoKg.setText(pesoFormatted)
             logger.log2("PesoValue: Pesos Foramteado recibido en JabaFragment -> $pesoFormatted")
         }
         showLoading()
 
+
         connectedDeviceAddress = sharedViewModel.getConnectedDeviceAddress()
 
-        if (!connectedDeviceAddress.isNullOrBlank()){
+        if (!connectedDeviceAddress.isNullOrBlank()) {
             sharedViewModel.connectedDeviceName.observe(viewLifecycleOwner) { deviceName ->
                 if (!deviceName.isNullOrEmpty()) {
                     binding.deviceConnected.text = "CONECTADO A: $deviceName"
-                    binding.deviceConnected.background = ContextCompat.getDrawable(requireContext(), R.drawable.button_background_active)
+                    binding.deviceConnected.background = ContextCompat.getDrawable(
+                        requireContext(),
+                        R.drawable.button_background_active
+                    )
                 } else {
                     binding.deviceConnected.text = "NO CONECTADO"
-                    binding.deviceConnected.background = ContextCompat.getDrawable(requireContext(), R.drawable.button_background_inactive)
+                    binding.deviceConnected.background = ContextCompat.getDrawable(
+                        requireContext(),
+                        R.drawable.button_background_inactive
+                    )
                 }
             }
-        }else{
+        } else {
             binding.deviceConnected.text = "NO CONECTADO"
-            binding.deviceConnected.background = ContextCompat.getDrawable(requireContext(), R.drawable.button_background_inactive)
+            binding.deviceConnected.background =
+                ContextCompat.getDrawable(requireContext(), R.drawable.button_background_inactive)
 
         }
 
         // Regreso de datos de la preliminar
         dataDetaPesoPollosJson = sharedViewModel.getDataDetaPesoPollosJson()
         dataPesoPollosJson = sharedViewModel.getDataPesoPollosJson()
-        idPesoShared = sharedViewModel.getIdListPesos()?: 0
+        idPesoShared = sharedViewModel.getIdListPesos() ?: 0
 
 
         jabasAdapter = JabasAdapter(jabasList, this, sharedViewModel)
@@ -200,7 +224,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
 
         val pesoUsedExisted = db.getPesosUsedAll()
-        if (!pesoUsedExisted.isNullOrEmpty()){
+        if (!pesoUsedExisted.isNullOrEmpty()) {
             val peso = pesoUsedExisted.first() // Asumiendo que quieres el primer registro
             idPesoShared = peso.idPesoUsed
             sharedViewModel.setIdListPesos(idPesoShared)
@@ -214,7 +238,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
         if (!dataDetaPesoPollosJson.isNullOrEmpty()) {
             val dataDetaPesoPollos = JSONArray(dataDetaPesoPollosJson)
             detallesList = procesarDataDetaPesoPollos(dataDetaPesoPollos)
-            Log.d("JabasFragment detallesList","${detallesList}")
+            Log.d("JabasFragment detallesList", "${detallesList}")
 
             val dataPesoPollos = JSONObject(dataPesoPollosJson.toString())
             distribuirDatosEnInputs(dataPesoPollos)
@@ -241,19 +265,19 @@ class JabasFragment : Fragment(), OnItemClickListener {
             binding.textNomCli.isEnabled = false
         }
 
-
-
-        val isProduction = Constants.obtenerEstadoModo(requireContext())
-        val baseUrl = Constants.getBaseUrl(isProduction)
         // Obtener los nombres de los nucleos y llenar el spinner
-        getNucleos(baseUrl) { nucleos ->
+        getNucleos(baseUrl, requireContext()) { nucleos ->
             nucleos?.let {
                 showLoading()
                 // Preparar nombres de los nucleos con elemento por defecto
                 val nombresNucleos = mutableListOf("Núcleos")
                 nombresNucleos.addAll(it.map { nucleo -> nucleo.nombre })
 
-                val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, nombresNucleos)
+                val adapter = ArrayAdapter(
+                    requireContext(),
+                    android.R.layout.simple_spinner_item,
+                    nombresNucleos
+                )
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                 binding.selectEstablecimiento.adapter = adapter
 
@@ -271,10 +295,13 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     Log.d("JabasFragment", "GalponIdToSelect: $galponIdToSelect")
 
 
-                    getSelectGalpon(idNucleo, baseUrl) { galpones ->
+                    getSelectGalpon(idNucleo, baseUrl, requireContext()) { galpones ->
                         galpones?.let {
                             galponesList = it
-                            Log.d("JabasFragment", "Galpones cargados: ${it.map { galpon -> "${galpon.idGalpon}: ${galpon.nombre}" }}")
+                            Log.d(
+                                "JabasFragment",
+                                "Galpones cargados: ${it.map { galpon -> "${galpon.idGalpon}: ${galpon.nombre}" }}"
+                            )
 
                             if (it.isNotEmpty()) {
                                 val nombresGalpones = mutableListOf("Galpones")
@@ -286,36 +313,63 @@ class JabasFragment : Fragment(), OnItemClickListener {
                                     galponIdMap[galpon.idGalpon] = galpon.nombre
                                 }
 
-                                val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, nombresGalpones)
+                                val adapter = ArrayAdapter(
+                                    requireContext(),
+                                    android.R.layout.simple_spinner_item,
+                                    nombresGalpones
+                                )
                                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                                 binding.selectGalpon.adapter = adapter
 
                                 if (galponIdToSelect != null) {
-                                    Log.d("JabasFragment", "Intentando seleccionar galpon con ID: $galponIdToSelect")
+                                    Log.d(
+                                        "JabasFragment",
+                                        "Intentando seleccionar galpon con ID: $galponIdToSelect"
+                                    )
 
-                                    val index = nombresGalpones.indexOf(galponIdMap[galponIdToSelect.toInt()])
+                                    val index =
+                                        nombresGalpones.indexOf(galponIdMap[galponIdToSelect.toInt()])
                                     if (index != -1) {
                                         binding.selectGalpon.setSelection(index)
-                                        Log.d("JabasFragment", "Galpon seleccionado en posición: $index")
+                                        Log.d(
+                                            "JabasFragment",
+                                            "Galpon seleccionado en posición: $index"
+                                        )
                                     } else {
-                                        Log.w("JabasFragment", "galponIdToSelect no encontrado: $galponIdToSelect")
+                                        Log.w(
+                                            "JabasFragment",
+                                            "galponIdToSelect no encontrado: $galponIdToSelect"
+                                        )
                                         binding.selectGalpon.setSelection(0)
                                     }
                                 } else {
-                                    Log.d("JabasFragment", "No hay galponIdToSelect. Seleccionando 'Galpones'.")
+                                    Log.d(
+                                        "JabasFragment",
+                                        "No hay galponIdToSelect. Seleccionando 'Galpones'."
+                                    )
                                     binding.selectGalpon.setSelection(0)
                                 }
                                 idGalpoListaPesos = ""
                             } else {
-                                Log.w("SelectGalpon", "La lista de galpones está vacía para el nucleo $idNucleo")
-                                val emptyAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, listOf("Galpones"))
+                                Log.w(
+                                    "SelectGalpon",
+                                    "La lista de galpones está vacía para el nucleo $idNucleo"
+                                )
+                                val emptyAdapter = ArrayAdapter(
+                                    requireContext(),
+                                    android.R.layout.simple_spinner_item,
+                                    listOf("Galpones")
+                                )
                                 emptyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                                 binding.selectGalpon.adapter = emptyAdapter
 
                             }
                             fetchData(2000)
                         } ?: run {
-                            Log.e("SelectGalpon", "Error al obtener los galpones desde el servidor para el nucleo $idNucleo")
+                            Log.e(
+                                "SelectGalpon",
+                                "Error al obtener los galpones desde el servidor para el nucleo $idNucleo"
+                            )
                             fetchData(2000)
                         }
                     }
@@ -323,7 +377,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
                 // Seleccionar nucleo inicial y cargar galpones correspondientes
                 if (nucleoIdSeleccionado.isNotEmpty()) {
-                    val position = it.indexOfFirst { nucleo -> nucleo.idEstablecimiento == nucleoIdSeleccionado }
+                    val position =
+                        it.indexOfFirst { nucleo -> nucleo.idEstablecimiento == nucleoIdSeleccionado }
                     if (position != -1) {
                         binding.selectEstablecimiento.setSelection(position + 1)
                         cargarYSeleccionarGalpones(nucleoIdSeleccionado, galponIdSeleccionado)
@@ -335,40 +390,57 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 }
 
                 // Listener para cambios en la selección de nucleo
-                binding.selectEstablecimiento.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                    override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                        updateSpinnerPesosIdGalpon(0, 0)
-                        if (position == 0) {
-                            if (jabasList.isEmpty()){
-                                if (idPesoShared != 0) {
-                                    limpiarCampos()
-                                }else if (dataPesoPollosJson.isNullOrBlank()){
-                                    limpiarCampos()
+                binding.selectEstablecimiento.onItemSelectedListener =
+                    object : AdapterView.OnItemSelectedListener {
+                        override fun onItemSelected(
+                            parent: AdapterView<*>?,
+                            view: View?,
+                            position: Int,
+                            id: Long
+                        ) {
+                            updateSpinnerPesosIdGalpon(0, 0)
+                            if (position == 0) {
+                                if (jabasList.isEmpty()) {
+                                    if (idPesoShared != 0) {
+                                        limpiarCampos()
+                                    } else if (dataPesoPollosJson.isNullOrBlank()) {
+                                        limpiarCampos()
+                                    }
+                                } else if (idPesoShared != 0) {
+                                    if (dataPesoPollosJson.isNullOrBlank()) {
+                                        limpiarCampos()
+                                    }
                                 }
-                            }else if (idPesoShared != 0){
-                                if (dataPesoPollosJson.isNullOrBlank()){
-                                    limpiarCampos()
+                                val emptyAdapter = ArrayAdapter(
+                                    requireContext(),
+                                    android.R.layout.simple_spinner_item,
+                                    listOf("Galpones")
+                                )
+                                emptyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                                binding.selectGalpon.adapter = emptyAdapter
+                            } else {
+                                val idNucleoSeleccionado = it[position - 1].idEstablecimiento
+                                // Si es la selección inicial, usar galponIdSeleccionado, si no, usar ""
+                                val galponIdToSelect =
+                                    if (idNucleoSeleccionado == nucleoIdSeleccionado) galponIdSeleccionado else ""
+                                if (idGalpoListaPesos.isNullOrBlank()) {
+                                    cargarYSeleccionarGalpones(
+                                        idNucleoSeleccionado,
+                                        galponIdToSelect
+                                    ) // Sin retraso para selecciones manuales
+                                } else {
+                                    cargarYSeleccionarGalpones(
+                                        idNucleoSeleccionado,
+                                        idGalpoListaPesos
+                                    )
                                 }
-                            }
-                            val emptyAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, listOf("Galpones"))
-                            emptyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                            binding.selectGalpon.adapter = emptyAdapter
-                        } else {
-                            val idNucleoSeleccionado = it[position - 1].idEstablecimiento
-                            // Si es la selección inicial, usar galponIdSeleccionado, si no, usar ""
-                            val galponIdToSelect = if (idNucleoSeleccionado == nucleoIdSeleccionado) galponIdSeleccionado else ""
-                            if (idGalpoListaPesos.isNullOrBlank()) {
-                                cargarYSeleccionarGalpones(idNucleoSeleccionado, galponIdToSelect) // Sin retraso para selecciones manuales
-                            }else{
-                                cargarYSeleccionarGalpones(idNucleoSeleccionado, idGalpoListaPesos)
                             }
                         }
-                    }
 
-                    override fun onNothingSelected(parent: AdapterView<*>?) {
-                        // Manejar caso cuando no se selecciona nada
+                        override fun onNothingSelected(parent: AdapterView<*>?) {
+                            // Manejar caso cuando no se selecciona nada
+                        }
                     }
-                }
                 fetchData(2000)
             } ?: run {
                 Log.e("JabasFragment", "Error al obtener los nucleos desde el servidor.")
@@ -378,23 +450,31 @@ class JabasFragment : Fragment(), OnItemClickListener {
         }
 
         binding.selectGalpon.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
                 when (position) {
                     0 -> {
                         //
                     }
-                    else ->{
+
+                    else -> {
                         val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
-                        val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+                        val idGalpon =
+                            galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull()
+                                ?: 0
                         val idNucleo = binding.selectEstablecimiento.selectedItemPosition
-                        if (jabasList.isEmpty()){
+                        if (jabasList.isEmpty()) {
                             if (idPesoShared != 0) {
                                 limpiarCampos()
-                            }else if (dataPesoPollosJson.isNullOrBlank()){
+                            } else if (dataPesoPollosJson.isNullOrBlank()) {
                                 limpiarCampos()
                             }
-                        }else if (idPesoShared != 0){
-                            if (dataPesoPollosJson.isNullOrBlank()){
+                        } else if (idPesoShared != 0) {
+                            if (dataPesoPollosJson.isNullOrBlank()) {
                                 limpiarCampos()
                             }
                         }
@@ -402,6 +482,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     }
                 }
             }
+
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 // Opcional: maneja el caso cuando no se selecciona nada
             }
@@ -421,93 +502,128 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 MotionEvent.ACTION_UP -> {
                     val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
                     val idNucleo = binding.selectEstablecimiento.selectedItemPosition
-                    val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+                    val idGalpon =
+                        galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull()
+                            ?: 0
                     updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
                 }
             }
             false
         }
 
-        binding.selectListpesos.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                Log.d("JabasFragment", "Posición seleccionada en selectListpesos: $position")
-                when (position) {
-                    0 -> {
-                        // "Lista de Pesos" seleccionado
-                        Log.d("JabasFragment", "Opción 'Lista de Pesos' seleccionada")
-                        // Limpiar los campos o realizar alguna acción por defecto
-                        if (jabasList.isEmpty()){
-                            if (idPesoShared != 0) {
-                                limpiarCampos()
-                            }else if (dataPesoPollosJson.isNullOrBlank()){
-                                limpiarCampos()
-                            }
-                        }else if (idPesoShared != 0){
-                            if (dataPesoPollosJson.isNullOrBlank()){
-                                limpiarCampos()
-                            }
-                        }
-                        sharedViewModel.setIdListPesos(0)
-                    }
-                    else -> {
-                        if (binding.idListPeso.text.isNullOrBlank()){
-                            showLoading()
-                        }
-                        if (pesosList.isNotEmpty()) {
-                            val selectedPesos = pesosList[position - 1]
-                            Log.d("JabasFragment", "Peso seleccionado: ${selectedPesos.numeroDocCliente}/${selectedPesos.nombreCompleto}")
-
-                            var idPeso = selectedPesos.id
-                            if (idPesoShared != 0){
-                                if (idPeso != idPesoShared){
-                                    updatePesoStatus(idPesoShared, "NotUsed")
+        binding.selectListpesos.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    Log.d("JabasFragment", "Posición seleccionada en selectListpesos: $position")
+                    when (position) {
+                        0 -> {
+                            // "Lista de Pesos" seleccionado
+                            Log.d("JabasFragment", "Opción 'Lista de Pesos' seleccionada")
+                            // Limpiar los campos o realizar alguna acción por defecto
+                            if (jabasList.isEmpty()) {
+                                if (idPesoShared != 0) {
+                                    limpiarCampos()
+                                } else if (dataPesoPollosJson.isNullOrBlank()) {
+                                    limpiarCampos()
+                                }
+                            } else if (idPesoShared != 0) {
+                                if (dataPesoPollosJson.isNullOrBlank()) {
+                                    limpiarCampos()
                                 }
                             }
+                            sharedViewModel.setIdListPesos(0)
+                        }
 
-                            if (idPeso != 0) {
-                                ManagerPost.getStautusPeso(
-                                    requireContext(),
-                                    idPeso
-                                ) { result ->
-                                    if (result != null) {
-                                        val parts = result.split("|")
-                                        val status = parts.getOrNull(0) ?: "0"
-                                        val addresMac = parts.getOrNull(1) ?: ""
+                        else -> {
+                            if (binding.idListPeso.text.isNullOrBlank()) {
+                                showLoading()
+                            }
+                            if (pesosList.isNotEmpty()) {
+                                val selectedPesos = pesosList[position - 1]
+                                Log.d(
+                                    "JabasFragment",
+                                    "Peso seleccionado: ${selectedPesos.numeroDocCliente}/${selectedPesos.nombreCompleto}"
+                                )
 
-                                        var diviceName = getDeviceId(requireContext())
-                                        when {
-                                            status == "1" && addresMac == diviceName -> {
-                                                // Proceder con las acciones existentes
-                                                binding.idListPeso.text = idPeso.toString()
-                                                idPesoShared = idPeso
-                                                sharedViewModel.setIdListPesos(idPeso)
+                                var idPeso = selectedPesos.id
+                                if (idPesoShared != 0) {
+                                    if (idPeso != idPesoShared) {
+                                        updatePesoStatus(idPesoShared, "NotUsed")
+                                    }
+                                }
 
-                                                updatePesoStatus(idPeso, "Used")
+                                if (idPeso != 0) {
+                                    ManagerPost.getStautusPeso(
+                                        requireContext(),
+                                        idPeso
+                                    ) { result ->
+                                        if (result != null) {
+                                            val parts = result.split("|")
+                                            val status = parts.getOrNull(0) ?: "0"
+                                            val addresMac = parts.getOrNull(1) ?: ""
 
-                                                // Resto del código para procesar datos (sin cambios)
-                                                val dataPesoPollos = JSONObject(selectedPesos.dataPesoJson)
-                                                val dataDetaPesoPollos = JSONArray(selectedPesos.dataDetaPesoJson)
+                                            var diviceName = getDeviceId(requireContext())
+                                            when {
+                                                status == "1" && addresMac == diviceName -> {
+                                                    // Proceder con las acciones existentes
+                                                    binding.idListPeso.text = idPeso.toString()
+                                                    idPesoShared = idPeso
+                                                    sharedViewModel.setIdListPesos(idPeso)
 
-                                                val idNucleo = dataPesoPollos.optString("_PP_idNucleo", "0")
-                                                val idGalpon = dataPesoPollos.optString("_PP_IdGalpon", "0")
+                                                    updatePesoStatus(idPeso, "Used")
 
-                                                idGalpoListaPesos = idGalpon
-                                                Log.d("JabasFragment", "ID Núcleo en JSON: $idNucleo, ID Galpón en JSON: $idGalpon")
+                                                    // Resto del código para procesar datos (sin cambios)
+                                                    val dataPesoPollos =
+                                                        JSONObject(selectedPesos.dataPesoJson)
+                                                    val dataDetaPesoPollos =
+                                                        JSONArray(selectedPesos.dataDetaPesoJson)
 
-                                                // Seleccionar el núcleo
-                                                val nucleos = (binding.selectEstablecimiento.adapter as? ArrayAdapter<*>)?.let { adapter ->
-                                                    (0 until adapter.count).map { adapter.getItem(it) }
-                                                } ?: listOf()
-                                                val nucleoPosition = nucleos.indexOfFirst { it.toString().contains(idNucleo) }
-                                                val positionToSelect = if (nucleoPosition != -1) nucleoPosition else 0
-                                                binding.selectEstablecimiento.setSelection(positionToSelect)
+                                                    val idNucleo = dataPesoPollos.optString(
+                                                        "_PP_idNucleo",
+                                                        "0"
+                                                    )
+                                                    val idGalpon = dataPesoPollos.optString(
+                                                        "_PP_IdGalpon",
+                                                        "0"
+                                                    )
 
-                                                actualizarSpinnerGalpon(idGalpon)
+                                                    idGalpoListaPesos = idGalpon
+                                                    Log.d(
+                                                        "JabasFragment",
+                                                        "ID Núcleo en JSON: $idNucleo, ID Galpón en JSON: $idGalpon"
+                                                    )
 
-                                                // Resto del código para procesar datos (sin cambios)
+                                                    // Seleccionar el núcleo
+                                                    val nucleos =
+                                                        (binding.selectEstablecimiento.adapter as? ArrayAdapter<*>)?.let { adapter ->
+                                                            (0 until adapter.count).map {
+                                                                adapter.getItem(
+                                                                    it
+                                                                )
+                                                            }
+                                                        } ?: listOf()
+                                                    val nucleoPosition = nucleos.indexOfFirst {
+                                                        it.toString().contains(idNucleo)
+                                                    }
+                                                    val positionToSelect =
+                                                        if (nucleoPosition != -1) nucleoPosition else 0
+                                                    binding.selectEstablecimiento.setSelection(
+                                                        positionToSelect
+                                                    )
+
+                                                    actualizarSpinnerGalpon(idGalpon)
+
+                                                    // Resto del código para procesar datos (sin cambios)
 //                                                if (dataDetaPesoPollosJson.isNullOrBlank()){
                                                     limpiarTablaJabas()
-                                                    detallesList = procesarDataDetaPesoPollos(dataDetaPesoPollos)
+                                                    detallesList = procesarDataDetaPesoPollos(
+                                                        dataDetaPesoPollos
+                                                    )
                                                     distribuirDatosEnInputs(dataPesoPollos)
 
                                                     detallesList.forEach { detalle ->
@@ -523,93 +639,145 @@ class JabasFragment : Fragment(), OnItemClickListener {
                                                     }
 //                                                }
 
-                                                binding.botonDeletePeso.visibility = View.VISIBLE
-                                                binding.botonGuardarPeso.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.yellow)
-                                                binding.botonGuardarPeso.setImageResource(R.drawable.baseline_backup_24)
-                                            }
-                                            status == "1" && addresMac != diviceName -> {
-                                                showCustomToast(requireContext(), "Este peso está siendo usado por otro dispositivo", "info")
-                                                limpiarCampos()
-                                            }
-                                            status == "0" && addresMac == "null" ->{
-                                                // Proceder con las acciones existentes
-                                                binding.idListPeso.text = idPeso.toString()
-                                                idPesoShared = idPeso
-                                                sharedViewModel.setIdListPesos(idPeso)
+                                                    binding.botonDeletePeso.visibility =
+                                                        View.VISIBLE
+                                                    binding.botonGuardarPeso.backgroundTintList =
+                                                        ContextCompat.getColorStateList(
+                                                            requireContext(),
+                                                            R.color.yellow
+                                                        )
+                                                    binding.botonGuardarPeso.setImageResource(R.drawable.baseline_backup_24)
+                                                }
 
-                                                updatePesoStatus(idPeso, "Used")
+                                                status == "1" && addresMac != diviceName -> {
+                                                    showCustomToast(
+                                                        requireContext(),
+                                                        "Este peso está siendo usado por otro dispositivo",
+                                                        "info"
+                                                    )
+                                                    limpiarCampos()
+                                                }
 
-                                                // Resto del código para procesar datos (sin cambios)
-                                                val dataPesoPollos = JSONObject(selectedPesos.dataPesoJson)
-                                                val dataDetaPesoPollos = JSONArray(selectedPesos.dataDetaPesoJson)
+                                                status == "0" && addresMac == "null" -> {
+                                                    // Proceder con las acciones existentes
+                                                    binding.idListPeso.text = idPeso.toString()
+                                                    idPesoShared = idPeso
+                                                    sharedViewModel.setIdListPesos(idPeso)
 
-                                                val idNucleo = dataPesoPollos.optString("_PP_idNucleo", "0")
-                                                val idGalpon = dataPesoPollos.optString("_PP_IdGalpon", "0")
-                                                idGalpoListaPesos = idGalpon
-                                                Log.d("JabasFragment", "ID Núcleo en JSON: $idNucleo, ID Galpón en JSON: $idGalpon")
+                                                    updatePesoStatus(idPeso, "Used")
 
-                                                // Seleccionar el núcleo
-                                                val nucleos = (binding.selectEstablecimiento.adapter as? ArrayAdapter<*>)?.let { adapter ->
-                                                    (0 until adapter.count).map { adapter.getItem(it) }
-                                                } ?: listOf()
-                                                val nucleoPosition = nucleos.indexOfFirst { it.toString().contains(idNucleo) }
-                                                val positionToSelect = if (nucleoPosition != -1) nucleoPosition else 0
-                                                binding.selectEstablecimiento.setSelection(positionToSelect)
+                                                    // Resto del código para procesar datos (sin cambios)
+                                                    val dataPesoPollos =
+                                                        JSONObject(selectedPesos.dataPesoJson)
+                                                    val dataDetaPesoPollos =
+                                                        JSONArray(selectedPesos.dataDetaPesoJson)
 
-                                                actualizarSpinnerGalpon(idGalpon)
-
-                                                  // Resto del código para procesar datos (sin cambios)
-//                                                if (dataDetaPesoPollosJson.isNullOrBlank()){
-                                                limpiarTablaJabas()
-                                                detallesList = procesarDataDetaPesoPollos(dataDetaPesoPollos)
-                                                distribuirDatosEnInputs(dataPesoPollos)
-
-                                                detallesList.forEach { detalle ->
-                                                    val newItem = JabasItem(
-                                                        id = detalle.idDetaPP,
-                                                        numeroJabas = detalle.cantJabas,
-                                                        numeroPollos = detalle.cantPollos,
-                                                        pesoKg = detalle.peso,
-                                                        conPollos = detalle.tipo
+                                                    val idNucleo = dataPesoPollos.optString(
+                                                        "_PP_idNucleo",
+                                                        "0"
+                                                    )
+                                                    val idGalpon = dataPesoPollos.optString(
+                                                        "_PP_IdGalpon",
+                                                        "0"
+                                                    )
+                                                    idGalpoListaPesos = idGalpon
+                                                    Log.d(
+                                                        "JabasFragment",
+                                                        "ID Núcleo en JSON: $idNucleo, ID Galpón en JSON: $idGalpon"
                                                     )
 
-                                                    jabasAdapter.addItem(newItem)
-                                                }
+                                                    // Seleccionar el núcleo
+                                                    val nucleos =
+                                                        (binding.selectEstablecimiento.adapter as? ArrayAdapter<*>)?.let { adapter ->
+                                                            (0 until adapter.count).map {
+                                                                adapter.getItem(
+                                                                    it
+                                                                )
+                                                            }
+                                                        } ?: listOf()
+                                                    val nucleoPosition = nucleos.indexOfFirst {
+                                                        it.toString().contains(idNucleo)
+                                                    }
+                                                    val positionToSelect =
+                                                        if (nucleoPosition != -1) nucleoPosition else 0
+                                                    binding.selectEstablecimiento.setSelection(
+                                                        positionToSelect
+                                                    )
+
+                                                    actualizarSpinnerGalpon(idGalpon)
+
+                                                    // Resto del código para procesar datos (sin cambios)
+//                                                if (dataDetaPesoPollosJson.isNullOrBlank()){
+                                                    limpiarTablaJabas()
+                                                    detallesList = procesarDataDetaPesoPollos(
+                                                        dataDetaPesoPollos
+                                                    )
+                                                    distribuirDatosEnInputs(dataPesoPollos)
+
+                                                    detallesList.forEach { detalle ->
+                                                        val newItem = JabasItem(
+                                                            id = detalle.idDetaPP,
+                                                            numeroJabas = detalle.cantJabas,
+                                                            numeroPollos = detalle.cantPollos,
+                                                            pesoKg = detalle.peso,
+                                                            conPollos = detalle.tipo
+                                                        )
+
+                                                        jabasAdapter.addItem(newItem)
+                                                    }
 //                                                }
 
-                                                binding.botonDeletePeso.visibility = View.VISIBLE
-                                                binding.botonGuardarPeso.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.yellow)
-                                                binding.botonGuardarPeso.setImageResource(R.drawable.baseline_backup_24)
-                                            }
-                                            else -> {
-                                                showCustomToast(requireContext(), "Error: Este peso está siendo usado por otro dispositivo", "error")
-                                                limpiarCampos()
-                                                fetchData(2000)
-                                            }
-                                        }
+                                                    binding.botonDeletePeso.visibility =
+                                                        View.VISIBLE
+                                                    binding.botonGuardarPeso.backgroundTintList =
+                                                        ContextCompat.getColorStateList(
+                                                            requireContext(),
+                                                            R.color.yellow
+                                                        )
+                                                    binding.botonGuardarPeso.setImageResource(R.drawable.baseline_backup_24)
+                                                }
 
-                                    } else {
-                                        showCustomToast(requireContext(), "Error al obtener el estado del peso", "error")
-                                        fetchData(2000)
+                                                else -> {
+                                                    showCustomToast(
+                                                        requireContext(),
+                                                        "Error: Este peso está siendo usado por otro dispositivo",
+                                                        "error"
+                                                    )
+                                                    limpiarCampos()
+                                                    fetchData(2000)
+                                                }
+                                            }
+
+                                        } else {
+                                            showCustomToast(
+                                                requireContext(),
+                                                "Error al obtener el estado del peso",
+                                                "error"
+                                            )
+                                            fetchData(2000)
+                                        }
                                     }
                                 }
+                                fetchData(2000)
+                            } else {
+                                Log.d("JabasFragment", "La lista de pesos está vacía")
+                                binding.botonDeletePeso.visibility = View.INVISIBLE
+                                binding.botonGuardarPeso.backgroundTintList =
+                                    ContextCompat.getColorStateList(
+                                        requireContext(),
+                                        R.color.purple_500
+                                    )
+                                binding.botonGuardarPeso.setImageResource(R.drawable.baseline_add_24)
+                                fetchData(2000)
                             }
-                        fetchData(2000)
-                        } else {
-                            Log.d("JabasFragment", "La lista de pesos está vacía")
-                            binding.botonDeletePeso.visibility = View.INVISIBLE
-                            binding.botonGuardarPeso.backgroundTintList  = ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
-                            binding.botonGuardarPeso.setImageResource(R.drawable.baseline_add_24)
-                            fetchData(2000)
                         }
                     }
                 }
-            }
 
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                Log.d("JabasFragment", "Nada seleccionado en selectListpesos")
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    Log.d("JabasFragment", "Nada seleccionado en selectListpesos")
+                }
             }
-        }
 
         binding.botonDeletePeso.setOnClickListener {
             val idPeso = sharedViewModel.getIdListPesos()
@@ -643,29 +811,35 @@ class JabasFragment : Fragment(), OnItemClickListener {
             }
         }
 
-        binding.botonGuardarPeso.setOnClickListener{
+        binding.botonGuardarPeso.setOnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
                 showLoading()
                 val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
                 val idNucleo = binding.selectEstablecimiento.selectedItemPosition
-                val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+                val idGalpon =
+                    galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull()
+                        ?: 0
                 var numDoc = binding.textDocCli.text.toString()
                 var nombres = binding.textNomCli.text.toString()
 
                 if (!jabasList.isNotEmpty()) {
-                    showCustomToast(requireContext(),"¡La tabla esta vacía, por favor registre datos antes de enviar!","info")
+                    showCustomToast(
+                        requireContext(),
+                        "¡La tabla esta vacía, por favor registre datos antes de enviar!",
+                        "info"
+                    )
                     fetchData(2000)
-                } else if (numDoc.isNullOrBlank() && nombres.isNullOrBlank()){
-                    showCustomToast(requireContext(),"¡Ingrese un Cliente","info")
+                } else if (numDoc.isNullOrBlank() && nombres.isNullOrBlank()) {
+                    showCustomToast(requireContext(), "¡Ingrese un Cliente", "info")
                     fetchData(2000)
-                } else if (binding.PrecioKilo.text.isNullOrBlank()){
-                    showCustomToast(requireContext(),"¡Ingrese un precio","info")
+                } else if (binding.PrecioKilo.text.isNullOrBlank()) {
+                    showCustomToast(requireContext(), "¡Ingrese un precio", "info")
                     binding.PrecioKilo.error = "Ingrese un precio"
                     fetchData(2000)
-                } else if (idNucleo == 0){
+                } else if (idNucleo == 0) {
                     showCustomToast(requireContext(), "¡Seleccione un nucleo!", "info")
                     fetchData(2000)
-                } else if (idGalpon == 0){
+                } else if (idGalpon == 0) {
                     showCustomToast(requireContext(), "¡Seleccione un galpón!", "info")
                     fetchData(2000)
                 } else {
@@ -691,7 +865,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     )
 
                     dataPesoPollosJson = dataPesoPollos.toJson().toString()
-                    dataDetaPesoPollosJson = JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
+                    dataDetaPesoPollosJson =
+                        JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
 
                     val pesosEntity = PesosEntity(
                         id = 0,
@@ -703,14 +878,20 @@ class JabasFragment : Fragment(), OnItemClickListener {
                         dataDetaPesoJson = dataDetaPesoPollosJson!!,
                         fechaRegistro = ""
                     )
-                    if (idPesoShared == 0){
-                        val success = addListPesos(requireContext(), this@JabasFragment, pesosEntity)
+                    if (idPesoShared == 0) {
+                        val success =
+                            addListPesos(requireContext(), this@JabasFragment, pesosEntity)
                         if (success) {
                             limpiarCampos()
                             updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
                         }
-                    }else{
-                        val success = updateListPesos(requireContext(), this@JabasFragment, pesosEntity, idPesoShared)
+                    } else {
+                        val success = updateListPesos(
+                            requireContext(),
+                            this@JabasFragment,
+                            pesosEntity,
+                            idPesoShared
+                        )
                         if (success) {
                             limpiarCampos()
                             sharedViewModel.setContadorJabas(0)
@@ -728,26 +909,29 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.inputNumeroJabas.isEnabled = true
         binding.inputCantPollos.isEnabled = false
 
-        binding.inputPesoKg.isEnabled = true // pesotrue
+        binding.inputPesoKg.isEnabled = false // pesotrue
 
-        if (!dataDetaPesoPollosJson.isNullOrBlank()){
+        if (!dataDetaPesoPollosJson.isNullOrBlank()) {
             sharedViewModel.setBtnTrue()
             binding.checkboxConPollos.isChecked = false
             binding.botonGuardar.isEnabled = true
-        }else{
+        } else {
             sharedViewModel.setBtnFalse()
             binding.checkboxConPollos.isChecked = false
             binding.botonGuardar.isEnabled = true
         }
         var valor = sharedViewModel.getbtnStatus()
 
-        if (valor == false){
-            binding.botonEnviar.backgroundTintList  = ContextCompat.getColorStateList(requireContext(), R.color.gray)
+        if (valor == false) {
+            binding.botonEnviar.backgroundTintList =
+                ContextCompat.getColorStateList(requireContext(), R.color.gray)
             binding.botonEnviar.setImageResource(R.drawable.null_24)
-        }else{
-            binding.botonEnviar.backgroundTintList  = ContextCompat.getColorStateList(requireContext(), R.color.your_greed)
+        } else {
+            binding.botonEnviar.backgroundTintList =
+                ContextCompat.getColorStateList(requireContext(), R.color.your_greed)
             binding.botonEnviar.setImageResource(R.drawable.baseline_content_paste_go_24)
-            binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
+            binding.botonGuardar.backgroundTintList =
+                ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
             binding.botonGuardar.isEnabled = true
         }
 
@@ -757,16 +941,23 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.checkboxConPollos.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 var nJabas = sharedViewModel.getContadorJabas()
-                if (nJabas == 0){
-                    binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.gray)
+                if (nJabas == 0) {
+                    binding.botonGuardar.backgroundTintList =
+                        ContextCompat.getColorStateList(requireContext(), R.color.gray)
                     binding.botonGuardar.isEnabled = false
                     showCustomToast(requireContext(), "No te quedan Jabas para usar", "warning")
-                } else if (nJabas!! < 0){
-                    binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.gray)
+                } else if (nJabas!! < 0) {
+                    binding.botonGuardar.backgroundTintList =
+                        ContextCompat.getColorStateList(requireContext(), R.color.gray)
                     binding.botonGuardar.isEnabled = false
-                    showCustomToast(requireContext(), "Te faltan ${nJabas} Jabas por registrar", "error")
-                }else{
-                    binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
+                    showCustomToast(
+                        requireContext(),
+                        "Te faltan ${nJabas} Jabas por registrar",
+                        "error"
+                    )
+                } else {
+                    binding.botonGuardar.backgroundTintList =
+                        ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
                     binding.botonGuardar.isEnabled = true
                 }
 
@@ -775,15 +966,21 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 binding.inputCantPollos.isEnabled = true
                 binding.inputCantPollos.setText("")
                 binding.inputCantPollos.requestFocus()
-                val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                inputMethodManager.showSoftInput(binding.inputCantPollos, InputMethodManager.SHOW_IMPLICIT)
+                val inputMethodManager =
+                    requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                inputMethodManager.showSoftInput(
+                    binding.inputCantPollos,
+                    InputMethodManager.SHOW_IMPLICIT
+                )
             } else {
-                binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
+                binding.botonGuardar.backgroundTintList =
+                    ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
                 binding.botonGuardar.isEnabled = true
                 binding.inputNumeroJabas.setText("10")
                 binding.inputCantPollos.isEnabled = false
                 binding.inputCantPollos.setText("0")
-                val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                val inputMethodManager =
+                    requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 inputMethodManager.hideSoftInputFromWindow(binding.inputCantPollos.windowToken, 0)
             }
         }
@@ -804,7 +1001,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
             val numeroPollos = binding.inputCantPollos.text.toString()
             val pesoKg = binding.inputPesoKg.text.toString()
             val precioKilo = binding.PrecioKilo.text.toString()
-            val conPollos = if (binding.checkboxConPollos.isChecked) "JABAS CON POLLOS" else "JABAS SIN POLLOS"
+            val conPollos =
+                if (binding.checkboxConPollos.isChecked) "JABAS CON POLLOS" else "JABAS SIN POLLOS"
 
             var isValid = true
 
@@ -857,12 +1055,16 @@ class JabasFragment : Fragment(), OnItemClickListener {
         }
 
         binding.botonCliente.setOnClickListener {
-            val establecimientoSeleccionado = binding.selectEstablecimiento.selectedItemPosition != 0
+            val establecimientoSeleccionado =
+                binding.selectEstablecimiento.selectedItemPosition != 0
             val galponSeleccionado = binding.selectGalpon.selectedItemPosition != 0
 
             if (!establecimientoSeleccionado || !galponSeleccionado) {
-                // Si alguno no está seleccionado, mostrar un mensaje y no hacer la búsqueda
-                showCustomToast(requireContext(), "Por favor, seleccione un Establecimiento y un Galpón", "warning")
+                showCustomToast(
+                    requireContext(),
+                    "Por favor, seleccione un Establecimiento y un Galpón",
+                    "warning"
+                )
                 return@setOnClickListener
             }
 
@@ -879,53 +1081,93 @@ class JabasFragment : Fragment(), OnItemClickListener {
             }
 
             Log.d("JabasFragment", "Cliente a Buscar: $numeroCliente")
+            val db = AppDatabase(requireContext())
 
             // Verificar disponibilidad de internet
             if (NetworkUtils.isNetworkAvailable(requireContext())) {
-                val jsonParam = JSONObject()
-                jsonParam.put("numeroDocumento", numeroCliente)
-
-                // Obtener el estado del modo
-                val isProduction = Constants.obtenerEstadoModo(requireContext())
-                // Construir la URL base según el estado del modo
-                val baseUrl = Constants.getBaseUrl(isProduction)
-
-                var baseUrlCliente = "${baseUrl}controllers/FuncionesController/buscarCliente.php"
-                // Llamar a la función BuscarCliente con la URL adecuada
-                ManagerPost.BuscarCliente(baseUrlCliente, jsonParam.toString()) { nombreCompleto ->
-                    // Actualizar la vista con el nombre del cliente
-                    binding.textNomCli.setText(nombreCompleto ?: "")
-
-                    preLoading.hidePreCarga()
-                    if (nombreCompleto.isNullOrBlank()) {
-                        showCustomToast(requireContext(), "No se encontró el cliente, Ingrese un nombre manualmente", "info")
-                        binding.textDocCli.isEnabled = true
-                        binding.textNomCli.isEnabled = true
-                        binding.botonCliente.isEnabled = true
-                    }else{
-                        binding.textDocCli.isEnabled = false
-                        binding.textNomCli.isEnabled = false
-                        binding.botonCliente.isEnabled = false
-                    }
-                }
-            } else {
-                // Si no hay conexión a internet, buscar en la base de datos local
-                val db = AppDatabase(requireContext())
                 val cliente = db.getClienteById(numeroCliente)
 
                 if (cliente != null) {
+                    binding.textNomCli.setText(cliente.nombreCompleto)
+
+                    binding.textDocCli.isEnabled = false
+                    binding.textNomCli.isEnabled = false
+                    binding.botonCliente.isEnabled = false
                     // Actualizar la vista con los datos del cliente desde la base de datos
+                    preLoading.hidePreCarga()
+                } else {
+                    val jsonParam = JSONObject()
+                    jsonParam.put("numeroDocumento", numeroCliente)
+
+                    var baseUrlCliente =
+                        "${baseUrl}controllers/FuncionesController/buscarCliente.php"
+                    ManagerPost.BuscarCliente(
+                        baseUrlCliente,
+                        jsonParam.toString()
+                    ) { nombreCompleto ->
+                        binding.textNomCli.setText(nombreCompleto ?: "")
+
+                        preLoading.hidePreCarga()
+                        if (nombreCompleto.isNullOrBlank()) {
+                            showCustomToast(
+                                requireContext(),
+                                "No se encontró el cliente, Ingrese un nombre manualmente",
+                                "info"
+                            )
+                            binding.textDocCli.isEnabled = true
+                            binding.textNomCli.isEnabled = true
+                            binding.botonCliente.isEnabled = true
+                        } else {
+                            binding.textDocCli.isEnabled = false
+                            binding.textNomCli.isEnabled = false
+                            binding.botonCliente.isEnabled = false
+
+                            val nuevoCliente = ClienteEntity(
+                                numeroDocCliente = numeroCliente,
+                                nombreCompleto = nombreCompleto.toString(),
+                                fechaRegistro = ""
+                            )
+                            val cliente = db.getClienteById(numeroCliente)
+
+                            if (cliente == null) {
+                                val insertResult = db.insertCliente(nuevoCliente)
+
+                                if (insertResult != -1L) {
+                                    Toast.makeText(
+                                        context,
+                                        "Cliente guardado exitosamente",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "Error al guardar el cliente",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                val cliente = db.getClienteById(numeroCliente)
+
+                if (cliente != null) {
                     binding.textNomCli.setText(cliente.nombreCompleto)
                     preLoading.hidePreCarga()
                 } else {
-                    Toast.makeText(requireContext(), "Cliente no encontrado localmente", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Cliente no encontrado localmente",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     preLoading.hidePreCarga()
                 }
             }
         }
 
         // Configuración del botón Limpiar
-        binding.botonLimpiar.setOnClickListener {
+        binding.botonLimpiarCliente.setOnClickListener {
             val builder = AlertDialog.Builder(requireContext())
             builder.setTitle("¿Qué deseas hacer?")
 
@@ -943,8 +1185,12 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
                 // Abrir el teclado
                 Handler(Looper.getMainLooper()).postDelayed({
-                    val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                    inputMethodManager.showSoftInput(binding.textDocCli, InputMethodManager.SHOW_IMPLICIT)
+                    val inputMethodManager =
+                        requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                    inputMethodManager.showSoftInput(
+                        binding.textDocCli,
+                        InputMethodManager.SHOW_IMPLICIT
+                    )
                 }, 100)
             }
 
@@ -967,13 +1213,16 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.botonEnviar.setOnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
                 showLoading()
-                val sharedPreferences = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                val sharedPreferences =
+                    requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
                 val dni = sharedPreferences.getString("dni", "") ?: ""
                 val idEsta = sharedPreferences.getString("idEstablecimiento", "") ?: ""
 
                 val dataDetaPesoPollos = ManagerPost.captureData(jabasList)
                 val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
-                val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+                val idGalpon =
+                    galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull()
+                        ?: 0
                 val idNucleo = binding.selectEstablecimiento.selectedItemPosition
                 val dataPesoPollos = ManagerPost.captureDataPesoPollos(
                     id = 1,
@@ -995,39 +1244,46 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     idEstablecimiento = idEsta
                 )
                 var idEstablecimiento = binding.selectEstablecimiento.selectedItemPosition
-                var precio =  dataPesoPollos.PKPollo.toDoubleOrNull()
-                if (idEstablecimiento == 0){
+                var precio = dataPesoPollos.PKPollo.toDoubleOrNull()
+                if (idEstablecimiento == 0) {
                     showCustomToast(requireContext(), "¡Seleccione un Núcleo!", "info")
                     fetchData(500)
                     toggleAcordionisGone()
 
-                }else if (dataPesoPollos.idGalpon == "0" || dataPesoPollos.idGalpon.isBlank()){
+                } else if (dataPesoPollos.idGalpon == "0" || dataPesoPollos.idGalpon.isBlank()) {
                     showCustomToast(requireContext(), "¡Seleccione un galpón!", "info")
                     fetchData(500)
                     toggleAcordionisGone()
 
-                }else if (dataPesoPollos.numeroDocCliente == "" && dataPesoPollos.nombreCompleto == ""){
+                } else if (dataPesoPollos.numeroDocCliente == "" && dataPesoPollos.nombreCompleto == "") {
                     showCustomToast(requireContext(), "¡Registre un cliente!", "info")
                     fetchData(500)
                     toggleAcordionisGone()
-                }else if (dataDetaPesoPollos.isEmpty()) {
-                    showCustomToast(requireContext(), "¡La tabla esta vacía, por favor registre datos antes de enviar!", "info")
+                } else if (dataDetaPesoPollos.isEmpty()) {
+                    showCustomToast(
+                        requireContext(),
+                        "¡La tabla esta vacía, por favor registre datos antes de enviar!",
+                        "info"
+                    )
                     fetchData(500)
 
-                }else if (dataPesoPollos.PKPollo.isBlank()) {
-                    binding.PrecioKilo.error = "¡Para calcular el Total a Pagar necesitamos saber el precio por kilo!"
+                } else if (dataPesoPollos.PKPollo.isBlank()) {
+                    binding.PrecioKilo.error =
+                        "¡Para calcular el Total a Pagar necesitamos saber el precio por kilo!"
                     fetchData(500)
 
-                }else if (precio == null || dataPesoPollos.PKPollo.isBlank()) {
-                    binding.PrecioKilo.error = "¡Para calcular el Total a Pagar necesitamos saber el precio por kilo!"
+                } else if (precio == null || dataPesoPollos.PKPollo.isBlank()) {
+                    binding.PrecioKilo.error =
+                        "¡Para calcular el Total a Pagar necesitamos saber el precio por kilo!"
                     fetchData(500)
-                }else{
+                } else {
                     toggleAcordionnotGone()
                     Log.d("JabasFragment", "$dataDetaPesoPollos")
                     Log.d("JabasFragment", "$dataPesoPollos")
 
                     dataPesoPollosJson = dataPesoPollos.toJson().toString()
-                    dataDetaPesoPollosJson = JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
+                    dataDetaPesoPollosJson =
+                        JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
 
                     sharedViewModel.setDataPesoPollosJson(dataPesoPollosJson!!)
                     sharedViewModel.setDataDetaPesoPollosJson(dataDetaPesoPollosJson!!)
@@ -1084,7 +1340,10 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     connectedDeviceAddress = null
                     sharedViewModel.updateConnectedDeviceAddress("")
                     binding.deviceConnected.text = "NO CONECTADO"
-                    binding.deviceConnected.background = ContextCompat.getDrawable(requireContext(), R.drawable.button_background_inactive)
+                    binding.deviceConnected.background = ContextCompat.getDrawable(
+                        requireContext(),
+                        R.drawable.button_background_inactive
+                    )
 //                    findNavController().navigate(R.id.nav_slideshow)
                     fetchData(1000)
                 } else {
@@ -1102,8 +1361,15 @@ class JabasFragment : Fragment(), OnItemClickListener {
     }
 
     private fun showModalBluetoothFragment() {
-        dialogFragment = BluetoothFragment()
-        dialogFragment.show(requireActivity().supportFragmentManager, "BluetoothFragment")
+        checkBluetoothPermissions { permissionsGranted ->
+            if (permissionsGranted) {
+                // Si los permisos están concedidos, muestra el fragmento
+                val dialogFragment = BluetoothFragment()
+                dialogFragment.show(requireActivity().supportFragmentManager, "BluetoothFragment")
+            } else {
+                // Si los permisos no están concedidos, no muestres el fragmento
+            }
+        }
     }
 
     private fun actualizarSpinnerGalpon(idGalpon: String) {
@@ -1129,15 +1395,23 @@ class JabasFragment : Fragment(), OnItemClickListener {
         Log.d("idGalponSelect", "Posición a seleccionar: $positionToSelect")
 
         binding.selectGalpon.setSelection(positionToSelect)
-        Log.d("idGalponSelect", "Galpón seleccionado: posición $positionToSelect, idGalpon: $idGalpon")
+        Log.d(
+            "idGalponSelect",
+            "Galpón seleccionado: posición $positionToSelect, idGalpon: $idGalpon"
+        )
     }
 
-    private fun updateSpinnerPesosIdGalpon(idNucleo : Int, idGalpon: Int) {
+    private fun updateSpinnerPesosIdGalpon(idNucleo: Int, idGalpon: Int) {
         val idDevice = getDeviceId(requireContext())
         val isProduction = Constants.obtenerEstadoModo(requireContext())
         val baseUrl = Constants.getBaseUrl(isProduction)
         // Obtener los pesos guardados en la base de datos
-        ManagerPost.getListPesosByIdGalpon(baseUrl, idGalpon, idNucleo, idDevice) { fetchedPesosList ->
+        ManagerPost.getListPesosByIdGalpon(
+            baseUrl,
+            idGalpon,
+            idNucleo,
+            idDevice
+        ) { fetchedPesosList ->
             if (fetchedPesosList != null && fetchedPesosList.isNotEmpty()) {
                 // Actualizar la lista global
                 pesosList = fetchedPesosList
@@ -1171,21 +1445,29 @@ class JabasFragment : Fragment(), OnItemClickListener {
                         binding.selectListpesos.setSelection(0)
                     }
                 }
-                } else {
+            } else {
                 // Si no hay datos, actualizar la lista global a una lista vacía
                 pesosList = emptyList()
 
                 // Actualizar el spinner en el hilo principal
                 CoroutineScope(Dispatchers.Main).launch {
                     val spinnerItems = listOf("Lista de Pesos", "No hay datos guardados")
-                    val adapter = object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_item, spinnerItems) {
+                    val adapter = object : ArrayAdapter<String>(
+                        requireContext(),
+                        android.R.layout.simple_spinner_item,
+                        spinnerItems
+                    ) {
                         override fun isEnabled(position: Int): Boolean {
                             // Deshabilitar el segundo ítem (posición 1)
                             return position != 1
                         }
 
                         @SuppressLint("ResourceAsColor")
-                        override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
+                        override fun getDropDownView(
+                            position: Int,
+                            convertView: View?,
+                            parent: ViewGroup
+                        ): View {
                             val view = super.getDropDownView(position, convertView, parent)
                             val textView = view as TextView
                             // Deshabilitar el segundo ítem (posición 1)
@@ -1216,19 +1498,28 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     pesosList = emptyList()
                     // Actualizar el spinner
                     val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
-                    val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+                    val idGalpon =
+                        galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull()
+                            ?: 0
                     val idNucleo = binding.selectEstablecimiento.selectedItemPosition
                     limpiarCampos()
                     updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
                 } else {
-                    Toast.makeText(requireContext(), "Error al eliminar el peso", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Error al eliminar el peso",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         } else {
-            Toast.makeText(requireContext(), "No se encontró el registro con ID $idPeso", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                "No se encontró el registro con ID $idPeso",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
-
 
 
     private fun showNoInternetDialog() {
@@ -1242,14 +1533,22 @@ class JabasFragment : Fragment(), OnItemClickListener {
             .show()
     }
 
-    private fun showSendDataConfirmationDialog(dataDetaPesoPollos: List<DataDetaPesoPollosEntity>, dataPesoPollos: List<DataPesoPollosEntity>) {
+    private fun showSendDataConfirmationDialog(
+        dataDetaPesoPollos: List<DataDetaPesoPollosEntity>,
+        dataPesoPollos: List<DataPesoPollosEntity>
+    ) {
         AlertDialog.Builder(requireContext())
             .setTitle("Enviar Datos")
             .setMessage("Se ha detectado una conexión a Internet. ¿Deseas enviar los datos almacenados?")
             .setPositiveButton("Enviar") { dialog, _ ->
                 // El usuario aceptó enviar los datos
                 CoroutineScope(Dispatchers.IO).launch {
-                    ManagerPost.sendLocalDataToServer(requireContext(), this@JabasFragment, dataDetaPesoPollos, dataPesoPollos)
+                    ManagerPost.sendLocalDataToServer(
+                        requireContext(),
+                        this@JabasFragment,
+                        dataDetaPesoPollos,
+                        dataPesoPollos
+                    )
                     checkSendData = true
                 }
                 dialog.dismiss()
@@ -1276,9 +1575,11 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.totalPagarPreview.setText("")
         binding.checkboxConPollos.isChecked = false
         binding.botonEnviar.isEnabled = false
-        binding.botonEnviar.backgroundTintList  = ContextCompat.getColorStateList(requireContext(), R.color.gray)
+        binding.botonEnviar.backgroundTintList =
+            ContextCompat.getColorStateList(requireContext(), R.color.gray)
         binding.botonEnviar.setImageResource(R.drawable.null_24)
-        binding.botonGuardar.backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
+        binding.botonGuardar.backgroundTintList =
+            ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
         binding.botonGuardar.isEnabled = true
         binding.botonCliente.isEnabled = true
 
@@ -1295,7 +1596,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.textNomCli.error = null
 
         binding.botonDeletePeso.visibility = View.INVISIBLE
-        binding.botonGuardarPeso.backgroundTintList  = ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
+        binding.botonGuardarPeso.backgroundTintList =
+            ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
         binding.botonGuardarPeso.setImageResource(R.drawable.baseline_add_24)
 
         // Limpiar Tabla
@@ -1305,7 +1607,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
         _binding?.contadorJabas?.text = "= 0"
     }
 
-    private fun limpiarTablaJabas(){
+    private fun limpiarTablaJabas() {
         // Limpiar Tabla
         sharedViewModel.setDataPesoPollosJson("")
         sharedViewModel.setDataDetaPesoPollosJson("")
@@ -1322,7 +1624,6 @@ class JabasFragment : Fragment(), OnItemClickListener {
         builder.setTitle("Confirmar limpieza")
         builder.setMessage("¿Está seguro de que desea limpiar los campos?")
         builder.setPositiveButton("Sí") { dialog, which ->
-            // Aquí llama a la función para limpiar los campos
             limpiarCampos()
         }
         builder.setNegativeButton("Cancelar", null)
@@ -1360,8 +1661,26 @@ class JabasFragment : Fragment(), OnItemClickListener {
 //                checkAndSendLocalData()
             }
         }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // Android 13 o superior
             checkNotificationPermission()
+        }
+
+        requestMultiplePermissions =
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+                val allGranted = permissions.values.all { it }
+                if (allGranted) {
+                    enableBluetoothFeatures()
+                } else {
+                    showPermissionDeniedDialog()
+                }
+            }
+
+        // Verificar permisos de Bluetooth al crear el fragmento
+        checkBluetoothPermissions { arePermissionsGranted ->
+            if (arePermissionsGranted) {
+                enableBluetoothFeatures()
+            }
         }
     }
 
@@ -1393,12 +1712,13 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
         builder.setNegativeButton("Cancelar") { dialog, _ ->
             dialog.dismiss()
-            // Aquí puedes manejar la cancelación, si es necesario
+
         }
 
         val dialog = builder.create()
         dialog.show()
     }
+
     private fun requestNotificationPermission() {
         // Solicitar el permiso
         ActivityCompat.requestPermissions(
@@ -1428,6 +1748,78 @@ class JabasFragment : Fragment(), OnItemClickListener {
         }
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////
+    //BLUETOOTH PRINCIPAL PERMISOS
+    ////////////////////////////////////////////////////////////////////////////////////////
+    private fun checkBluetoothPermissions(onPermissionsChecked: (Boolean) -> Unit) {
+        val bluetoothPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            arrayOf(
+                android.Manifest.permission.BLUETOOTH_CONNECT,
+                android.Manifest.permission.BLUETOOTH_SCAN,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            )
+        } else {
+            arrayOf(
+                android.Manifest.permission.BLUETOOTH,
+                android.Manifest.permission.BLUETOOTH_ADMIN,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            )
+        }
+
+        if (bluetoothPermissions.all { permission ->
+                ContextCompat.checkSelfPermission(
+                    requireContext(),
+                    permission
+                ) == PackageManager.PERMISSION_GRANTED
+            }) {
+            onPermissionsChecked(true)
+        } else {
+            // Mostrar el diálogo de explicación de permisos primero
+            showBluetoothPermissionExplanationDialog(bluetoothPermissions, onPermissionsChecked)
+        }
+    }
+
+    private fun showPermissionDeniedDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Permisos Necesarios")
+            .setMessage("Los permisos de Bluetooth son necesarios para usar esta función. Por favor, habilítelos en la configuración de la aplicación.")
+            .setPositiveButton("Ir a Configuración") { _, _ ->
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                val uri = Uri.fromParts("package", requireActivity().packageName, null)
+                intent.data = uri
+                startActivity(intent)
+            }
+            .setNegativeButton("Cancelar") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun showBluetoothPermissionExplanationDialog(
+        permissions: Array<String>,
+        onPermissionsChecked: (Boolean) -> Unit
+    ) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Permisos de Bluetooth Requeridos")
+            .setMessage("Esta aplicación necesita permisos de Bluetooth para funcionar correctamente. ¿Desea concederlos?")
+            .setPositiveButton("Conceder") { _, _ ->
+                requestMultiplePermissions.launch(permissions)
+            }
+            .setNegativeButton("Cancelar") { dialog, _ ->
+                onPermissionsChecked(false)
+                dialog.dismiss()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun enableBluetoothFeatures() {
+        // Habilitar características de Bluetooth aquí
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////
+
     var idPesoTemp = 0
     var dataPesoPollosJsonTemp = ""
     var dataDetaPesoPollosJsonTemp = ""
@@ -1440,25 +1832,27 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
         binding.botonDeletePeso.visibility = View.INVISIBLE
 
-        if (idPesoShared == 0){
+        if (idPesoShared == 0) {
             sharedViewModel.setIdListPesos(idPesoTemp)
-            idPesoShared = sharedViewModel.getIdListPesos()?: 0
-        }else{
+            idPesoShared = sharedViewModel.getIdListPesos() ?: 0
+        } else {
             val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
-            val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+            val idGalpon =
+                galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
             val idNucleo = binding.selectEstablecimiento.selectedItemPosition
             updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
         }
 
         // Inicia la verificación periódica de la conexión a Internet
-//        handler.post(checkInternetRunnable)
+        handler.post(checkInternetRunnable)
     }
+
     override fun onStop() {
         super.onStop()
 
-        idPesoTemp = sharedViewModel.getIdListPesos()?: 0
-        dataPesoPollosJsonTemp = sharedViewModel.getDataPesoPollosJson()?: ""
-        dataDetaPesoPollosJsonTemp = sharedViewModel.getDataDetaPesoPollosJson()?: ""
+        idPesoTemp = sharedViewModel.getIdListPesos() ?: 0
+        dataPesoPollosJsonTemp = sharedViewModel.getDataPesoPollosJson() ?: ""
+        dataDetaPesoPollosJsonTemp = sharedViewModel.getDataDetaPesoPollosJson() ?: ""
         sharedViewModel.setDataPesoPollosJson(dataPesoPollosJsonTemp)
         sharedViewModel.setDataDetaPesoPollosJson(dataDetaPesoPollosJsonTemp)
         sharedViewModel.setIdListPesos(idPesoTemp)
@@ -1472,14 +1866,14 @@ class JabasFragment : Fragment(), OnItemClickListener {
         val db = AppDatabase(requireContext())
         val device = getDeviceId(requireContext())
 
-        idPesoTemp = sharedViewModel.getIdListPesos()?: 0
-        dataPesoPollosJsonTemp = sharedViewModel.getDataPesoPollosJson()?: ""
-        dataDetaPesoPollosJsonTemp = sharedViewModel.getDataDetaPesoPollosJson()?: ""
+        idPesoTemp = sharedViewModel.getIdListPesos() ?: 0
+        dataPesoPollosJsonTemp = sharedViewModel.getDataPesoPollosJson() ?: ""
+        dataDetaPesoPollosJsonTemp = sharedViewModel.getDataDetaPesoPollosJson() ?: ""
 
         updatePesoStatus(idPesoTemp, "Used")
-        if (!navegationTrue){
-            if (idPesoTemp != 0){
-                if (!dataPesoPollosJsonTemp.isNullOrBlank() && !dataDetaPesoPollosJsonTemp.isNullOrBlank()){
+        if (!navegationTrue) {
+            if (idPesoTemp != 0) {
+                if (!dataPesoPollosJsonTemp.isNullOrBlank() && !dataDetaPesoPollosJsonTemp.isNullOrBlank()) {
                     val pesoUsed = pesoUsedEntity(
                         idPesoUsed = idPesoTemp,
                         devicedName = device,
@@ -1488,9 +1882,11 @@ class JabasFragment : Fragment(), OnItemClickListener {
                         fechaRegistro = ""
                     )
                     db.addPesoUsed(pesoUsed)
-                }else{
+                } else {
                     val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
-                    val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+                    val idGalpon =
+                        galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull()
+                            ?: 0
                     val idNucleo = binding.selectEstablecimiento.selectedItemPosition
                     val dataDetaPesoPollos = ManagerPost.captureData(jabasList)
                     val dataPesoPollos = ManagerPost.captureDataPesoPollos(
@@ -1514,7 +1910,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     )
 
                     dataPesoPollosJson = dataPesoPollos.toJson().toString()
-                    dataDetaPesoPollosJson = JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
+                    dataDetaPesoPollosJson =
+                        JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
 
                     val pesoUsed = pesoUsedEntity(
                         idPesoUsed = idPesoTemp,
@@ -1536,13 +1933,19 @@ class JabasFragment : Fragment(), OnItemClickListener {
                             dataDetaPesoJson = dataDetaPesoPollosJson!!,
                             fechaRegistro = ""
                         )
-                        updateListPesos(requireContext(), this@JabasFragment, pesosEntity, idPesoTemp)
+                        updateListPesos(
+                            requireContext(),
+                            this@JabasFragment,
+                            pesosEntity,
+                            idPesoTemp
+                        )
                     }
                 }
             }
-        }else{
+        } else {
             val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
-            val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+            val idGalpon =
+                galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
             val idNucleo = binding.selectEstablecimiento.selectedItemPosition
             val dataDetaPesoPollos = ManagerPost.captureData(jabasList)
             val dataPesoPollos = ManagerPost.captureDataPesoPollos(
@@ -1596,11 +1999,11 @@ class JabasFragment : Fragment(), OnItemClickListener {
         sharedViewModel.setDataDetaPesoPollosJson(dataDetaPesoPollosJsonTemp)
         sharedViewModel.setIdListPesos(idPesoTemp)
         // Detiene la verificación periódica
-//        handler.removeCallbacks(checkInternetRunnable)
+        handler.removeCallbacks(checkInternetRunnable)
     }
 
-    fun updatePesoStatus(id: Int, status: String){
-        if (id != 0){
+    fun updatePesoStatus(id: Int, status: String) {
+        if (id != 0) {
             val idDevice = getDeviceId(requireContext())
             setStatusUsed(requireContext(), id, "$status", idDevice) { success ->
                 if (!success) {
@@ -1623,6 +2026,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
     override fun onItemAdd() {
         updateUI()
     }
+
     private var isJabasInputValid = true
     private var currentInputJabas = 0
 
@@ -1636,7 +2040,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
         _binding?.contadorJabas?.text = "= $nuevoContador"
 
-        if (nuevoContador != 0){
+        if (nuevoContador != 0) {
             validateInputJabas(nuevoContador)
         }
         updateSaveButton(nuevoContador, isEditMode, isConPollos)
@@ -1680,7 +2084,11 @@ class JabasFragment : Fragment(), OnItemClickListener {
             val numeroJabas = _binding?.inputNumeroJabas?.text.toString().toIntOrNull() ?: 0
             currentInputJabas = numeroJabas
             if (numeroJabas > nuevoContador.coerceAtLeast(0)) {  // Usamos coerceAtLeast para manejar contadores negativos
-                showCustomToast(requireContext(), "No puedes usar jabas mayores a las que tienes", "error")
+                showCustomToast(
+                    requireContext(),
+                    "No puedes usar jabas mayores a las que tienes",
+                    "error"
+                )
                 _binding?.inputNumeroJabas?.error = "Actualiza el valor aquí"
                 _binding?.inputNumeroJabas?.let {
                     it.requestFocus()
@@ -1699,15 +2107,35 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
     private fun showToastMessage(contador: Int) {
         when {
-            contador < 0 -> showCustomToast(requireContext(), "Te Faltan ${contador} Jabas por registrar!", "info")
-            contador == 0 && jabasList.isEmpty() -> showCustomToast(requireContext(), "No hay jabas registradas", "info")
-            contador == 0 -> showCustomToast(requireContext(), "Ya no hay Jabas por utilizar", "success")
-            contador > 0 -> showCustomToast(requireContext(), "Tienes $contador Jabas por utilizar", "info")
+            contador < 0 -> showCustomToast(
+                requireContext(),
+                "Te Faltan ${contador} Jabas por registrar!",
+                "info"
+            )
+
+            contador == 0 && jabasList.isEmpty() -> showCustomToast(
+                requireContext(),
+                "No hay jabas registradas",
+                "info"
+            )
+
+            contador == 0 -> showCustomToast(
+                requireContext(),
+                "Ya no hay Jabas por utilizar",
+                "success"
+            )
+
+            contador > 0 -> showCustomToast(
+                requireContext(),
+                "Tienes $contador Jabas por utilizar",
+                "info"
+            )
         }
     }
 
     private fun showKeyboard(view: View) {
-        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val imm =
+            requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
 
         if (view is EditText) {
@@ -1736,13 +2164,14 @@ class JabasFragment : Fragment(), OnItemClickListener {
         }
     }
 
-    fun toggleAcordionisGone(){
+    fun toggleAcordionisGone() {
         if (binding.accordionContent.visibility == View.GONE) {
             binding.accordionContent.visibility = View.VISIBLE
             binding.arrow.setImageResource(R.drawable.ic_arrow_up)
         }
     }
-    fun toggleAcordionnotGone(){
+
+    fun toggleAcordionnotGone() {
         if (binding.accordionContent.visibility != View.GONE) {
             binding.accordionContent.visibility = View.GONE
             binding.arrow.setImageResource(R.drawable.ic_arrow_down)

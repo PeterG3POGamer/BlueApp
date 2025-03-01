@@ -23,6 +23,7 @@
     <!--    NAVECACION-->
     <string name="pesajes">Pesajes</string>
     <string name="reportes">Reportes</string>
+    <string name="localdata">Datos Locales</string>
     <string name="configuration">Configuración</string>
 
     <!--    ITEMS-->
