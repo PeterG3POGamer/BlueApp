@@ -29,8 +29,20 @@ class indexDataLocal : Fragment() {
             findNavController().navigate(R.id.nav_initClientes)
         }
 
+        binding.cardNucleos.setOnClickListener {
+            findNavController().navigate(R.id.nav_initNucleos)
+        }
+
+        binding.cardGalpones.setOnClickListener {
+            findNavController().navigate(R.id.nav_initGalpones)
+        }
+
         binding.cardImpresora.setOnClickListener {
             findNavController().navigate(R.id.nav_impresoraConfig)
+        }
+
+        binding.cardConfigBal.setOnClickListener {
+            findNavController().navigate(R.id.nav_initConfConex)
         }
     }
 

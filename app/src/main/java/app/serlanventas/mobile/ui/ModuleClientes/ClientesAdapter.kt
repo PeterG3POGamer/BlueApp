@@ -16,8 +16,8 @@ class ClientesAdapter(
 ) : RecyclerView.Adapter<ClientesAdapter.ClienteViewHolder>() {
 
     class ClienteViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val nombreCliente: TextView = itemView.findViewById(R.id.nombreCliente)
         val documentoCliente: TextView = itemView.findViewById(R.id.documentoCliente)
+        val nombreCliente: TextView = itemView.findViewById(R.id.nombreCliente)
         val btnEditar: Button = itemView.findViewById(R.id.btnEditar)
         val btnEliminar: Button = itemView.findViewById(R.id.btnEliminar)
     }

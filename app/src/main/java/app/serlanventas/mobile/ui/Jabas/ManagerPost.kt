@@ -32,9 +32,11 @@ import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.GalponEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.NucleoEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.PesosEntity
+import app.serlanventas.mobile.ui.DataBase.Entities.pesoUsedEntity
 import app.serlanventas.mobile.ui.Services.PreLoading
 import app.serlanventas.mobile.ui.Services.createNotificationChannel
 import app.serlanventas.mobile.ui.Services.generateAndOpenPDF2
+import app.serlanventas.mobile.ui.Services.getAddressMacDivice.getDeviceId
 import app.serlanventas.mobile.ui.Services.showNotification
 import app.serlanventas.mobile.ui.Services.showProgressNotification
 import app.serlanventas.mobile.ui.Services.showSuccessNotification
@@ -1081,6 +1083,7 @@ object ManagerPost {
 
     fun getListPesosByIdGalpon(
         baseUrl: String,
+        context: Context,
         idGalpon: Int,
         idEstablecimiento: Int,
         diviceName: String,
@@ -1088,75 +1091,83 @@ object ManagerPost {
     ) {
         val urlString =
             "${baseUrl}controllers/TempPesoPollosController.php?op=getListPesosByIdGalpon&idGalpon=$idGalpon&idEstablecimiento=${idEstablecimiento}&diviceName=$diviceName"
+        val db = AppDatabase(context)
 
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val url = URL(urlString)
-                val conn = url.openConnection() as HttpURLConnection
-                conn.requestMethod = "GET"
-                conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+        if (NetworkUtils.isNetworkAvailable(context)) {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val url = URL(urlString)
+                    val conn = url.openConnection() as HttpURLConnection
+                    conn.requestMethod = "GET"
+                    conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
 
-                val responseCode = conn.responseCode
+                    val responseCode = conn.responseCode
 
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
 
-                    try {
-                        val jsonResponse = JSONObject(inputStream)
-                        val status = jsonResponse.optString("status")
+                        try {
+                            val jsonResponse = JSONObject(inputStream)
+                            val status = jsonResponse.optString("status")
 
-                        if (status == "success") {
-                            val dataArray = jsonResponse.getJSONArray("data")
-                            val pesosList = mutableListOf<PesosEntity>()
+                            if (status == "success") {
+                                val dataArray = jsonResponse.getJSONArray("data")
+                                val pesosList = mutableListOf<PesosEntity>()
 
-                            for (i in 0 until dataArray.length()) {
-                                val item = dataArray.getJSONObject(i)
-                                val pesosEntity = PesosEntity(
-                                    id = item.getInt("idPeso"),
-                                    idNucleo = item.getInt("idNucleo"),
-                                    idGalpon = item.getInt("idGalpon"),
-                                    numeroDocCliente = item.getString("numeroDocCliente"),
-                                    nombreCompleto = item.optString("nombreCompleto"),
-                                    dataPesoJson = item.getString("dataPesoJson"),
-                                    dataDetaPesoJson = item.getString("dataDetaPesoJson"),
-                                    fechaRegistro = item.getString("fechaRegistro")
+                                for (i in 0 until dataArray.length()) {
+                                    val item = dataArray.getJSONObject(i)
+                                    val pesosEntity = PesosEntity(
+                                        id = item.getInt("idPeso"),
+                                        idNucleo = item.getInt("idNucleo"),
+                                        idGalpon = item.getInt("idGalpon"),
+                                        numeroDocCliente = item.getString("numeroDocCliente"),
+                                        nombreCompleto = item.optString("nombreCompleto"),
+                                        dataPesoJson = item.getString("dataPesoJson"),
+                                        dataDetaPesoJson = item.getString("dataDetaPesoJson"),
+                                        fechaRegistro = item.getString("fechaRegistro")
+                                    )
+                                    pesosList.add(pesosEntity)
+                                }
+
+                                withContext(Dispatchers.Main) {
+                                    callback(pesosList)
+                                }
+                            } else {
+                                withContext(Dispatchers.Main) {
+                                    callback(null)
+                                }
+                            }
+                        } catch (e: JSONException) {
+                            withContext(Dispatchers.Main) {
+                                Log.e(
+                                    "GetListPesosByIdNucleo",
+                                    "Error al convertir la respuesta a JSON: $inputStream",
+                                    e
                                 )
-                                pesosList.add(pesosEntity)
-                            }
-
-                            withContext(Dispatchers.Main) {
-                                callback(pesosList)
-                            }
-                        } else {
-                            withContext(Dispatchers.Main) {
                                 callback(null)
                             }
                         }
-                    } catch (e: JSONException) {
+                    } else {
                         withContext(Dispatchers.Main) {
-                            Log.e(
-                                "GetListPesosByIdNucleo",
-                                "Error al convertir la respuesta a JSON: $inputStream",
-                                e
-                            )
+                            Log.e("GetListPesosByIdNucleo", "Error al obtener datos: $responseCode")
                             callback(null)
                         }
                     }
-                } else {
+                } catch (ex: Exception) {
+                    ex.printStackTrace()
                     withContext(Dispatchers.Main) {
-                        Log.e("GetListPesosByIdNucleo", "Error al obtener datos: $responseCode")
+                        Log.e("GetListPesosByIdNucleo", "Error: ${ex.message}")
                         callback(null)
                     }
                 }
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    Log.e("GetListPesosByIdNucleo", "Error: ${ex.message}")
-                    callback(null)
-                }
             }
+        } else {
+            // Si no hay conexión a internet, obtener datos locales
+            val pesosList = db.getPesosByIdGalponAndEstablecimiento(idGalpon, idEstablecimiento)
+            callback(pesosList)
         }
     }
+
 
 
     fun getListPesosId(
@@ -1268,8 +1279,6 @@ object ManagerPost {
             }
 
             val responseCode = conn.responseCode
-            val responseMessage = conn.responseMessage
-
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
                 Log.e("AddListPesos", "Error: $inputStream")
@@ -1283,40 +1292,60 @@ object ManagerPost {
                         withContext(Dispatchers.Main) {
                             showCustomToast(context, "Datos enviados correctamente", "success")
                         }
-                        true
+                        return@withContext true
                     } else {
                         withContext(Dispatchers.Main) {
-                            showCustomToast(context, "Ocurrio un error al insertar", "error")
+                            showCustomToast(context, "Ocurrió un error al insertar", "error")
                         }
                         Log.e("AddListPesos", "Error: $message")
-                        false
                     }
                 } catch (e: JSONException) {
                     withContext(Dispatchers.Main) {
-                        showCustomToast(
-                            context,
-                            "Error al procesar la respuesta del servidor",
-                            "error"
-                        )
+                        showCustomToast(context, "Error al procesar la respuesta del servidor", "error")
                     }
                     Log.e("addListPesos", "JSON Exception: ${e.message}")
-                    false
                 }
             } else {
                 withContext(Dispatchers.Main) {
                     showCustomToast(context, "Error de red: ${conn.responseMessage}", "error")
                 }
                 Log.e("addListPesos", "Server response: $responseCode ${conn.responseMessage}")
-                false
             }
         } catch (ex: Exception) {
             withContext(Dispatchers.Main) {
                 showCustomToast(context, "Error de red: ${ex.message}", "error")
             }
             Log.e("addListPesos", "Exception: ${ex.message}")
-            false
+        }
+
+        // Si llegamos aquí, significa que falló la inserción en el servidor remoto
+        // Insertamos en la base de datos local
+        val pesoUsedEntity = PesosEntity(
+            id = 0,
+            idNucleo = pesosEntity.idNucleo,
+            idGalpon = pesosEntity.idGalpon,
+            numeroDocCliente = pesosEntity.numeroDocCliente,
+            nombreCompleto = pesosEntity.nombreCompleto,
+            dataPesoJson = pesosEntity.dataPesoJson,
+            dataDetaPesoJson = pesosEntity.dataDetaPesoJson,
+            fechaRegistro = ""
+        )
+        val db = AppDatabase(context)
+        val result = db.insertListPesos(pesoUsedEntity)
+
+        if (result != -1L) {
+            withContext(Dispatchers.Main) {
+                showCustomToast(context, "Datos guardados localmente", "info")
+            }
+            return@withContext true
+        } else {
+            withContext(Dispatchers.Main) {
+                showCustomToast(context, "Error al guardar datos localmente", "error")
+            }
+            return@withContext false
         }
     }
+
 
     suspend fun updateListPesos(
         context: Context,
@@ -1326,8 +1355,7 @@ object ManagerPost {
     ): Boolean = withContext(Dispatchers.IO) {
         val isProduction = Constants.obtenerEstadoModo(context)
         val baseUrl = Constants.getBaseUrl(isProduction)
-        val urlString =
-            "${baseUrl}controllers/TempPesoPollosController.php?op=insertar&idPesoShared=${idPesoShared}"
+        val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=insertar&idPesoShared=${idPesoShared}"
 
         try {
             val url = URL(urlString)
@@ -1346,11 +1374,9 @@ object ManagerPost {
             }
 
             val responseCode = conn.responseCode
-            val responseMessage = conn.responseMessage
-
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-                Log.e("AddListPesos", "Error: $inputStream")
+                Log.e("UpdateListPesos", "Response: $inputStream")
 
                 try {
                     val jsonResponse = JSONObject(inputStream)
@@ -1361,40 +1387,59 @@ object ManagerPost {
                         withContext(Dispatchers.Main) {
                             showCustomToast(context, "Peso actualizado correctamente", "success")
                         }
-                        true
+                        return@withContext true
                     } else {
                         withContext(Dispatchers.Main) {
-                            showCustomToast(context, "Ocurrio un error al insertar", "error")
+                            showCustomToast(context, "Ocurrió un error al actualizar", "error")
                         }
-                        Log.e("AddListPesos", "Error: $message")
-                        false
+                        Log.e("UpdateListPesos", "Error: $message")
                     }
                 } catch (e: JSONException) {
                     withContext(Dispatchers.Main) {
-                        showCustomToast(
-                            context,
-                            "Error al procesar la respuesta del servidor",
-                            "error"
-                        )
+                        showCustomToast(context, "Error al procesar la respuesta del servidor", "error")
                     }
-                    Log.e("addListPesos", "JSON Exception: ${e.message}")
-                    false
+                    Log.e("updateListPesos", "JSON Exception: ${e.message}")
                 }
             } else {
                 withContext(Dispatchers.Main) {
                     showCustomToast(context, "Error de red: ${conn.responseMessage}", "error")
                 }
-                Log.e("addListPesos", "Server response: $responseCode ${conn.responseMessage}")
-                false
+                Log.e("updateListPesos", "Server response: $responseCode ${conn.responseMessage}")
             }
         } catch (ex: Exception) {
             withContext(Dispatchers.Main) {
                 showCustomToast(context, "Error de red: ${ex.message}", "error")
             }
-            Log.e("addListPesos", "Exception: ${ex.message}")
-            false
+            Log.e("updateListPesos", "Exception: ${ex.message}")
+        }
+
+        // Si llegamos aquí, significa que falló la actualización en el servidor remoto
+        val idDevice = getDeviceId(context)
+
+        // Actualizamos en la base de datos local
+        val pesoUsedEntity = pesoUsedEntity(
+            idPesoUsed = idPesoShared,
+            devicedName = idDevice,
+            dataPesoPollosJson = pesosEntity.dataPesoJson,
+            dataDetaPesoPollosJson = pesosEntity.dataDetaPesoJson,
+            fechaRegistro = ""
+        )
+        val db = AppDatabase(context)
+        val result = db.addPesoUsed(pesoUsedEntity)
+
+        if (result != -1L) {
+            withContext(Dispatchers.Main) {
+                showCustomToast(context, "Datos actualizados localmente", "info")
+            }
+            return@withContext true
+        } else {
+            withContext(Dispatchers.Main) {
+                showCustomToast(context, "Error al actualizar datos localmente", "error")
+            }
+            return@withContext false
         }
     }
+
 
     fun removeListPesosId(
         context: Context,

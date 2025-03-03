@@ -12,6 +12,7 @@ import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.ClienteEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.GalponEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.NucleoEntity
+import app.serlanventas.mobile.ui.DataBase.Entities.SerieDeviceEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.UsuarioEntity
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.showCustomToast
 import com.bumptech.glide.Glide
@@ -25,19 +26,36 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
+sealed class SyncResult {
+    data class Success(val needsSync: Boolean) : SyncResult()
+    data class Error(val message: String) : SyncResult()
+}
+
 class DataSyncManager(private val context: Context) {
 
     private val db = AppDatabase(context)
 
-    fun sincronizarData(baseUrl: String, callback: (Boolean) -> Unit, isSincronizar: (Boolean) -> Unit) {
+    fun sincronizarData(baseUrl: String, macDevice: String, callback: (SyncResult) -> Unit) {
         val urlString = "${baseUrl}controllers/PesoPollosController.php?op=getAllDataSynchronized"
+
+        // Crea un objeto JSON con el campo mac
+        val jsonBody = JSONObject().apply {
+            put("mac", macDevice)
+        }
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val url = URL(urlString)
                 val conn = url.openConnection() as HttpURLConnection
-                conn.requestMethod = "GET"
+                conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+                conn.doOutput = true
+
+                // Escribe el JSON en el cuerpo de la solicitud
+                val outputStream = conn.outputStream
+                outputStream.write(jsonBody.toString().toByteArray(Charsets.UTF_8))
+                outputStream.flush()
+                outputStream.close()
 
                 val responseCode = conn.responseCode
                 if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -52,44 +70,57 @@ class DataSyncManager(private val context: Context) {
                         val necesitaSincronizar = compararDatos(data)
 
                         withContext(Dispatchers.Main) {
-                            isSincronizar(necesitaSincronizar)
-                        }
-
-                        if (necesitaSincronizar) {
-                            // Procesar usuarios
-                            procesarUsuarios(data.getJSONArray("usuarios"))
-
-                            // Procesar establecimientos
-                            procesarEstablecimientos(data.getJSONArray("establecimientos"))
-
-                            // Procesar galpones
-                            procesarGalpones(data.getJSONArray("galpones"))
-
-                            // Procesar clientes
-                            procesarClientes(data.getJSONArray("clientes"))
-                        }
-
-                        withContext(Dispatchers.Main) {
-                            callback(true)
+                            if (necesitaSincronizar) {
+                                procesarDatos(data, callback)
+                            } else {
+                                callback(SyncResult.Success(false))
+                            }
                         }
                     } catch (e: JSONException) {
                         withContext(Dispatchers.Main) {
                             Log.e("DataSyncManager", "Error al convertir la respuesta a JSON: $inputStream", e)
-                            callback(false)
+                            callback(SyncResult.Error("Error al convertir la respuesta a JSON"))
                         }
                     }
                 } else {
                     withContext(Dispatchers.Main) {
                         Log.e("DataSyncManager", "Error al enviar datos: $responseCode")
-                        callback(false)
+                        callback(SyncResult.Error("Error al enviar datos: $responseCode"))
                     }
                 }
             } catch (ex: Exception) {
                 ex.printStackTrace()
                 withContext(Dispatchers.Main) {
                     Log.e("DataSyncManager", "Error: ${ex.message}")
-                    callback(false)
+                    callback(SyncResult.Error("Error: ${ex.message}"))
                 }
+            }
+        }
+    }
+
+
+    private fun procesarDatos(data: JSONObject, callback: (SyncResult) -> Unit) {
+        procesarUsuarios(data.getJSONArray("usuarios")) { success ->
+            if (success) {
+                procesarEstablecimientos(data.getJSONArray("establecimientos")) { success ->
+                    if (success) {
+                        procesarGalpones(data.getJSONArray("galpones")) { success ->
+                            if (success) {
+                                procesarClientes(data.getJSONArray("clientes")) { success ->
+                                    procesarSerieDevice(data.getJSONArray("series")){ success ->
+                                        callback(SyncResult.Success(success))
+                                    }
+                                }
+                            } else {
+                                callback(SyncResult.Error("Error al procesar galpones"))
+                            }
+                        }
+                    } else {
+                        callback(SyncResult.Error("Error al procesar establecimientos"))
+                    }
+                }
+            } else {
+                callback(SyncResult.Error("Error al procesar usuarios"))
             }
         }
     }
@@ -204,7 +235,7 @@ class DataSyncManager(private val context: Context) {
                 clienteNube.getString("nomtit") == clienteLocal.nombreCompleto
     }
 
-    private fun procesarUsuarios(usuarios: JSONArray) {
+    private fun procesarUsuarios(usuarios: JSONArray, callback: (Boolean) -> Unit) {
         for (i in 0 until usuarios.length()) {
             val usuario = usuarios.getJSONObject(i)
 
@@ -221,16 +252,17 @@ class DataSyncManager(private val context: Context) {
             if (usuarioExistente == null) {
                 val insertResult = db.insertUsuario(nuevoUsuario)
 
-                if (insertResult != -1L) {
-                    // insertado correctamente no devolver ningún mensaje
-                } else {
+                if (insertResult == -1L) {
                     showCustomToast(context, "Error al guardar el usuario", "error")
+                    callback(false)
+                    return
                 }
             }
         }
+        callback(true)
     }
 
-    private fun procesarEstablecimientos(establecimientos: JSONArray) {
+    private fun procesarEstablecimientos(establecimientos: JSONArray, callback: (Boolean) -> Unit) {
         for (i in 0 until establecimientos.length()) {
             val establecimiento = establecimientos.getJSONObject(i)
 
@@ -244,16 +276,17 @@ class DataSyncManager(private val context: Context) {
             if (nucleoExistente == null) {
                 val insertResult = db.insertNucleo(nuevoNucleo)
 
-                if (insertResult != -1L) {
-                    // insertado correctamente no devolver ningún mensaje
-                } else {
+                if (insertResult == -1L) {
                     showCustomToast(context, "Error al guardar el nucleo", "error")
+                    callback(false)
+                    return
                 }
             }
         }
+        callback(true)
     }
 
-    private fun procesarGalpones(galpones: JSONArray) {
+    private fun procesarGalpones(galpones: JSONArray, callback: (Boolean) -> Unit) {
         for (i in 0 until galpones.length()) {
             val galpon = galpones.getJSONObject(i)
 
@@ -267,16 +300,17 @@ class DataSyncManager(private val context: Context) {
             if (galponExistente == null) {
                 val insertResult = db.insertGalpon(nuevoGalpon)
 
-                if (insertResult != -1L) {
-                    // insertado correctamente no devolver ningún mensaje
-                } else {
-                    showCustomToast(context, "Error al guardar el nucleo", "error")
+                if (insertResult == -1L) {
+                    showCustomToast(context, "Error al guardar el galpon", "error")
+                    callback(false)
+                    return
                 }
             }
         }
+        callback(true)
     }
 
-    private fun procesarClientes(clientes: JSONArray) {
+    private fun procesarClientes(clientes: JSONArray, callback: (Boolean) -> Unit) {
         for (i in 0 until clientes.length()) {
             val cliente = clientes.getJSONObject(i)
 
@@ -290,16 +324,17 @@ class DataSyncManager(private val context: Context) {
             if (clienteExistente == null) {
                 val insertResult = db.insertCliente(nuevoCliente)
 
-                if (insertResult != -1L) {
-                    // insertado correctamente no devolver ningún mensaje
-                } else {
+                if (insertResult == -1L) {
                     showCustomToast(context, "Error al guardar el cliente", "error")
+                    callback(false)
+                    return
                 }
             }
         }
+        callback(true)
     }
 
-    fun showSuccessDialog() {
+    fun showSuccessDialog(onDismiss: () -> Unit) {
         // Inflar el diseño personalizado
         val inflater = LayoutInflater.from(context)
         val view = inflater.inflate(R.layout.dialog_success, null)
@@ -324,6 +359,7 @@ class DataSyncManager(private val context: Context) {
         // Acción del botón "Aceptar"
         btnAceptar.setOnClickListener {
             dialog.dismiss() // Cerrar el diálogo
+            onDismiss.invoke() // Ejecutar la acción después de cerrar el diálogo
         }
 
         // Mostrar el diálogo
@@ -344,4 +380,29 @@ class DataSyncManager(private val context: Context) {
             }
             .show()
     }
+
+    fun procesarSerieDevice(data: JSONArray, callback: (Boolean) -> Unit) {
+        for (i in 0 until data.length()) {
+            val serie = data.getJSONObject(i)
+
+            val nuevoSerieDevice = SerieDeviceEntity(
+                idSerieDevice = serie.getInt("idSerie"),
+                codigo = serie.getString("num"),
+                mac = serie.getString("macDevice"),
+            )
+            val serieDeviceExistente = db.getSerieDeviceByCodigo(serie.getString("num"))
+
+            if (serieDeviceExistente == null) {
+                val insertResult = db.insertSerieDevice(nuevoSerieDevice)
+
+                if (insertResult == -1L) {
+                    showCustomToast(context, "Error al guardar la serie", "error")
+                    callback(false)
+                    return
+                }
+            }
+        }
+        callback(true)
+    }
 }
+

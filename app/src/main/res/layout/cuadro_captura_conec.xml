@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white">
+
+    <!-- TÍTULO -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="CONFIGURACIÓN DE CAPTURA"
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="12dp" />
+
+    <!-- CADENA CLAVE -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Cadena Clave ->: 545 (Ej: Código único, patrón repetible para cada dispositivo)"
+        android:textStyle="bold"
+        android:paddingTop="8dp" />
+
+    <EditText
+        android:id="@+id/edtCadenaClave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Ejemplo: Valor:"
+        android:background="@android:color/darker_gray"
+        android:padding="8dp"
+        android:gravity="center"
+        android:layout_marginBottom="8dp" />
+
+    <!-- LONGITUD Y FORMATO PESO -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingBottom="8dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Longitud ->: 10 (Ej: Número que representa la longitud de algo)"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingBottom="4dp" />
+
+            <EditText
+                android:id="@+id/edtLongitud"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Ej: 10"
+                android:background="@android:color/darker_gray"
+                android:padding="8dp"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Formato Peso ->: 2 (Ej: Número de decimales en una medición precisa)"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingBottom="4dp" />
+
+            <EditText
+                android:id="@+id/edtFormatoPeso"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Ej: 0.00"
+                android:background="@android:color/darker_gray"
+                android:padding="8dp"
+                android:gravity="center" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- N° LECTURAS -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="N° de Lecturas ->: 5 (Ej: Número de veces que el dispositivo debe leer)"
+        android:textStyle="bold"
+        android:paddingTop="8dp" />
+
+    <EditText
+        android:id="@+id/edtNumLecturas"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Ingrese cantidad"
+        android:background="@android:color/darker_gray"
+        android:padding="8dp"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <!-- INFORMACIÓN DE DISPOSITIVO BLUETOOTH -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Dispositivo Bluetooth"
+        android:textStyle="bold"
+        android:paddingTop="8dp" />
+
+    <RadioGroup
+        android:id="@+id/rgTipoConexion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingVertical="4dp">
+
+        <RadioButton
+            android:id="@+id/rbPreviamenteConectados"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Previamente conectados"
+            android:checked="true"
+            android:layout_weight="1" />
+
+        <RadioButton
+            android:id="@+id/rbConectadoAhora"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Conectado ahora"
+            android:layout_weight="1" />
+    </RadioGroup>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <Spinner
+            android:id="@+id/spinnerDispositivosBluetooth"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:padding="8dp"
+            android:visibility="visible" />
+
+        <ImageButton
+            android:id="@+id/btnRefreshBluetooth"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_popup_sync"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:contentDescription="Actualizar conexión Bluetooth" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/txtNombreDispositivo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nombre: "
+        android:padding="4dp" />
+
+    <TextView
+        android:id="@+id/txtMacDispositivo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="MAC: "
+        android:padding="4dp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- BOTONES -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnGuardar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="GUARDAR"
+            android:background="@android:color/holo_blue_light"
+            android:textColor="@android:color/white"
+            android:layout_marginEnd="8dp"
+            android:padding="12dp" />
+
+        <Button
+            android:id="@+id/btnActualizar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="ACTUALIZAR"
+            android:background="@android:color/holo_orange_light"
+            android:textColor="@android:color/white"
+            android:layout_marginEnd="8dp"
+            android:padding="12dp" />
+
+        <Button
+            android:id="@+id/btnEliminar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="ELIMINAR"
+            android:background="@android:color/holo_red_light"
+            android:textColor="@android:color/white"
+            android:padding="12dp" />
+
+        <Button
+            android:id="@+id/btnLimpiar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="LIMPIAR"
+            android:background="@android:color/darker_gray"
+            android:textColor="@android:color/white"
+            android:padding="12dp" />
+    </LinearLayout>
+
+    <!-- ListView para mostrar los registros -->
+    <ListView
+        android:id="@+id/listViewRegistros"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="0.5dp"
+        android:paddingTop="16dp"
+        android:layout_marginTop="16dp" />
+</LinearLayout>

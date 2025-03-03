@@ -48,6 +48,24 @@
         tools:layout="@layout/fragment_module_clientes" />
 
     <fragment
+        android:id="@+id/nav_initConfConex"
+        android:name="app.serlanventas.mobile.ui.ModuleConfigConex.ConfigConexFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_conex_config" />
+
+    <fragment
+        android:id="@+id/nav_initNucleos"
+        android:name="app.serlanventas.mobile.ui.ModuleNucleos.NucleosFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_module_nucleos" />
+
+    <fragment
+        android:id="@+id/nav_initGalpones"
+        android:name="app.serlanventas.mobile.ui.ModuleGalpones.GalponesFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_module_galpones" />
+
+    <fragment
         android:id="@+id/nav_impresoraConfig"
         android:name="app.serlanventas.mobile.ui.ImpresoraSettings.ImpresoraSettingsFragment"
         android:label="@string/menu_bt_balanza"

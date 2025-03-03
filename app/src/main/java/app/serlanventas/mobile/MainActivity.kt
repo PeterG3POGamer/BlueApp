@@ -1,6 +1,5 @@
 package app.serlanventas.mobile
 
-import NetworkUtils
 import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.AlertDialog
@@ -33,9 +32,7 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import app.serlanventas.mobile.VersionControl.UpdateChecker
 import app.serlanventas.mobile.databinding.ActivityMainBinding
-import app.serlanventas.mobile.ui.DataSyncManager.DataSyncManager
 import app.serlanventas.mobile.ui.Jabas.ManagerPost
-import app.serlanventas.mobile.ui.Jabas.ManagerPost.showCustomToast
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice
 import app.serlanventas.mobile.ui.Utilidades.Constants
 import app.serlanventas.mobile.ui.ViewModel.SharedViewModel
@@ -86,73 +83,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        val isProduction = Constants.obtenerEstadoModo(this)
-        val baseUrl = Constants.getBaseUrl(isProduction)
-        val dataSyncManager = DataSyncManager(this)
-
-        // Primero, verificar si es necesario sincronizar los datos
-        if (NetworkUtils.isNetworkAvailable(this)) {
-            dataSyncManager.sincronizarData(
-                baseUrl,
-                callback = { success ->
-                    if (!success) {
-                        // Error al verificar los datos
-                        dataSyncManager.showErrorDialog { retry ->
-                            if (retry) {
-                                dataSyncManager.sincronizarData(baseUrl,
-                                    callback = { successRetry ->
-                                        if (successRetry) {
-                                            dataSyncManager.showSuccessDialog()
-                                        } else {
-                                            dataSyncManager.showErrorDialog(null)
-                                        }
-                                    },
-                                    isSincronizar = { _ -> }
-                                )
-                            }
-                        }
-                    }
-                },
-                isSincronizar = { necesitaSincronizar ->
-                    if (necesitaSincronizar) {
-                        // Mostrar el diálogo solo si es necesario sincronizar
-                        dataSyncManager.showSyncConfirmationDialog { shouldSync ->
-                            if (shouldSync) {
-                                dataSyncManager.sincronizarData(baseUrl,
-                                    callback = { success ->
-                                        if (success) {
-                                            dataSyncManager.showSuccessDialog()
-                                        } else {
-                                            dataSyncManager.showErrorDialog { retry ->
-                                                if (retry) {
-                                                    dataSyncManager.sincronizarData(baseUrl,
-                                                        callback = { successRetry ->
-                                                            if (successRetry) {
-                                                                dataSyncManager.showSuccessDialog()
-                                                            } else {
-                                                                dataSyncManager.showErrorDialog(null)
-                                                            }
-                                                        },
-                                                        isSincronizar = { _ -> }
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    },
-                                    isSincronizar = { _ -> }
-                                )
-                            } else {
-                                showCustomToast(this, "No se sincronizarán los datos.", "info")
-                            }
-                        }
-                    } else {
-                        // No es necesario sincronizar, mostrar mensaje informativo
-                        showCustomToast(this, "No hay datos que sincronizar.", "success")
-                    }
-                }
-            )
-        }
 
         setupExceptionHandler()
 
@@ -531,6 +461,7 @@ class MainActivity : AppCompatActivity() {
             R.id.nav_initLocalData -> menu.findItem(R.id.nav_initLocalData).isChecked = true
             R.id.nav_initClientes -> menu.findItem(R.id.nav_initLocalData).isChecked = true
             R.id.nav_impresoraConfig -> menu.findItem(R.id.nav_initLocalData).isChecked = true
+            R.id.nav_initConfConex -> menu.findItem(R.id.nav_initLocalData).isChecked = true
         }
     }
 

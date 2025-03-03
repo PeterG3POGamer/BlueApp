@@ -400,7 +400,8 @@ class BluetoothFragment : DialogFragment() {
     private fun setupBluetoothService() {
         if (viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
             bluetoothConnectionService = BluetoothConnectionService(requireContext(), bluetoothAdapter) { message ->
-                handleReceivedMessage(message)
+                sharedViewModel.updatePesoValue(message.processedValue)
+                sharedViewModel.updateRawData(message.rawData)
             }
             bluetoothConnectionService.startServer()
             startDiscovery()

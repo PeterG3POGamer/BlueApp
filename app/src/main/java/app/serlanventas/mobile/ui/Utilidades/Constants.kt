@@ -53,6 +53,6 @@ object Constants {
 
     fun obtenerEstadoModo(context: Context): Boolean {
         val sharedPreferences: SharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        return sharedPreferences.getBoolean("isProduction", false) // Por defecto, es false (modo de prueba)
+        return sharedPreferences.getBoolean("isProduction", true) // Por defecto, es false (modo de prueba)
     }
 }

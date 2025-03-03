@@ -6,20 +6,25 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.content.Context
+import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.Services.Logger
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.UUID
 
+data class BluetoothMessage(val rawData: String, val processedValue: String)
+
+
 // BluetoothConnectionService.kt
 class BluetoothConnectionService(
     private val context: Context,
     private val bluetoothAdapter: BluetoothAdapter,
-    private val onMessageReceived: (String) -> Unit // Callback para manejar datos recibidos
+    private val onMessageReceived: (BluetoothMessage) -> Unit // Callback para manejar datos recibidos
 ) {
 
-    private val uuid: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB") // UUID para SPP (Serial Port Profile)
+    private val uuid: UUID =
+        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB") // UUID para SPP (Serial Port Profile)
     private var connectThread: ConnectThread? = null
     private var connectedThread: ConnectedThread? = null
     private var acceptThread: AcceptThread? = null
@@ -55,29 +60,17 @@ class BluetoothConnectionService(
 
     // Cierra la conexión Bluetooth con un dispositivo específico y limpia recursos.
     fun closeConnection(device: BluetoothDevice): Boolean {
-        try {
-            connectThread?.cancelAndJoin()
-        } catch (e: Exception) {
-            logger.log("Error al cerrar connectThread", e)
-        }
-
-        try {
-            connectedThread?.cancelAndJoin()
-        } catch (e: Exception) {
-            logger.log("Error al cerrar connectedThread", e)
-        }
-
-        try {
-            acceptThread?.cancelAndJoin()
-        } catch (e: Exception) {
-            logger.log("Error al cerrar acceptThread", e)
-        }
-
-        connectThread = null
-        connectedThread = null
-
         var result = false
-        device.let {
+        try {
+            // Cancelar y unir hilos de conexión
+            connectThread?.cancelAndJoin()
+            connectedThread?.cancelAndJoin()
+            acceptThread?.cancelAndJoin()
+
+            // Cerrar todos los sockets abiertos
+            closeAllSockets()
+
+            // Intentar desvincular el dispositivo
             try {
                 val method = device.javaClass.getMethod("removeBond")
                 result = method.invoke(device) as Boolean
@@ -85,11 +78,15 @@ class BluetoothConnectionService(
             } catch (e: Exception) {
                 logger.log("closeConnection: Error al desvincular el dispositivo", e)
             }
+        } catch (e: Exception) {
+            logger.log("Error al cerrar la conexión Bluetooth", e)
+        } finally {
+            // Reiniciar el servicio
+            restartService()
         }
-
-        restartService()
         return result
     }
+
 
     fun restartService() {
         closeAllSockets()
@@ -151,7 +148,10 @@ class BluetoothConnectionService(
                     try {
                         it.close()
                     } catch (closeException: IOException) {
-                        logger.log("ConnectThread: No se pudo cerrar el socket después de un fallo de conexión", closeException)
+                        logger.log(
+                            "ConnectThread: No se pudo cerrar el socket después de un fallo de conexión",
+                            closeException
+                        )
                     }
                     return
                 }
@@ -180,7 +180,8 @@ class BluetoothConnectionService(
         override fun run() {
             try {
                 while (true) {
-                    val bytes = inputStream.read(buffer, bufferPosition, buffer.size - bufferPosition)
+                    val bytes =
+                        inputStream.read(buffer, bufferPosition, buffer.size - bufferPosition)
                     if (bytes == -1) {
                         logger.log("BluetoothService: Conexión Bluetooth cerrada")
                         break
@@ -197,45 +198,141 @@ class BluetoothConnectionService(
             }
         }
 
-        // Procesa los datos recibidos, acumulando hasta encontrar un mensaje completo.
+        // Procesa los datos recibidos, extrayendo los valores después de la clave definida
+        // Variable para almacenar datos entre llamadas
+        private var datosAcumulados = ""
+        private var esperandoFinalizacion = false
+
+        // Procesa los datos recibidos, extrayendo los valores después de la clave definida
         private fun processReceivedData() {
-            val data = String(buffer, 0, bufferPosition)
+            // Convertir el buffer de bytes a una cadena limpia
+            val data = String(buffer, 0, bufferPosition).trim()
             logger.log("$dividename -> ConnectedThread: Datos crudos recibidos: $data")
 
-            for (char in data) {
-                if (char == '\n' || char == '=' || char == ' ') {
-                    // Fin de un mensaje, procesar el dato acumulado
-                    var message = dataAccumulator.toString().trim()
-                    if (message.isNotEmpty()) {
-                        if (message.startsWith("=") || message.startsWith(":") || message.startsWith("->") || message.startsWith(">")) {
-                            message = message.substring(1).trim()
-                        }else if (message.endsWith("=") ){
-                            message = message.substring(0, message.length - 1).trim()
-                        }
+            // Acumulamos los datos recibidos
+            datosAcumulados += data
 
-                        logger.log("BluetoothService: Mensaje completo recibido: $message")
-                        if (isValidDecimalNumber(message)) {
-                            onMessageReceived(message)
-                        } else {
-                            logger.log("BluetoothService: Mensaje no es un número decimal válido: $message")
-                            onMessageReceived(message)
-                        }
-                    }
-                    dataAccumulator.clear()
-                } else {
-                    // Acumular el carácter
-                    if (char.isDigit() || char == '.') {
-                        logger.log("BluetoothService: Carácter acumulado: $char")
-                        dataAccumulator.append(char)
-                    } else {
-                        logger.log("BluetoothService: Carácter ignorado: $char")
-                    }
+            val db = AppDatabase(context)
+            val confCapture = db.obtenerConfCaptureActivo()
+
+            // Definir valores predeterminados
+            val defaultCadenaClave = "Valor:" // Es el patrón que se usará para dividir
+            val defaultLongitud = 1  // Longitud de los enteros que se acumulan
+            val defaultDecimales = 1 // Número de decimales
+            val defaultNumLecturas = 1 // Número de lecturas a tomar en cuenta
+
+            // Obtener la configuración de captura o los valores predeterminados si no existe
+            val _CadenaClave = confCapture?._cadenaClave ?: defaultCadenaClave
+            val _Longitud = confCapture?._longitud ?: defaultLongitud
+            val _Decimales = confCapture?._formatoPeo ?: defaultDecimales
+            val _NumLecturas = confCapture?._numLecturas ?: defaultNumLecturas
+
+            // Verificar si tenemos un patrón de inicio
+            if (datosAcumulados.contains("=") && !esperandoFinalizacion) {
+                esperandoFinalizacion = true
+                logger.log("$dividename -> ConnectedThread: Detectado inicio de valor, acumulando datos...")
+                // Limpiamos el buffer y esperamos más datos
+                bufferPosition = 0
+                return
+            }
+
+            // Verificar si debemos seguir esperando más datos
+            val tieneFinDeLinea = datosAcumulados.contains("\r\n") || datosAcumulados.contains("\n")
+            val esLoBastanteLargo = datosAcumulados.length >= 20  // Un límite razonable
+
+            if (esperandoFinalizacion && !tieneFinDeLinea && !esLoBastanteLargo) {
+                logger.log("$dividename -> ConnectedThread: Continuando acumulación, datos hasta ahora: $datosAcumulados")
+                // Limpiamos el buffer y esperamos más datos
+                bufferPosition = 0
+                return
+            }
+
+            // Si llegamos aquí, procesamos los datos acumulados
+            logger.log("$dividename -> ConnectedThread: Procesando datos completos: $datosAcumulados")
+
+            // Normaliza los datos eliminando saltos de línea y espacios innecesarios
+            val datosLimpios = datosAcumulados.replace("\n", " ").replace("\r", " ").trim()
+
+            // Divide los datos en partes usando la clave establecida
+            val partes = datosLimpios.split(_CadenaClave).map { it.trim() }
+
+            // Variable para acumular TODOS los dígitos encontrados primero
+            var todosLosDigitos = ""
+
+            // Primero acumulamos TODOS los dígitos encontrados después de cada cadena clave
+            for (i in 1 until partes.size) { // Empezamos desde 1 para omitir la parte antes de la primera clave
+                val parte = partes[i]
+                if (parte.isNotEmpty()) {
+                    // Extraer solo los dígitos (incluido el punto decimal) de la parte
+                    val soloDigitos = parte.filter { it.isDigit() || it == '.' }
+                    todosLosDigitos += soloDigitos
                 }
             }
+
+            // Si no se encontró ningún valor después de la cadena clave, buscar después del "="
+            if (todosLosDigitos.isEmpty()) {
+                val indiceInicio = datosLimpios.indexOf("=")
+                if (indiceInicio >= 0) {
+                    val despuesDelInicio = datosLimpios.substring(indiceInicio + 1)
+                    todosLosDigitos = despuesDelInicio.filter { it.isDigit() || it == '.' }
+                } else {
+                    // Si no hay cadena clave ni =, extraer cualquier número
+                    todosLosDigitos = datosLimpios.filter { it.isDigit() || it == '.' }
+                }
+            }
+
+            logger.log("$dividename -> ConnectedThread: Todos los dígitos acumulados: $todosLosDigitos")
+
+            // Ahora procesamos el valor acumulado según la configuración
+            if (todosLosDigitos.isNotEmpty()) {
+                // Separamos la parte entera y decimal si existe
+                val partes = todosLosDigitos.split(".")
+                var parteEntera = partes[0]
+                val parteDecimal = if (partes.size > 1) partes[1] else ""
+
+                // Aplicamos la restricción de longitud a la parte entera DESPUÉS de acumular
+                if (parteEntera.length > _Longitud) {
+                    // Tomamos los últimos dígitos según la longitud configurada
+                    parteEntera = parteEntera.takeLast(_Longitud)
+                }
+
+                // Reconstruimos el número con la parte decimal
+                var valorNumericoFinal = parteEntera
+                if (parteDecimal.isNotEmpty()) {
+                    valorNumericoFinal += ".$parteDecimal"
+                }
+
+                logger.log("$dividename -> ConnectedThread: Valor numérico final: $valorNumericoFinal")
+
+                // Convertimos a double para aplicar el formato
+                val numero = try {
+                    valorNumericoFinal.toDouble()
+                } catch (e: Exception) {
+                    logger.log("$dividename -> Error al convertir valor: $valorNumericoFinal, usando 0.0")
+                    0.0
+                }
+
+                // Aplicamos el formato según los decimales configurados
+                val formatoPeso = "%.${_Decimales}f"
+                val valorFormateado = String.format(formatoPeso, numero)
+
+                logger.log("$dividename -> ConnectedThread: Valor formateado final: $valorFormateado")
+
+                // Enviamos el resultado
+                onMessageReceived(BluetoothMessage(datosAcumulados, valorFormateado))
+            } else {
+                logger.log("$dividename -> ConnectedThread: No se encontraron valores numéricos después de la cadena clave")
+            }
+
+            // Reiniciamos las variables de acumulación
+            datosAcumulados = ""
+            esperandoFinalizacion = false
 
             // Limpiar el buffer
             bufferPosition = 0
         }
+
+
 
         // Verifica si un mensaje es un número decimal válido.
         private val decimalNumberRegex = "^-?\\d+(\\.\\d+)?\$".toRegex()

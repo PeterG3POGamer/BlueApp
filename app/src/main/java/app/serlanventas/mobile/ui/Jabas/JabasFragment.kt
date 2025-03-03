@@ -177,7 +177,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
         )
         sharedViewModel.pesoValue.observe(viewLifecycleOwner) { peso ->
             val pesoFormatted = BigDecimal(peso.toDoubleOrNull() ?: 0.0)
-                .setScale(2, RoundingMode.DOWN) 
+                .setScale(2, RoundingMode.DOWN)
                 .toString()
             binding.inputPesoKg.setText(pesoFormatted)
             logger.log2("PesoValue: Pesos Foramteado recibido en JabaFragment -> $pesoFormatted")
@@ -871,7 +871,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
                     val pesosEntity = PesosEntity(
                         id = 0,
                         idNucleo = idNucleo,
-                        idGalpon = idGalpon.toInt(),
+                        idGalpon = idGalpon,
                         numeroDocCliente = dataPesoPollos.numeroDocCliente,
                         nombreCompleto = dataPesoPollos.nombreCompleto,
                         dataPesoJson = dataPesoPollosJson!!,
@@ -920,7 +920,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
             binding.checkboxConPollos.isChecked = false
             binding.botonGuardar.isEnabled = true
         }
-        var valor = sharedViewModel.getbtnStatus()
+        var valor = sharedViewModel.getBtnStatus()
 
         if (valor == false) {
             binding.botonEnviar.backgroundTintList =
@@ -1055,19 +1055,6 @@ class JabasFragment : Fragment(), OnItemClickListener {
         }
 
         binding.botonCliente.setOnClickListener {
-            val establecimientoSeleccionado =
-                binding.selectEstablecimiento.selectedItemPosition != 0
-            val galponSeleccionado = binding.selectGalpon.selectedItemPosition != 0
-
-            if (!establecimientoSeleccionado || !galponSeleccionado) {
-                showCustomToast(
-                    requireContext(),
-                    "Por favor, seleccione un Establecimiento y un Galpón",
-                    "warning"
-                )
-                return@setOnClickListener
-            }
-
             val preLoading = PreLoading(requireContext())
             preLoading.showPreCarga()
 
@@ -1122,29 +1109,39 @@ class JabasFragment : Fragment(), OnItemClickListener {
                             binding.textNomCli.isEnabled = false
                             binding.botonCliente.isEnabled = false
 
+                            // Deshabilitar campos de entrada
+                            binding.textDocCli.isEnabled = false
+                            binding.textNomCli.isEnabled = false
+                            binding.botonCliente.isEnabled = false
+
                             val nuevoCliente = ClienteEntity(
                                 numeroDocCliente = numeroCliente,
                                 nombreCompleto = nombreCompleto.toString(),
                                 fechaRegistro = ""
                             )
+
                             val cliente = db.getClienteById(numeroCliente)
 
                             if (cliente == null) {
-                                val insertResult = db.insertCliente(nuevoCliente)
+                                // Mostrar un diálogo de confirmación
+                                AlertDialog.Builder(requireContext())
+                                    .setTitle("Confirmar Ingreso")
+                                    .setMessage("¿Desea ingresar el cliente con el documento $numeroCliente?")
+                                    .setPositiveButton("Sí") { dialog, _ ->
+                                        // Insertar el cliente si el usuario confirma
+                                        val insertResult = db.insertCliente(nuevoCliente)
 
-                                if (insertResult != -1L) {
-                                    Toast.makeText(
-                                        context,
-                                        "Cliente guardado exitosamente",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        "Error al guardar el cliente",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
+                                        if (insertResult != -1L) {
+                                            showCustomToast(requireContext(), "Cliente guardado exitosamente", "success")
+                                        } else {
+                                            showCustomToast(requireContext(), "Error al guardar el cliente", "error")
+                                        }
+                                        dialog.dismiss()
+                                    }
+                                    .setNegativeButton("No") { dialog, _ ->
+                                        dialog.dismiss()
+                                    }
+                                    .show()
                             }
                         }
                     }
@@ -1154,13 +1151,21 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
                 if (cliente != null) {
                     binding.textNomCli.setText(cliente.nombreCompleto)
+                    binding.textDocCli.isEnabled = false
+                    binding.textNomCli.isEnabled = false
+                    binding.botonCliente.isEnabled = false
+
                     preLoading.hidePreCarga()
                 } else {
-                    Toast.makeText(
+                    binding.textDocCli.isEnabled = true
+                    binding.textNomCli.isEnabled = true
+                    binding.botonCliente.isEnabled = true
+
+                    showCustomToast(
                         requireContext(),
-                        "Cliente no encontrado localmente",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                        "No se encontró el cliente, Ingrese un nombre manualmente",
+                        "info"
+                    )
                     preLoading.hidePreCarga()
                 }
             }
@@ -1168,45 +1173,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
 
         // Configuración del botón Limpiar
         binding.botonLimpiarCliente.setOnClickListener {
-            val builder = AlertDialog.Builder(requireContext())
-            builder.setTitle("¿Qué deseas hacer?")
-
-            // Establecer los botones en el diálogo
-            builder.setPositiveButton("Limpiar") { dialog, which ->
-                // Limpiar los campos de entrada
-                binding.textDocCli.setText("")
-                binding.textNomCli.setText("")
-                binding.textDocCli.isEnabled = true
-                binding.textNomCli.isEnabled = true
-                binding.botonCliente.isEnabled = true
-
-                // Colocar el foco en el campo Número de Documento
-                binding.textDocCli.requestFocus()
-
-                // Abrir el teclado
-                Handler(Looper.getMainLooper()).postDelayed({
-                    val inputMethodManager =
-                        requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                    inputMethodManager.showSoftInput(
-                        binding.textDocCli,
-                        InputMethodManager.SHOW_IMPLICIT
-                    )
-                }, 100)
-            }
-
-            builder.setNeutralButton("Editar") { dialog, which ->
-                // Habilitar solo el campo de Razón Social (Nombre)
-                binding.textNomCli.isEnabled = true
-            }
-
-            builder.setNegativeButton("Cancelar") { dialog, which ->
-                // Cerrar el diálogo sin realizar ninguna acción
-                dialog.dismiss()
-            }
-
-            // Crear y mostrar el diálogo
-            val dialog = builder.create()
-            dialog.show()
+            showDialogLimpiarCliente()
         }
 
 
@@ -1335,8 +1302,18 @@ class JabasFragment : Fragment(), OnItemClickListener {
                 val deviceAddress = connectedDeviceAddress
                 val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
                 val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
-                val disconnected = bluetoothConnectionService?.closeConnection(device) ?: false
-                if (disconnected) {
+
+                try {
+                    val disconnected = bluetoothConnectionService?.closeConnection(device) ?: false
+                    if (disconnected) {
+                        Log.i("Bluetooth", "Desconexión exitosa")
+                    } else {
+                        Log.w("Bluetooth", "Desconexión fallida, pero se actualizará el estado")
+                    }
+                } catch (e: Exception) {
+                    Log.e("Bluetooth", "Error al desconectar: ${e.message}")
+                } finally {
+                    // Actualiza el estado de la conexión independientemente del resultado
                     connectedDeviceAddress = null
                     sharedViewModel.updateConnectedDeviceAddress("")
                     binding.deviceConnected.text = "NO CONECTADO"
@@ -1344,14 +1321,8 @@ class JabasFragment : Fragment(), OnItemClickListener {
                         requireContext(),
                         R.drawable.button_background_inactive
                     )
-//                    findNavController().navigate(R.id.nav_slideshow)
-                    fetchData(1000)
-                } else {
-                    // Puedes mostrar un mensaje de error o hacer otra cosa si no se desconectó correctamente
-                    Log.e("Bluetooth", "No se pudo desconectar correctamente")
                     fetchData(1000)
                 }
-
             }
             .setNegativeButton("Cancelar") { dialog, id ->
                 dialog.dismiss()
@@ -1359,6 +1330,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
         val alert = builder.create()
         alert.show()
     }
+
 
     private fun showModalBluetoothFragment() {
         checkBluetoothPermissions { permissionsGranted ->
@@ -1408,6 +1380,7 @@ class JabasFragment : Fragment(), OnItemClickListener {
         // Obtener los pesos guardados en la base de datos
         ManagerPost.getListPesosByIdGalpon(
             baseUrl,
+            requireContext(),
             idGalpon,
             idNucleo,
             idDevice
@@ -1561,6 +1534,48 @@ class JabasFragment : Fragment(), OnItemClickListener {
             .show()
     }
 
+    fun showDialogLimpiarCliente() {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("¿Que acción quiere realizar?")
+
+        // Establecer los botones en el diálogo
+        builder.setPositiveButton("Limpiar") { dialog, which ->
+            // Limpiar los campos de entrada
+            binding.textDocCli.setText("")
+            binding.textNomCli.setText("")
+            binding.textDocCli.isEnabled = true
+            binding.textNomCli.isEnabled = true
+            binding.botonCliente.isEnabled = true
+
+            // Colocar el foco en el campo Número de Documento
+            binding.textDocCli.requestFocus()
+
+            // Abrir el teclado
+            Handler(Looper.getMainLooper()).postDelayed({
+                val inputMethodManager =
+                    requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                inputMethodManager.showSoftInput(
+                    binding.textDocCli,
+                    InputMethodManager.SHOW_IMPLICIT
+                )
+            }, 100)
+        }
+
+        builder.setNeutralButton("Editar") { dialog, which ->
+            // Habilitar solo el campo de Razón Social (Nombre)
+            binding.textNomCli.isEnabled = true
+        }
+
+        builder.setNegativeButton("Cancelar") { dialog, which ->
+            // Cerrar el diálogo sin realizar ninguna acción
+            dialog.dismiss()
+        }
+
+        // Crear y mostrar el diálogo
+        val dialog = builder.create()
+        dialog.show()
+    }
+
     fun limpiarCampos() {
         updatePesoStatus(idPesoShared, "NotUsed")
         idPesoShared = 0
@@ -1568,10 +1583,14 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.idListPeso.text = ""
         idGalpoListaPesos = ""
         binding.inputPesoKg.text?.clear()
-        binding.textDocCli.setText("")
-        binding.textNomCli.setText("")
-        binding.textDocCli.isEnabled = true
-        binding.textNomCli.isEnabled = true
+        if (binding.botonCliente.isEnabled == true) {
+            binding.textNomCli.setText("")
+            binding.textDocCli.setText("")
+            binding.textDocCli.isEnabled = true
+            binding.textNomCli.isEnabled = true
+            binding.botonCliente.isEnabled = true
+        }
+
         binding.totalPagarPreview.setText("")
         binding.checkboxConPollos.isChecked = false
         binding.botonEnviar.isEnabled = false
@@ -1581,7 +1600,6 @@ class JabasFragment : Fragment(), OnItemClickListener {
         binding.botonGuardar.backgroundTintList =
             ContextCompat.getColorStateList(requireContext(), R.color.purple_500)
         binding.botonGuardar.isEnabled = true
-        binding.botonCliente.isEnabled = true
 
         sharedViewModel.setDataPesoPollosJson("")
         sharedViewModel.setDataDetaPesoPollosJson("")

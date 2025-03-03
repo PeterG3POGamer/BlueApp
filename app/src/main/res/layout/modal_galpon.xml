@@ -11,37 +11,24 @@
         android:gravity="end">
 
         <EditText
-            android:id="@+id/inputNumeroCliente"
+            android:id="@+id/inputNombreGalpon"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Documento (8-11 dígitos)"
+            android:hint="Nombre del Galpón"
             android:imeOptions="actionNext"
             android:inputType="number"
             android:maxLength="11"
             android:maxLines="1"
             android:minHeight="48dp" />
-
-        <Button
-            android:id="@+id/botonBuscar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Buscar"
-            android:drawableLeft="@drawable/baseline_youtube_searched_for_24"
-            android:onClick="buscarCliente"
-            android:backgroundTint="@color/purple_500"
-            android:textColor="@android:color/white"/>
     </LinearLayout>
 
-    <EditText
-        android:id="@+id/inputNombreCliente"
+    <Spinner
+        android:id="@+id/spinnerNucleo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nombre completo"
-        android:imeOptions="actionDone"
-        android:inputType="textCapCharacters"
-        android:maxLines="1"
-        android:minHeight="48dp" />
+        android:layout_marginTop="16dp" />
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -60,7 +47,7 @@
             android:id="@+id/botonGuardar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="guardarCliente"
+            android:onClick="guardarGalpon"
             android:text="Guardar" />
 
     </LinearLayout>

@@ -58,4 +58,27 @@
 
     </style>
 
+<!-- Estilo para campos de texto -->
+<style name="AppTextField" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+    <item name="boxCornerRadiusBottomEnd">8dp</item>
+    <item name="boxCornerRadiusBottomStart">8dp</item>
+    <item name="boxCornerRadiusTopEnd">8dp</item>
+    <item name="boxCornerRadiusTopStart">8dp</item>
+    <item name="boxStrokeColor">#1E3A8A</item>
+    <item name="hintTextColor">#1E3A8A</item>
+</style>
+
+<!-- Estilo para textos de título -->
+<style name="TitleText">
+    <item name="android:textSize">22sp</item>
+    <item name="android:textColor">#1E3A8A</item>
+    <item name="android:fontFamily">@font/opensans_bold</item>
+</style>
+
+<!-- Estilo para textos normales -->
+<style name="BodyText">
+    <item name="android:textSize">16sp</item>
+    <item name="android:textColor">#334155</item>
+    <item name="android:fontFamily">@font/opensans_regular</item>
+</style>
 </resources>

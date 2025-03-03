@@ -1,6 +1,6 @@
 package app.serlanventas.mobile
 
-import android.app.AlertDialog
+import NetworkUtils
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
@@ -8,10 +8,20 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
+import android.view.View
+import android.widget.ProgressBar
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import app.serlanventas.mobile.VersionControl.UpdateChecker
+import app.serlanventas.mobile.ui.DataSyncManager.DataSyncManager
+import app.serlanventas.mobile.ui.DataSyncManager.SyncResult
+import app.serlanventas.mobile.ui.Jabas.ManagerPost.showCustomToast
+import app.serlanventas.mobile.ui.Services.getAddressMacDivice
+import app.serlanventas.mobile.ui.Utilidades.Constants
 import app.serlanventas.mobile.ui.login.LoginFragment
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.PrintWriter
@@ -20,11 +30,18 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-
 class LoginActivity : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
     private val updateChecker by lazy { UpdateChecker(this) }
+    private lateinit var progressBar: ProgressBar
+    private lateinit var statusMessage: TextView
+    private lateinit var progressDetails: TextView
+    private var isProduction: Boolean = false
+    private var baseUrl: String = ""
+    private lateinit var dataSyncManager: DataSyncManager
 
+    // Mueve la inicialización de isLoggedIn dentro de onCreate
+    private var isLoggedIn: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,8 +52,91 @@ class LoginActivity : AppCompatActivity() {
         // Inicializar SharedPreferences
         sharedPreferences = getSharedPreferences("app_prefs", MODE_PRIVATE)
 
-        // Verificar si el usuario ya ha iniciado sesión
-        val isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false)
+        // Inicializar isLoggedIn después de que sharedPreferences esté inicializada
+        isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false)
+
+        isProduction = Constants.obtenerEstadoModo(this)
+        baseUrl = Constants.getBaseUrl(isProduction)
+        dataSyncManager = DataSyncManager(this)
+
+        // Inicializar vistas de progreso
+        progressBar = findViewById(R.id.progress_bar)
+        statusMessage = findViewById(R.id.status_message)
+        progressDetails = findViewById(R.id.progress_details)
+
+        // Mostrar ProgressBar mientras se sincronizan los datos
+        progressBar.visibility = View.VISIBLE
+        statusMessage.visibility = View.VISIBLE
+        progressDetails.visibility = View.VISIBLE
+
+        // Primero, verificar si es necesario sincronizar los datos
+        if (NetworkUtils.isNetworkAvailable(this)) {
+            lifecycleScope.launch {
+                updateProgress("Iniciando sincronización...")
+                delay(1000)
+
+                val idDevice = getAddressMacDivice.getDeviceId(this@LoginActivity)
+
+                dataSyncManager.sincronizarData(baseUrl, idDevice) { result ->
+                    when (result) {
+                        is SyncResult.Success -> {
+                            if (result.needsSync) {
+                                updateProgress("Es necesario sincronizar datos...")
+                                dataSyncManager.showSyncConfirmationDialog { shouldSync ->
+                                    if (shouldSync) {
+                                        updateProgress("Sincronizando datos...")
+                                        dataSyncManager.sincronizarData(baseUrl, idDevice) { syncResult ->
+                                            handleSyncResult(syncResult)
+                                        }
+                                    } else {
+                                        showCustomToast(this@LoginActivity, "No se sincronizarán los datos.", "info")
+                                        navigateBasedOnLoginState(isLoggedIn)
+                                    }
+                                }
+                            } else {
+                                showCustomToast(this@LoginActivity, "Sus datos están sincronizados.", "success")
+                                navigateBasedOnLoginState(isLoggedIn)
+                            }
+                        }
+                        is SyncResult.Error -> {
+                            dataSyncManager.showErrorDialog { retry ->
+                                if (retry) {
+                                    dataSyncManager.sincronizarData(baseUrl, idDevice) { syncResult ->
+                                        handleSyncResult(syncResult)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            navigateBasedOnLoginState(isLoggedIn)
+        }
+    }
+
+    private fun handleSyncResult(result: SyncResult) {
+        when (result) {
+            is SyncResult.Success -> {
+                if (result.needsSync) {
+                    dataSyncManager.showSuccessDialog {
+                        navigateBasedOnLoginState(isLoggedIn)
+                    }
+                }else{
+                    navigateBasedOnLoginState(isLoggedIn)
+                }
+            }
+            is SyncResult.Error -> {
+                dataSyncManager.showErrorDialog(null)
+            }
+        }
+    }
+
+    private fun navigateBasedOnLoginState(isLoggedIn: Boolean) {
+        // Ocultar ProgressBar y mostrar el contenido principal
+        progressBar.visibility = View.GONE
+        statusMessage.visibility = View.GONE
+        progressDetails.visibility = View.GONE
 
         if (isLoggedIn) {
             // Si ya está logueado, redirigir a la MainActivity
@@ -45,10 +145,16 @@ class LoginActivity : AppCompatActivity() {
             finish()
         } else {
             // Si no está logueado, mostrar el LoginFragment
-            if (savedInstanceState == null) {
+            findViewById<View>(R.id.fragment_container).visibility = View.VISIBLE
+            if (supportFragmentManager.findFragmentById(R.id.fragment_container) == null) {
                 showLoginFragment()
             }
         }
+    }
+
+    private fun updateProgress(message: String) {
+        statusMessage.text = "Autenticando..."
+        progressDetails.text = message
     }
 
     private fun checkAndRequestInstallPermission() {
@@ -69,7 +175,7 @@ class LoginActivity : AppCompatActivity() {
                         dialog.dismiss()
                     }
                     .show()
-            }else{
+            } else {
                 downloadUpdate()
             }
         } else {
