@@ -9,8 +9,8 @@ android {
         applicationId = "app.serlanventas.mobile"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.16.1"
+        versionCode = 3
+        versionName = "1.16.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         namespace = "app.serlanventas.mobile"
         vectorDrawables {
