@@ -19,7 +19,6 @@ data class DataPesoPollosEntity(
     val totalNeto: String,
     val TotalPagar: String,
     val idUsuario: String,
-    val idEstablecimiento: String
 ) {
     fun toJson(): JSONObject {
         val json = JSONObject()
@@ -38,7 +37,6 @@ data class DataPesoPollosEntity(
         json.put("_PP_totalNeto", totalNeto)
         json.put("_PP_TotalPagar", TotalPagar)
         json.put("_PP_idUsuario", idUsuario)
-        json.put("_PP_idEstablecimiento", idEstablecimiento)
         nombreCompleto?.let {
             json.put("_PP_nombreCompleto", it)
         }

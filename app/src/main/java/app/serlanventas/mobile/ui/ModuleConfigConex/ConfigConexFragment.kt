@@ -12,7 +12,6 @@ import app.serlanventas.mobile.databinding.FragmentConexConfigBinding
 import app.serlanventas.mobile.ui.ViewModel.SharedViewModel
 import app.serlanventas.mobile.ui.slideshow.BluetoothConnectionService
 
-
 class ConfigConexFragment : Fragment() {
     private var _binding: FragmentConexConfigBinding? = null
     private val binding get() = _binding!!
@@ -20,7 +19,6 @@ class ConfigConexFragment : Fragment() {
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private var bluetoothConnectionService: BluetoothConnectionService? = null
     private val sharedViewModel: SharedViewModel by activityViewModels()
-
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,11 +39,22 @@ class ConfigConexFragment : Fragment() {
             }
         )
         sharedViewModel.pesoValue.observe(viewLifecycleOwner) { peso ->
-            binding.etPesaje.setText(peso)
+            val pesoFormatted = peso.toDoubleOrNull()?.toString() ?: "0.00"
+            binding.etPesaje.setText(pesoFormatted)
         }
+
 
         sharedViewModel.rawData.observe(viewLifecycleOwner) { rawData ->
             binding.etPesoCrudo.setText(rawData)
+        }
+
+        // Configura el acordeón
+        binding.tvTitle.setOnClickListener {
+            if (binding.accordionContent.visibility == View.VISIBLE) {
+                binding.accordionContent.visibility = View.GONE
+            } else {
+                binding.accordionContent.visibility = View.VISIBLE
+            }
         }
 
         // Muestra la configuración de conexión por defecto

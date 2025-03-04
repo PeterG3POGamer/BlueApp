@@ -1,8 +1,9 @@
 package app.serlanventas.mobile
 
-import NetworkUtils
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
+import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -16,12 +17,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import app.serlanventas.mobile.VersionControl.UpdateChecker
 import app.serlanventas.mobile.ui.DataSyncManager.DataSyncManager
-import app.serlanventas.mobile.ui.DataSyncManager.SyncResult
-import app.serlanventas.mobile.ui.Jabas.ManagerPost.showCustomToast
-import app.serlanventas.mobile.ui.Services.getAddressMacDivice
+import app.serlanventas.mobile.ui.Interfaces.ProgressCallback
 import app.serlanventas.mobile.ui.Utilidades.Constants
+import app.serlanventas.mobile.ui.Utilidades.NetworkChangeReceiver
 import app.serlanventas.mobile.ui.login.LoginFragment
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.PrintWriter
@@ -30,7 +29,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class LoginActivity : AppCompatActivity() {
+class LoginActivity : AppCompatActivity(), ProgressCallback {
     private lateinit var sharedPreferences: SharedPreferences
     private val updateChecker by lazy { UpdateChecker(this) }
     private lateinit var progressBar: ProgressBar
@@ -39,6 +38,8 @@ class LoginActivity : AppCompatActivity() {
     private var isProduction: Boolean = false
     private var baseUrl: String = ""
     private lateinit var dataSyncManager: DataSyncManager
+    private lateinit var networkChangeReceiver: NetworkChangeReceiver
+
 
     // Mueve la inicialización de isLoggedIn dentro de onCreate
     private var isLoggedIn: Boolean = false
@@ -70,91 +71,34 @@ class LoginActivity : AppCompatActivity() {
         progressDetails.visibility = View.VISIBLE
 
         // Primero, verificar si es necesario sincronizar los datos
-        if (NetworkUtils.isNetworkAvailable(this)) {
-            lifecycleScope.launch {
-                updateProgress("Iniciando sincronización...")
-                delay(1000)
-
-                val idDevice = getAddressMacDivice.getDeviceId(this@LoginActivity)
-
-                dataSyncManager.sincronizarData(baseUrl, idDevice) { result ->
-                    when (result) {
-                        is SyncResult.Success -> {
-                            if (result.needsSync) {
-                                updateProgress("Es necesario sincronizar datos...")
-                                dataSyncManager.showSyncConfirmationDialog { shouldSync ->
-                                    if (shouldSync) {
-                                        updateProgress("Sincronizando datos...")
-                                        dataSyncManager.sincronizarData(baseUrl, idDevice) { syncResult ->
-                                            handleSyncResult(syncResult)
-                                        }
-                                    } else {
-                                        showCustomToast(this@LoginActivity, "No se sincronizarán los datos.", "info")
-                                        navigateBasedOnLoginState(isLoggedIn)
-                                    }
-                                }
-                            } else {
-                                showCustomToast(this@LoginActivity, "Sus datos están sincronizados.", "success")
-                                navigateBasedOnLoginState(isLoggedIn)
-                            }
-                        }
-                        is SyncResult.Error -> {
-                            dataSyncManager.showErrorDialog { retry ->
-                                if (retry) {
-                                    dataSyncManager.sincronizarData(baseUrl, idDevice) { syncResult ->
-                                        handleSyncResult(syncResult)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            navigateBasedOnLoginState(isLoggedIn)
-        }
-    }
-
-    private fun handleSyncResult(result: SyncResult) {
-        when (result) {
-            is SyncResult.Success -> {
-                if (result.needsSync) {
-                    dataSyncManager.showSuccessDialog {
+        networkChangeReceiver = NetworkChangeReceiver { isConnected ->
+            if (isConnected) {
+                dataSyncManager.checkSincronizardData(baseUrl, isLoggedIn, this) { success ->
+                    if (success) {
                         navigateBasedOnLoginState(isLoggedIn)
                     }
-                }else{
-                    navigateBasedOnLoginState(isLoggedIn)
                 }
-            }
-            is SyncResult.Error -> {
-                dataSyncManager.showErrorDialog(null)
+            }else{
+                navigateBasedOnLoginState(isLoggedIn)
             }
         }
     }
 
     private fun navigateBasedOnLoginState(isLoggedIn: Boolean) {
-        // Ocultar ProgressBar y mostrar el contenido principal
         progressBar.visibility = View.GONE
         statusMessage.visibility = View.GONE
         progressDetails.visibility = View.GONE
 
         if (isLoggedIn) {
-            // Si ya está logueado, redirigir a la MainActivity
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
             finish()
         } else {
-            // Si no está logueado, mostrar el LoginFragment
             findViewById<View>(R.id.fragment_container).visibility = View.VISIBLE
             if (supportFragmentManager.findFragmentById(R.id.fragment_container) == null) {
                 showLoginFragment()
             }
         }
-    }
-
-    private fun updateProgress(message: String) {
-        statusMessage.text = "Autenticando..."
-        progressDetails.text = message
     }
 
     private fun checkAndRequestInstallPermission() {
@@ -199,6 +143,9 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        this@LoginActivity.registerReceiver(networkChangeReceiver, filter)
+
         checkAndRequestInstallPermission()
     }
 
@@ -230,6 +177,19 @@ class LoginActivity : AppCompatActivity() {
             }
 
             defaultExceptionHandler?.uncaughtException(thread, throwable)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        this@LoginActivity.unregisterReceiver(networkChangeReceiver)
+
+    }
+
+    override fun onProgressUpdate(message: String) {
+        runOnUiThread {
+            statusMessage.text = "Autenticando..."
+            progressDetails.text = message
         }
     }
 }

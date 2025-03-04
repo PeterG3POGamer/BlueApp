@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="8dp"
     android:background="@android:color/white">
 
     <!-- TÍTULO -->
@@ -11,29 +11,71 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="CONFIGURACIÓN DE CAPTURA"
-        android:textSize="18sp"
+        android:textSize="14sp"
         android:textColor="@android:color/black"
         android:textStyle="bold"
         android:gravity="center"
-        android:paddingBottom="12dp" />
+        android:paddingBottom="6dp" />
 
     <!-- CADENA CLAVE -->
-    <TextView
+    <!-- LONGITUD Y FORMATO PESO -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Cadena Clave ->: 545 (Ej: Código único, patrón repetible para cada dispositivo)"
-        android:textStyle="bold"
-        android:paddingTop="8dp" />
-
-    <EditText
-        android:id="@+id/edtCadenaClave"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Ejemplo: Valor:"
-        android:background="@android:color/darker_gray"
-        android:padding="8dp"
+        android:orientation="horizontal"
         android:gravity="center"
-        android:layout_marginBottom="8dp" />
+        android:paddingBottom="2dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingEnd="4dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Patron Inicio"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingBottom="1dp" />
+
+            <EditText
+                android:id="@+id/edtCadenaClave"
+                android:layout_width="match_parent"
+                android:layout_height="38dp"
+                android:hint="Ej: ="
+                android:background="@drawable/rounded_edittext_background"
+                android:padding="0dp"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingStart="4dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Patron Cierre"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingBottom="1dp" />
+
+            <EditText
+                android:id="@+id/edtCadenaClaveCierre"
+                android:layout_width="match_parent"
+                android:layout_height="38dp"
+                android:hint="Ej: ;"
+                android:background="@drawable/rounded_edittext_background"
+                android:padding="0dp"
+                android:gravity="center" />
+        </LinearLayout>
+    </LinearLayout>
 
     <!-- LONGITUD Y FORMATO PESO -->
     <LinearLayout
@@ -41,29 +83,31 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:paddingBottom="8dp">
+        android:paddingBottom="2dp">
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingEnd="4dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Longitud ->: 10 (Ej: Número que representa la longitud de algo)"
+                android:text="Longitud de Enteros"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:paddingBottom="4dp" />
+                android:paddingBottom="1dp" />
 
             <EditText
                 android:id="@+id/edtLongitud"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="38dp"
                 android:hint="Ej: 10"
-                android:background="@android:color/darker_gray"
-                android:padding="8dp"
+                android:inputType="number"
+                android:background="@drawable/rounded_edittext_background"
+                android:padding="0dp"
                 android:gravity="center" />
         </LinearLayout>
 
@@ -71,44 +115,28 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingStart="4dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Formato Peso ->: 2 (Ej: Número de decimales en una medición precisa)"
+                android:text="Longitud Decimales"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:paddingBottom="4dp" />
+                android:paddingBottom="1dp" />
 
             <EditText
                 android:id="@+id/edtFormatoPeso"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Ej: 0.00"
-                android:background="@android:color/darker_gray"
-                android:padding="8dp"
+                android:layout_height="38dp"
+                android:hint="Ej: 2"
+                android:inputType="number"
+                android:background="@drawable/rounded_edittext_background"
+                android:padding="0dp"
                 android:gravity="center" />
         </LinearLayout>
     </LinearLayout>
-
-    <!-- N° LECTURAS -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="N° de Lecturas ->: 5 (Ej: Número de veces que el dispositivo debe leer)"
-        android:textStyle="bold"
-        android:paddingTop="8dp" />
-
-    <EditText
-        android:id="@+id/edtNumLecturas"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Ingrese cantidad"
-        android:background="@android:color/darker_gray"
-        android:padding="8dp"
-        android:gravity="center"
-        android:layout_marginBottom="16dp" />
 
     <!-- INFORMACIÓN DE DISPOSITIVO BLUETOOTH -->
     <TextView
@@ -116,14 +144,14 @@
         android:layout_height="wrap_content"
         android:text="Dispositivo Bluetooth"
         android:textStyle="bold"
-        android:paddingTop="8dp" />
+        android:paddingTop="2dp" />
 
     <RadioGroup
         android:id="@+id/rgTipoConexion"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingVertical="4dp">
+        android:paddingVertical="1dp">
 
         <RadioButton
             android:id="@+id/rbPreviamenteConectados"
@@ -152,7 +180,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:padding="8dp"
+            android:padding="2dp"
             android:visibility="visible" />
 
         <ImageButton
@@ -161,7 +189,7 @@
             android:layout_height="wrap_content"
             android:src="@android:drawable/ic_popup_sync"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="8dp"
+            android:padding="2dp"
             android:contentDescription="Actualizar conexión Bluetooth" />
     </LinearLayout>
 
@@ -170,64 +198,63 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Nombre: "
-        android:padding="4dp" />
+        android:padding="1dp" />
 
     <TextView
         android:id="@+id/txtMacDispositivo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="MAC: "
-        android:padding="4dp"
-        android:layout_marginBottom="16dp" />
+        android:padding="1dp"
+        android:layout_marginBottom="6dp" />
 
     <!-- BOTONES -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center">
+        android:gravity="center"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
 
         <Button
             android:id="@+id/btnGuardar"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="38dp"
             android:layout_weight="1"
             android:text="GUARDAR"
-            android:background="@android:color/holo_blue_light"
+            android:background="@drawable/rounded_button_background"
             android:textColor="@android:color/white"
+            android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
-            android:padding="12dp" />
+            android:padding="0dp"
+            android:textSize="12sp" />
 
         <Button
             android:id="@+id/btnActualizar"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="38dp"
             android:layout_weight="1"
             android:text="ACTUALIZAR"
-            android:background="@android:color/holo_orange_light"
+            android:background="@drawable/rounded_button_background"
             android:textColor="@android:color/white"
+            android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
-            android:padding="12dp" />
-
-        <Button
-            android:id="@+id/btnEliminar"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="ELIMINAR"
-            android:background="@android:color/holo_red_light"
-            android:textColor="@android:color/white"
-            android:padding="12dp" />
+            android:padding="4dp"
+            android:textSize="12sp" />
 
         <Button
             android:id="@+id/btnLimpiar"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="38dp"
             android:layout_weight="1"
             android:text="LIMPIAR"
-            android:background="@android:color/darker_gray"
+            android:background="@drawable/rounded_button_background"
             android:textColor="@android:color/white"
-            android:padding="12dp" />
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:padding="4dp"
+            android:textSize="12sp" />
     </LinearLayout>
 
     <!-- ListView para mostrar los registros -->
@@ -238,6 +265,6 @@
         android:layout_weight="1"
         android:divider="@android:color/darker_gray"
         android:dividerHeight="0.5dp"
-        android:paddingTop="16dp"
-        android:layout_marginTop="16dp" />
+        android:paddingTop="6dp"
+        android:layout_marginTop="6dp" />
 </LinearLayout>

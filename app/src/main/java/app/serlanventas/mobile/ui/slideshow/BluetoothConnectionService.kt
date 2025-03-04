@@ -15,16 +15,12 @@ import java.util.UUID
 
 data class BluetoothMessage(val rawData: String, val processedValue: String)
 
-
-// BluetoothConnectionService.kt
 class BluetoothConnectionService(
     private val context: Context,
     private val bluetoothAdapter: BluetoothAdapter,
-    private val onMessageReceived: (BluetoothMessage) -> Unit // Callback para manejar datos recibidos
+    private val onMessageReceived: (BluetoothMessage) -> Unit
 ) {
-
-    private val uuid: UUID =
-        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB") // UUID para SPP (Serial Port Profile)
+    private val uuid: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     private var connectThread: ConnectThread? = null
     private var connectedThread: ConnectedThread? = null
     private var acceptThread: AcceptThread? = null
@@ -33,7 +29,6 @@ class BluetoothConnectionService(
     private val logger = Logger(context)
     private var dividename: String = "Sin Conexión"
 
-    // Inicia un hilo para conectar con un dispositivo Bluetooth específico.
     @SuppressLint("MissingPermission")
     fun connect(device: BluetoothDevice) {
         dividename = device.name.toString()
@@ -41,7 +36,6 @@ class BluetoothConnectionService(
         connectThread?.start()
     }
 
-    // Inicia un hilo que escucha conexiones entrantes desde otros dispositivos Bluetooth.
     @SuppressLint("MissingPermission")
     fun startServer() {
         if (serverSocket == null) {
@@ -51,26 +45,19 @@ class BluetoothConnectionService(
         acceptThread?.start()
     }
 
-    // Maneja una conexión establecida, iniciando un hilo para manejar la comunicación.
     private fun connected(socket: BluetoothSocket) {
         connectedThread = ConnectedThread(socket)
         connectedThread?.start()
         openSockets.add(socket)
     }
 
-    // Cierra la conexión Bluetooth con un dispositivo específico y limpia recursos.
     fun closeConnection(device: BluetoothDevice): Boolean {
         var result = false
         try {
-            // Cancelar y unir hilos de conexión
             connectThread?.cancelAndJoin()
             connectedThread?.cancelAndJoin()
             acceptThread?.cancelAndJoin()
-
-            // Cerrar todos los sockets abiertos
             closeAllSockets()
-
-            // Intentar desvincular el dispositivo
             try {
                 val method = device.javaClass.getMethod("removeBond")
                 result = method.invoke(device) as Boolean
@@ -81,12 +68,10 @@ class BluetoothConnectionService(
         } catch (e: Exception) {
             logger.log("Error al cerrar la conexión Bluetooth", e)
         } finally {
-            // Reiniciar el servicio
             restartService()
         }
         return result
     }
-
 
     fun restartService() {
         closeAllSockets()
@@ -95,7 +80,6 @@ class BluetoothConnectionService(
         startServer()
     }
 
-    // Cierra todos los sockets abiertos y limpia la lista.
     private fun closeAllSockets() {
         for (socket in openSockets) {
             try {
@@ -107,58 +91,44 @@ class BluetoothConnectionService(
         openSockets.clear()
     }
 
-    // Extensión para cancelar un hilo y esperar a que termine.
     private fun Thread.cancelAndJoin() {
         try {
             interrupt()
-            join(500)  // Espera hasta 500 ms para que el thread termine
+            join(500)
         } catch (e: InterruptedException) {
             logger.log("Thread.cancelAndJoin(): Error al esperar a que el thread termine", e)
         }
     }
 
     @SuppressLint("MissingPermission")
-    // Hilo que maneja la conexión con un dispositivo Bluetooth.
     private inner class ConnectThread(private val device: BluetoothDevice) : Thread() {
         private val socket: BluetoothSocket? by lazy(LazyThreadSafetyMode.NONE) {
             device.createRfcommSocketToServiceRecord(uuid)
         }
 
-        @SuppressLint("MissingPermission")
         override fun run() {
-            // Cancelar descubrimiento para no interferir con la conexión
             bluetoothAdapter.cancelDiscovery()
-
-            // Asegurar que el dispositivo esté emparejado antes de intentar conectar
             if (device.bondState != BluetoothDevice.BOND_BONDED) {
                 logger.log("ConnectThread: El dispositivo no está emparejado. No se puede conectar.")
                 return
             }
-
             socket?.let {
                 try {
-//                    50:DA:D6:B4:39:14
-//                    Redmi Note 11
                     dividename = device.name.toString()
                     it.connect()
                     connected(it)
                 } catch (e: IOException) {
                     logger.log("ConnectThread: No se pudo conectar", e)
-                    // Intentar cerrar el socket
                     try {
                         it.close()
                     } catch (closeException: IOException) {
-                        logger.log(
-                            "ConnectThread: No se pudo cerrar el socket después de un fallo de conexión",
-                            closeException
-                        )
+                        logger.log("ConnectThread: No se pudo cerrar el socket después de un fallo de conexión", closeException)
                     }
                     return
                 }
             }
         }
 
-        // Cierra el socket Bluetooth y cancela la conexión.
         fun cancel() {
             try {
                 socket?.close()
@@ -168,27 +138,22 @@ class BluetoothConnectionService(
         }
     }
 
-    // Hilo que maneja la comunicación con un dispositivo conectado.
     private inner class ConnectedThread(private val socket: BluetoothSocket) : Thread() {
         private val inputStream: InputStream = socket.inputStream
         private val outputStream: OutputStream = socket.outputStream
-
         private var buffer = ByteArray(1024)
         private var bufferPosition = 0
-        private var dataAccumulator = StringBuilder()
+        private var datosAcumulados = ""
 
         override fun run() {
             try {
                 while (true) {
-                    val bytes =
-                        inputStream.read(buffer, bufferPosition, buffer.size - bufferPosition)
+                    val bytes = inputStream.read(buffer, bufferPosition, buffer.size - bufferPosition)
                     if (bytes == -1) {
                         logger.log("BluetoothService: Conexión Bluetooth cerrada")
                         break
                     }
-
                     bufferPosition += bytes
-
                     processReceivedData()
                 }
             } catch (e: IOException) {
@@ -198,154 +163,90 @@ class BluetoothConnectionService(
             }
         }
 
-        // Procesa los datos recibidos, extrayendo los valores después de la clave definida
-        // Variable para almacenar datos entre llamadas
-        private var datosAcumulados = ""
-        private var esperandoFinalizacion = false
-
-        // Procesa los datos recibidos, extrayendo los valores después de la clave definida
         private fun processReceivedData() {
-            // Convertir el buffer de bytes a una cadena limpia
             val data = String(buffer, 0, bufferPosition).trim()
             logger.log("$dividename -> ConnectedThread: Datos crudos recibidos: $data")
+            if (data.length == 1) {
+                // Recibiendo carácter por carácter
+                datosAcumulados += data
+                logger.log("$dividename -> ConnectedThread: Acumulando carácter: $datosAcumulados")
+                bufferPosition = 0
+                return
+            }
 
-            // Acumulamos los datos recibidos
-            datosAcumulados += data
+            // Procesar datos completos (ya sea acumulados o recibidos de golpe)
+            val datosCompletos = if (datosAcumulados.isNotEmpty()) datosAcumulados + data else data
+            datosAcumulados = ""
 
             val db = AppDatabase(context)
             val confCapture = db.obtenerConfCaptureActivo()
 
-            // Definir valores predeterminados
-            val defaultCadenaClave = "Valor:" // Es el patrón que se usará para dividir
-            val defaultLongitud = 1  // Longitud de los enteros que se acumulan
-            val defaultDecimales = 1 // Número de decimales
-            val defaultNumLecturas = 1 // Número de lecturas a tomar en cuenta
+            val _CadenaClave = confCapture?._cadenaClave ?: ""
+            val _Longitud = confCapture?._longitud ?: 1
+            val _Decimales = confCapture?._formatoPeo ?: 2
+            val _CadenaClaveCierre = confCapture?._cadenaClaveCierre ?: ""
 
-            // Obtener la configuración de captura o los valores predeterminados si no existe
-            val _CadenaClave = confCapture?._cadenaClave ?: defaultCadenaClave
-            val _Longitud = confCapture?._longitud ?: defaultLongitud
-            val _Decimales = confCapture?._formatoPeo ?: defaultDecimales
-            val _NumLecturas = confCapture?._numLecturas ?: defaultNumLecturas
+            logger.log("$dividename -> Configuración: Clave='$_CadenaClave', Cierre='$_CadenaClaveCierre', Longitud=$_Longitud, Decimales=$_Decimales")
 
-            // Verificar si tenemos un patrón de inicio
-            if (datosAcumulados.contains("=") && !esperandoFinalizacion) {
-                esperandoFinalizacion = true
-                logger.log("$dividename -> ConnectedThread: Detectado inicio de valor, acumulando datos...")
-                // Limpiamos el buffer y esperamos más datos
-                bufferPosition = 0
-                return
-            }
+            val valores = extraerValores(datosCompletos, _CadenaClave, _CadenaClaveCierre)
+            logger.log("$dividename -> Valores extraídos: $valores")
 
-            // Verificar si debemos seguir esperando más datos
-            val tieneFinDeLinea = datosAcumulados.contains("\r\n") || datosAcumulados.contains("\n")
-            val esLoBastanteLargo = datosAcumulados.length >= 20  // Un límite razonable
-
-            if (esperandoFinalizacion && !tieneFinDeLinea && !esLoBastanteLargo) {
-                logger.log("$dividename -> ConnectedThread: Continuando acumulación, datos hasta ahora: $datosAcumulados")
-                // Limpiamos el buffer y esperamos más datos
-                bufferPosition = 0
-                return
-            }
-
-            // Si llegamos aquí, procesamos los datos acumulados
-            logger.log("$dividename -> ConnectedThread: Procesando datos completos: $datosAcumulados")
-
-            // Normaliza los datos eliminando saltos de línea y espacios innecesarios
-            val datosLimpios = datosAcumulados.replace("\n", " ").replace("\r", " ").trim()
-
-            // Divide los datos en partes usando la clave establecida
-            val partes = datosLimpios.split(_CadenaClave).map { it.trim() }
-
-            // Variable para acumular TODOS los dígitos encontrados primero
-            var todosLosDigitos = ""
-
-            // Primero acumulamos TODOS los dígitos encontrados después de cada cadena clave
-            for (i in 1 until partes.size) { // Empezamos desde 1 para omitir la parte antes de la primera clave
-                val parte = partes[i]
-                if (parte.isNotEmpty()) {
-                    // Extraer solo los dígitos (incluido el punto decimal) de la parte
-                    val soloDigitos = parte.filter { it.isDigit() || it == '.' }
-                    todosLosDigitos += soloDigitos
-                }
-            }
-
-            // Si no se encontró ningún valor después de la cadena clave, buscar después del "="
-            if (todosLosDigitos.isEmpty()) {
-                val indiceInicio = datosLimpios.indexOf("=")
-                if (indiceInicio >= 0) {
-                    val despuesDelInicio = datosLimpios.substring(indiceInicio + 1)
-                    todosLosDigitos = despuesDelInicio.filter { it.isDigit() || it == '.' }
+            if (valores.isNotEmpty()) {
+                val ultimoValor = valores.last()
+                val valorProcesado = procesarValor(ultimoValor, _Longitud, _Decimales)
+                if (valorProcesado.isNotEmpty()) {
+                    logger.log("$dividename -> ConnectedThread: Valor procesado final: $valorProcesado")
+                    onMessageReceived(BluetoothMessage(datosCompletos, valorProcesado))
                 } else {
-                    // Si no hay cadena clave ni =, extraer cualquier número
-                    todosLosDigitos = datosLimpios.filter { it.isDigit() || it == '.' }
+                    logger.log("$dividename -> ConnectedThread: El valor no cumple con la configuración")
+                    onMessageReceived(BluetoothMessage(datosCompletos, datosCompletos))
                 }
-            }
-
-            logger.log("$dividename -> ConnectedThread: Todos los dígitos acumulados: $todosLosDigitos")
-
-            // Ahora procesamos el valor acumulado según la configuración
-            if (todosLosDigitos.isNotEmpty()) {
-                // Separamos la parte entera y decimal si existe
-                val partes = todosLosDigitos.split(".")
-                var parteEntera = partes[0]
-                val parteDecimal = if (partes.size > 1) partes[1] else ""
-
-                // Aplicamos la restricción de longitud a la parte entera DESPUÉS de acumular
-                if (parteEntera.length > _Longitud) {
-                    // Tomamos los últimos dígitos según la longitud configurada
-                    parteEntera = parteEntera.takeLast(_Longitud)
-                }
-
-                // Reconstruimos el número con la parte decimal
-                var valorNumericoFinal = parteEntera
-                if (parteDecimal.isNotEmpty()) {
-                    valorNumericoFinal += ".$parteDecimal"
-                }
-
-                logger.log("$dividename -> ConnectedThread: Valor numérico final: $valorNumericoFinal")
-
-                // Convertimos a double para aplicar el formato
-                val numero = try {
-                    valorNumericoFinal.toDouble()
-                } catch (e: Exception) {
-                    logger.log("$dividename -> Error al convertir valor: $valorNumericoFinal, usando 0.0")
-                    0.0
-                }
-
-                // Aplicamos el formato según los decimales configurados
-                val formatoPeso = "%.${_Decimales}f"
-                val valorFormateado = String.format(formatoPeso, numero)
-
-                logger.log("$dividename -> ConnectedThread: Valor formateado final: $valorFormateado")
-
-                // Enviamos el resultado
-                onMessageReceived(BluetoothMessage(datosAcumulados, valorFormateado))
             } else {
-                logger.log("$dividename -> ConnectedThread: No se encontraron valores numéricos después de la cadena clave")
+                logger.log("$dividename -> ConnectedThread: No se encontraron valores válidos según la configuración")
+                onMessageReceived(BluetoothMessage(datosCompletos, datosCompletos))
             }
 
-            // Reiniciamos las variables de acumulación
-            datosAcumulados = ""
-            esperandoFinalizacion = false
-
-            // Limpiar el buffer
             bufferPosition = 0
         }
 
+        private fun extraerValores(datos: String, cadenaClave: String, cadenaClaveCierre: String): List<String> {
+            val patron = when {
+                cadenaClave.isNotEmpty() && cadenaClaveCierre.isNotEmpty() ->
+                    "${Regex.escape(cadenaClave)}\\s*(\\d+(?:\\.\\d+)?)\\s*${Regex.escape(cadenaClaveCierre)}"
+                cadenaClave.isNotEmpty() ->
+                    "${Regex.escape(cadenaClave)}\\s*(\\d+(?:\\.\\d+)?)"
+                cadenaClaveCierre.isNotEmpty() ->
+                    "(\\d+(?:\\.\\d+)?)\\s*${Regex.escape(cadenaClaveCierre)}"
+                else ->
+                    "(\\d+(?:\\.\\d+)?)"
+            }
 
-
-        // Verifica si un mensaje es un número decimal válido.
-        private val decimalNumberRegex = "^-?\\d+(\\.\\d+)?\$".toRegex()
-        private fun isValidDecimalNumber(message: String): Boolean {
-            return message.matches(decimalNumberRegex)
+            val regex = Regex(patron)
+            return regex.findAll(datos).map { it.groupValues[1] }.toList()
         }
 
-        // Escribe datos en el socket Bluetooth.
+        private fun procesarValor(valor: String, longitud: Int, decimales: Int): String {
+            val partes = valor.split(".")
+            var parteEntera = partes[0].takeLast(longitud)
+            val parteDecimal = partes.getOrNull(1) ?: ""
+
+            if (parteEntera.isEmpty() || parteEntera.length > longitud) {
+                return ""
+            }
+
+            val valorNumerico = try {
+                "$parteEntera.$parteDecimal".toDouble()
+            } catch (e: Exception) {
+                logger.log("$dividename -> Error al convertir valor: $valor, ignorando")
+                return ""
+            }
+
+            return String.format("%.${decimales}f", valorNumerico)
+        }
+
         fun write(bytes: ByteArray) {
             try {
                 val message = String(bytes)
-
-                // Filtrar y enviar solo datos decimales válidos
                 if (message.matches("-?\\d+(\\.\\d+)?".toRegex())) {
                     outputStream.write(bytes)
                     logger.log("Datos enviados: ${String(bytes)}")
@@ -357,7 +258,6 @@ class BluetoothConnectionService(
             }
         }
 
-        // Cierra el socket y cancela la conexión.
         fun cancel() {
             try {
                 socket.close()
@@ -369,11 +269,9 @@ class BluetoothConnectionService(
     }
 
     @SuppressLint("MissingPermission")
-    // Hilo que escucha conexiones entrantes y las acepta.
     private inner class AcceptThread : Thread() {
         override fun run() {
             var socket: BluetoothSocket?
-
             while (!isInterrupted) {
                 try {
                     socket = serverSocket?.accept()
@@ -390,7 +288,6 @@ class BluetoothConnectionService(
 
         fun cancel() {
             interrupt()
-            // No cerramos el serverSocket aquí
         }
     }
-}
+} 

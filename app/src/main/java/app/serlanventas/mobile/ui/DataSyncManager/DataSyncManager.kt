@@ -1,5 +1,6 @@
 package app.serlanventas.mobile.ui.DataSyncManager
 
+import NetworkUtils
 import android.app.AlertDialog
 import android.content.Context
 import android.util.Log
@@ -14,10 +15,13 @@ import app.serlanventas.mobile.ui.DataBase.Entities.GalponEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.NucleoEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.SerieDeviceEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.UsuarioEntity
+import app.serlanventas.mobile.ui.Interfaces.ProgressCallback
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.showCustomToast
+import app.serlanventas.mobile.ui.Services.getAddressMacDivice
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -98,6 +102,71 @@ class DataSyncManager(private val context: Context) {
         }
     }
 
+    fun checkSincronizardData(baseUrl: String, isLoggedIn: Boolean, progressCallback: ProgressCallback, callback: (Boolean) -> Unit) {
+        if (NetworkUtils.isNetworkAvailable(context)) {
+            CoroutineScope(Dispatchers.IO).launch {
+                progressCallback.onProgressUpdate("Iniciando sincronización...")
+                delay(1000)
+
+                val idDevice = getAddressMacDivice.getDeviceId(context)
+
+                sincronizarData(baseUrl, idDevice) { result ->
+                    when (result) {
+                        is SyncResult.Success -> {
+                            if (result.needsSync) {
+                                progressCallback.onProgressUpdate("Es necesario sincronizar datos...")
+                                showSyncConfirmationDialog { shouldSync ->
+                                    if (shouldSync) {
+                                        progressCallback.onProgressUpdate("Sincronizando datos...")
+                                        sincronizarData(baseUrl, idDevice) { syncResult ->
+                                            handleSyncResult(syncResult, isLoggedIn, callback)
+                                        }
+                                    } else {
+                                        showCustomToast(context, "No se sincronizarán los datos.", "info")
+                                        callback(false)
+                                    }
+                                }
+                            } else {
+//                                showCustomToast(context, "Sus datos están sincronizados.", "success")
+                                callback(true)
+                            }
+                        }
+                        is SyncResult.Error -> {
+                            showErrorDialog { retry ->
+                                if (retry) {
+                                    sincronizarData(baseUrl, idDevice) { syncResult ->
+                                        handleSyncResult(syncResult, isLoggedIn, callback)
+                                    }
+                                } else {
+                                    callback(false)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            callback(false)
+        }
+    }
+
+    private fun handleSyncResult(result: SyncResult, isLoggedIn: Boolean, callback: (Boolean) -> Unit) {
+        when (result) {
+            is SyncResult.Success -> {
+                if (result.needsSync) {
+                    showSuccessDialog {
+                        callback(true)
+                    }
+                } else {
+                    callback(true)
+                }
+            }
+            is SyncResult.Error -> {
+                showErrorDialog(null)
+                callback(false)
+            }
+        }
+    }
 
     private fun procesarDatos(data: JSONObject, callback: (SyncResult) -> Unit) {
         procesarUsuarios(data.getJSONArray("usuarios")) { success ->

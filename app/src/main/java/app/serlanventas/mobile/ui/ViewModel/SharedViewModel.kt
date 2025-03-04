@@ -6,10 +6,10 @@ import androidx.lifecycle.ViewModel
 
 class SharedViewModel : ViewModel() {
 
-    // LiveData para la información de peso y datos crudos
+    // LiveData para la información de peso
     private val _pesoValue = MutableLiveData<String>()
     val pesoValue: LiveData<String> get() = _pesoValue
-
+    // LiveData para la información de Crudo
     private val _rawData = MutableLiveData<String>()
     val rawData: LiveData<String> get() = _rawData
 
@@ -136,4 +136,6 @@ class SharedViewModel : ViewModel() {
         _totalPeso.postValue(peso)
         _totalPesoNeto.postValue(neto)
     }
+
+
 }

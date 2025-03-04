@@ -2,6 +2,7 @@ package app.serlanventas.mobile.ui.Jabas
 
 import NetworkUtils
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.os.Build
@@ -156,7 +157,6 @@ object ManagerPost {
         totalNeto: String,
         totalPagar: String,
         idUsuario: String,
-        idEstablecimiento: String
     ): DataPesoPollosEntity {
         return DataPesoPollosEntity(
             id = id,
@@ -175,7 +175,6 @@ object ManagerPost {
             totalNeto = totalNeto,
             TotalPagar = totalPagar,
             idUsuario = idUsuario,
-            idEstablecimiento = idEstablecimiento
         )
     }
 
@@ -185,6 +184,9 @@ object ManagerPost {
 
     @SuppressLint("ResourceType")
     fun showCustomToast(context: Context, message: String, type: String) {
+        if (context == null || (context is Activity && (context.isFinishing || context.isDestroyed))) {
+            return  // No mostrar toast si el contexto no es válido
+        }
         val layoutInflater = LayoutInflater.from(context)
         val layout = layoutInflater.inflate(R.layout.toast_custom, null)
 
@@ -1087,6 +1089,7 @@ object ManagerPost {
         idGalpon: Int,
         idEstablecimiento: Int,
         diviceName: String,
+        combineLocalAndRemote: Boolean, // Nuevo parámetro booleano
         callback: (List<PesosEntity>?) -> Unit
     ) {
         val urlString =
@@ -1124,9 +1127,20 @@ object ManagerPost {
                                         nombreCompleto = item.optString("nombreCompleto"),
                                         dataPesoJson = item.getString("dataPesoJson"),
                                         dataDetaPesoJson = item.getString("dataDetaPesoJson"),
+                                        idEstado = "0",
+                                        devicedName = "",
                                         fechaRegistro = item.getString("fechaRegistro")
                                     )
                                     pesosList.add(pesosEntity)
+                                }
+
+                                // Si combineLocalAndRemote es true, combinar con datos locales
+                                if (combineLocalAndRemote) {
+                                    val localPesosList = db.getPesosByIdGalponAndEstablecimiento(
+                                        idGalpon,
+                                        idEstablecimiento
+                                    )
+                                    pesosList.addAll(localPesosList)
                                 }
 
                                 withContext(Dispatchers.Main) {
@@ -1167,7 +1181,6 @@ object ManagerPost {
             callback(pesosList)
         }
     }
-
 
 
     fun getListPesosId(
@@ -1301,7 +1314,11 @@ object ManagerPost {
                     }
                 } catch (e: JSONException) {
                     withContext(Dispatchers.Main) {
-                        showCustomToast(context, "Error al procesar la respuesta del servidor", "error")
+                        showCustomToast(
+                            context,
+                            "Error al procesar la respuesta del servidor",
+                            "error"
+                        )
                     }
                     Log.e("addListPesos", "JSON Exception: ${e.message}")
                 }
@@ -1315,7 +1332,6 @@ object ManagerPost {
             withContext(Dispatchers.Main) {
                 showCustomToast(context, "Error de red: ${ex.message}", "error")
             }
-            Log.e("addListPesos", "Exception: ${ex.message}")
         }
 
         // Si llegamos aquí, significa que falló la inserción en el servidor remoto
@@ -1328,6 +1344,8 @@ object ManagerPost {
             nombreCompleto = pesosEntity.nombreCompleto,
             dataPesoJson = pesosEntity.dataPesoJson,
             dataDetaPesoJson = pesosEntity.dataDetaPesoJson,
+            idEstado = "0",
+            devicedName = "",
             fechaRegistro = ""
         )
         val db = AppDatabase(context)
@@ -1353,9 +1371,35 @@ object ManagerPost {
         pesosEntity: PesosEntity,
         idPesoShared: Int
     ): Boolean = withContext(Dispatchers.IO) {
+        // Primero, actualizamos en la base de datos local
+        val idDevice = getDeviceId(context)
+        val pesoUsedEntity = pesoUsedEntity(
+            idPesoUsed = idPesoShared,
+            devicedName = idDevice,
+            dataPesoPollosJson = pesosEntity.dataPesoJson,
+            dataDetaPesoPollosJson = pesosEntity.dataDetaPesoJson,
+            fechaRegistro = ""
+        )
+        val db = AppDatabase(context)
+        val result = db.addPesoUsed(pesoUsedEntity)
+        val result2 = db.updatePesoById(idPesoShared, pesosEntity)
+
+        if (result == -1L || result2 <= 0) {
+            withContext(Dispatchers.Main) {
+                showCustomToast(context, "Error al actualizar datos localmente", "error")
+            }
+            return@withContext false
+        }
+
+        withContext(Dispatchers.Main) {
+            showCustomToast(context, "Datos actualizados localmente", "info")
+        }
+
+        // Después de la actualización local exitosa, intentamos actualizar el servidor remoto
         val isProduction = Constants.obtenerEstadoModo(context)
         val baseUrl = Constants.getBaseUrl(isProduction)
-        val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=insertar&idPesoShared=${idPesoShared}"
+        val urlString =
+            "${baseUrl}controllers/TempPesoPollosController.php?op=insertar&idPesoShared=${idPesoShared}"
 
         try {
             val url = URL(urlString)
@@ -1385,18 +1429,26 @@ object ManagerPost {
 
                     if (status == "success") {
                         withContext(Dispatchers.Main) {
-                            showCustomToast(context, "Peso actualizado correctamente", "success")
+                            showCustomToast(context, "Peso actualizado correctamente ", "success")
                         }
                         return@withContext true
                     } else {
                         withContext(Dispatchers.Main) {
-                            showCustomToast(context, "Ocurrió un error al actualizar", "error")
+                            showCustomToast(
+                                context,
+                                "Ocurrió un error al actualizar en el servidor",
+                                "error"
+                            )
                         }
                         Log.e("UpdateListPesos", "Error: $message")
                     }
                 } catch (e: JSONException) {
                     withContext(Dispatchers.Main) {
-                        showCustomToast(context, "Error al procesar la respuesta del servidor", "error")
+                        showCustomToast(
+                            context,
+                            "Error al procesar la respuesta del servidor",
+                            "error"
+                        )
                     }
                     Log.e("updateListPesos", "JSON Exception: ${e.message}")
                 }
@@ -1413,31 +1465,8 @@ object ManagerPost {
             Log.e("updateListPesos", "Exception: ${ex.message}")
         }
 
-        // Si llegamos aquí, significa que falló la actualización en el servidor remoto
-        val idDevice = getDeviceId(context)
-
-        // Actualizamos en la base de datos local
-        val pesoUsedEntity = pesoUsedEntity(
-            idPesoUsed = idPesoShared,
-            devicedName = idDevice,
-            dataPesoPollosJson = pesosEntity.dataPesoJson,
-            dataDetaPesoPollosJson = pesosEntity.dataDetaPesoJson,
-            fechaRegistro = ""
-        )
-        val db = AppDatabase(context)
-        val result = db.addPesoUsed(pesoUsedEntity)
-
-        if (result != -1L) {
-            withContext(Dispatchers.Main) {
-                showCustomToast(context, "Datos actualizados localmente", "info")
-            }
-            return@withContext true
-        } else {
-            withContext(Dispatchers.Main) {
-                showCustomToast(context, "Error al actualizar datos localmente", "error")
-            }
-            return@withContext false
-        }
+        // Si llegamos aquí, significa que la actualización remota falló, pero la local fue exitosa
+        return@withContext true
     }
 
 
@@ -1492,15 +1521,40 @@ object ManagerPost {
         context: Context,
         idPeso: Int,
         status: String,
-        diviceName: String,
+        deviceName: String,
         callback: (Boolean) -> Unit
     ) {
-        val isProduction = Constants.obtenerEstadoModo(context)
-        val baseUrl = Constants.getBaseUrl(isProduction)
-        val urlString =
-            "${baseUrl}controllers/TempPesoPollosController.php?op=$status&idPeso=$idPeso&diviceName=$diviceName"
-
         CoroutineScope(Dispatchers.IO).launch {
+            // Primero, actualizamos en la base de datos local
+            val db = AppDatabase(context)
+            val pesoEntity = PesosEntity(
+                id = idPeso,
+                idEstado = if (status == "Used") "1" else "0",
+                devicedName = deviceName,
+                fechaRegistro = "",
+                idGalpon = 0,
+                idNucleo = 0,
+                numeroDocCliente = "",
+                nombreCompleto = "",
+                dataPesoJson = "",
+                dataDetaPesoJson = ""
+            )
+            val result = db.setStatusUsed(pesoEntity)
+
+            if (result <= 0) {
+                // Si la actualización local falla, notificamos el error
+                CoroutineScope(Dispatchers.Main).launch {
+                    callback(false)
+                }
+                return@launch
+            }
+
+            // Después de la actualización local exitosa, intentamos actualizar el servidor remoto
+            val isProduction = Constants.obtenerEstadoModo(context)
+            val baseUrl = Constants.getBaseUrl(isProduction)
+            val urlString =
+                "${baseUrl}controllers/TempPesoPollosController.php?op=$status&idPeso=$idPeso&diviceName=$deviceName"
+
             try {
                 val url = URL(urlString)
                 val conn = url.openConnection() as HttpURLConnection
@@ -1511,14 +1565,10 @@ object ManagerPost {
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
                     val jsonResponse = JSONObject(inputStream)
-                    val status = jsonResponse.optString("status")
+                    val responseStatus = jsonResponse.optString("status")
 
                     CoroutineScope(Dispatchers.Main).launch {
-                        if (status == "success") {
-                            callback(true)
-                        } else {
-                            callback(false)
-                        }
+                        callback(responseStatus == "success")
                     }
                 } else {
                     CoroutineScope(Dispatchers.Main).launch {
@@ -1532,6 +1582,8 @@ object ManagerPost {
             }
         }
     }
+
+
 
     fun getStautusPeso(
         context: Context,
@@ -1589,6 +1641,24 @@ object ManagerPost {
                     }
                 }
             } catch (ex: Exception) {
+                CoroutineScope(Dispatchers.Main).launch {
+                    callback(null)
+                }
+            }
+
+            val db = AppDatabase(context)
+            val result = db.getPesosStatus(idPeso)
+
+            if (result.isNotEmpty()) {
+                val pesosEntity = result[0]
+                val statusFromData = "0"
+                val addresMac = "null"
+
+                val resultString = "$statusFromData|$addresMac"
+                CoroutineScope(Dispatchers.Main).launch {
+                    callback(resultString)
+                }
+            } else {
                 CoroutineScope(Dispatchers.Main).launch {
                     callback(null)
                 }

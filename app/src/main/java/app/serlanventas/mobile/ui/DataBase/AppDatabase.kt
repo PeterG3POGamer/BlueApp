@@ -24,7 +24,7 @@ class AppDatabase(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "SerlanVentas.db"
-        private const val DATABASE_VERSION = 7
+        private const val DATABASE_VERSION = 10
 
         // Table names
         private const val TABLE_DETA_PESO_POLLOS = "DataDetaPesoPollos"
@@ -65,7 +65,6 @@ class AppDatabase(context: Context) :
         private const val KEY_TOTAL_NETO = "totalNeto"
         private const val KEY_TOTAL_PAGAR = "TotalPagar"
         private const val KEY_DNI_USUARIO = "idUsuario"
-        private const val KEY_ID_ESTABLECIMIENTO = "idEstablecimiento"
 
         // Cliente Table - column names
         private const val KEY_FECHA_REGISTRO = "fechaRegistro"
@@ -73,6 +72,7 @@ class AppDatabase(context: Context) :
         // ListPesos Table - column names
         private const val KEY_DATA_PESO_JSON = "dataJsonPeso"
         private const val KEY_DATA_DETAPESO_JSON = "dataJsonDetaPeso"
+        private const val KEY_ID_ESTADO = "idEstado"
 
         private const val KEY_IMPRESORA_IP = "ip"
         private const val KEY_IMPRESORA_PUERTO = "puerto"
@@ -105,10 +105,8 @@ class AppDatabase(context: Context) :
         private const val KEY_CC_MAC_DISPOSITIVO = "cc_macDispositivo"
         private const val KEY_CC_LONGITUD = "cc_longitud"
         private const val KEY_CC_FORMATO_PEO = "cc_formatoPeo"
-        private const val KEY_CC_NUM_LECTURAS = "cc_numLecturas"
         private const val KEY_CC_ESTADO = "cc_estado"
-
-
+        private const val KEY_CC_CADENA_CLAVE_CIERRE = "cc_cadenaClaveCierre"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -133,6 +131,7 @@ class AppDatabase(context: Context) :
                 + "$KEY_PRECIO_K_POLLO TEXT, "
                 + "$KEY_NUMERO_DOC_CLIENTE TEXT, "
                 + "$KEY_ID_GALPON TEXT, "
+                + "$KEY_ID_NUCLEO TEXT, "
                 + "$KEY_NOMBRE_COMPLETO TEXT)")
         db.execSQL(CREATE_TABLE_PESO_POLLOS)
 
@@ -152,6 +151,7 @@ class AppDatabase(context: Context) :
                 + "$KEY_DATA_DETAPESO_JSON TEXT, "
                 + "$KEY_ID_GALPON TEXT, "
                 + "$KEY_ID_NUCLEO TEXT, "
+                + "$KEY_ID_ESTADO TEXT, "
                 + "$KEY_FECHA_REGISTRO TEXT)")
         db.execSQL(CREATE_TABLE_PESOS)
 
@@ -203,8 +203,8 @@ class AppDatabase(context: Context) :
                 + "$KEY_CC_MAC_DISPOSITIVO TEXT, "
                 + "$KEY_CC_LONGITUD INTEGER, "
                 + "$KEY_CC_FORMATO_PEO INTEGER, "
-                + "$KEY_CC_NUM_LECTURAS INTEGER, "
-                + "$KEY_CC_ESTADO INTEGER)")
+                + "$KEY_CC_ESTADO INTEGER, "
+                + "$KEY_CC_CADENA_CLAVE_CIERRE INTEGER)")
         db.execSQL(TABLE_CONFCAPTURE)
     }
 
@@ -287,8 +287,8 @@ class AppDatabase(context: Context) :
                 ),
                 _longitud = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_LONGITUD)),
                 _formatoPeo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_FORMATO_PEO)),
-                _numLecturas = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_NUM_LECTURAS)),
-                _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)) // Obtener el estado como entero (1 o 0)
+                _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)),
+                _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE))
             )
         }
         cursor.close()
@@ -303,8 +303,8 @@ class AppDatabase(context: Context) :
             put(KEY_CC_MAC_DISPOSITIVO, data._macDispositivo)
             put(KEY_CC_LONGITUD, data._longitud)
             put(KEY_CC_FORMATO_PEO, data._formatoPeo)
-            put(KEY_CC_NUM_LECTURAS, data._numLecturas)
-            put(KEY_CC_ESTADO, data._estado) // Actualizar el estado como entero (1 o 0)
+            put(KEY_CC_ESTADO, data._estado)
+            put(KEY_CC_CADENA_CLAVE_CIERRE, data._cadenaClaveCierre)
         }
 
         // Realizamos la actualización basado en la MAC del dispositivo
@@ -338,8 +338,8 @@ class AppDatabase(context: Context) :
                     ),
                     _longitud = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_LONGITUD)),
                     _formatoPeo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_FORMATO_PEO)),
-                    _numLecturas = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_NUM_LECTURAS)),
-                    _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)) // Obtener el estado como entero (1 o 0)
+                    _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)),
+                    _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE))
                 )
                 dataList.add(data)
             } while (cursor.moveToNext())
@@ -351,16 +351,16 @@ class AppDatabase(context: Context) :
     fun insertarConfCapture(data: CaptureDeviceEntity): Long {
         val db = this.writableDatabase
         val values = ContentValues().apply {
-            put(KEY_CC_CADENA_CLAVE, data._cadenaClave) // Agregar la cadena de clave
+            put(KEY_CC_CADENA_CLAVE, data._cadenaClave)
             put(
                 KEY_CC_NOMBRE_DISPOSITIVO,
                 data._nombreDispositivo
             ) // Agregar el nombre del dispositivo
-            put(KEY_CC_MAC_DISPOSITIVO, data._macDispositivo) // Agregar la MAC del dispositivo
-            put(KEY_CC_LONGITUD, data._longitud) // Agregar la longitud
-            put(KEY_CC_FORMATO_PEO, data._formatoPeo) // Agregar el formato PE
-            put(KEY_CC_NUM_LECTURAS, data._numLecturas) // Agregar el número de lecturas
-            put(KEY_CC_ESTADO, data._estado) // Agregar el estado como un entero (1 o 0)
+            put(KEY_CC_MAC_DISPOSITIVO, data._macDispositivo)
+            put(KEY_CC_LONGITUD, data._longitud)
+            put(KEY_CC_FORMATO_PEO, data._formatoPeo)
+            put(KEY_CC_ESTADO, data._estado)
+            put(KEY_CC_CADENA_CLAVE_CIERRE, data._cadenaClaveCierre)
         }
 
         // Insertar los valores en la tabla y devolver el id de la fila insertada
@@ -400,8 +400,8 @@ class AppDatabase(context: Context) :
                 ),
                 _longitud = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_LONGITUD)),
                 _formatoPeo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_FORMATO_PEO)),
-                _numLecturas = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_NUM_LECTURAS)),
-                _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)) // Obtener el estado como entero (1 o 0)
+                _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)),
+                _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE))
             )
         }
         cursor.close()
@@ -409,10 +409,147 @@ class AppDatabase(context: Context) :
     }
 
     // =========================================================
-    // INSERTS
+    // CRUD - List Pesos Temporales
     // =========================================================
 
-    // Insert functions
+    fun insertListPesos(pesos: PesosEntity): Long {
+        val db = this.writableDatabase
+        val currentDate = getCurrentDateTime()
+
+        val values = ContentValues().apply {
+            put(KEY_NUMERO_DOC_CLIENTE, pesos.numeroDocCliente)
+            put(KEY_NOMBRE_COMPLETO, pesos.nombreCompleto)
+            put(KEY_DATA_PESO_JSON, pesos.dataPesoJson)
+            put(KEY_DATA_DETAPESO_JSON, pesos.dataDetaPesoJson)
+            put(KEY_ID_NUCLEO, pesos.idNucleo)
+            put(KEY_ID_GALPON, pesos.idGalpon)
+            put(KEY_ID_ESTADO, pesos.idEstado)
+            put(KEY_FECHA_REGISTRO, currentDate)
+        }
+        return db.insert(TABLE_PESOS, null, values)
+    }
+
+    fun updatePesoById(idPesoShared: Int,pesos: PesosEntity): Int {
+        val db = this.writableDatabase
+        val currentDate = getCurrentDateTime()
+
+        val values = ContentValues().apply {
+            put(KEY_NUMERO_DOC_CLIENTE, pesos.numeroDocCliente)
+            put(KEY_NOMBRE_COMPLETO, pesos.nombreCompleto)
+            put(KEY_DATA_PESO_JSON, pesos.dataPesoJson)
+            put(KEY_DATA_DETAPESO_JSON, pesos.dataDetaPesoJson)
+            put(KEY_ID_NUCLEO, pesos.idNucleo)
+            put(KEY_ID_GALPON, pesos.idGalpon)
+            put(KEY_ID_ESTADO, pesos.idEstado)
+            put(KEY_FECHA_REGISTRO, currentDate)
+        }
+
+        val whereClause = "$KEY_ID = ?"
+        val whereArgs = arrayOf(idPesoShared.toString())
+        return db.update(TABLE_PESOS, values, whereClause, whereArgs)
+    }
+
+    fun getPesosUsedAll(): List<pesoUsedEntity> {
+        val pesosUsedList = mutableListOf<pesoUsedEntity>()
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_USED_PESOS"
+        val cursor = db.rawQuery(selectQuery, null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                val pesos = pesoUsedEntity(
+                    idPesoUsed = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)),
+                    dataPesoPollosJson = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_DATA_PESO_JSON
+                        )
+                    ),
+                    dataDetaPesoPollosJson = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_DATA_DETAPESO_JSON
+                        )
+                    ),
+                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
+                )
+                pesosUsedList.add(pesos)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return pesosUsedList
+    }
+
+    fun getPesosStatus(idPeso: Int): List<PesosEntity> {
+        val pesoList = mutableListOf<PesosEntity>()
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_PESOS WHERE $KEY_ID = ?"
+        val cursor = db.rawQuery(selectQuery, arrayOf(idPeso.toString()))
+
+        if (cursor.moveToFirst()) {
+            do {
+                val pesos = PesosEntity(
+                    id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)) ?: "",
+                    idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
+                    idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
+                    numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)) ?: "",
+                    nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)) ?: "",
+                    dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)) ?: "",
+                    dataDetaPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)) ?: "",
+                    idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)) ?: "0",
+                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO)) ?: ""
+                )
+                pesoList.add(pesos)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return pesoList
+    }
+
+    fun deletePesosById(id: Int): Int {
+        val db = this.writableDatabase
+        val whereClause = "$KEY_ID = ?"
+        val whereArgs = arrayOf(id.toString())
+        return db.delete(TABLE_PESOS, whereClause, whereArgs)
+    }
+
+    fun setStatusUsed(pesoEntity: PesosEntity): Int {
+        val db = this.writableDatabase
+        val contentValues = ContentValues().apply {
+            put(KEY_ID_ESTADO, pesoEntity.idEstado)
+            put(KEY_DEVICE_NAME, pesoEntity.devicedName)
+        }
+        return db.update(
+            TABLE_PESOS,
+            contentValues,
+            "$KEY_ID = ?",
+            arrayOf(pesoEntity.id.toString())
+        )
+    }
+
+    fun addPesoUsed(pesoUsed: pesoUsedEntity): Long {
+        val db = this.writableDatabase
+        val currentDate = getCurrentDateTime()
+
+        val values = ContentValues().apply {
+            put(KEY_ID, pesoUsed.idPesoUsed)
+            put(KEY_DEVICE_NAME, pesoUsed.devicedName)
+            put(KEY_DATA_PESO_JSON, pesoUsed.dataPesoPollosJson)
+            put(KEY_DATA_DETAPESO_JSON, pesoUsed.dataDetaPesoPollosJson)
+            put(KEY_FECHA_REGISTRO, currentDate)
+
+        }
+        return db.insert(TABLE_USED_PESOS, null, values)
+    }
+
+    fun deleteAllPesoUsed() {
+        val db = this.writableDatabase
+        db.delete(TABLE_USED_PESOS, null, null)
+        db.close()
+    }
+    // =========================================================
+    // INSERTS
+    // =========================================================
 
     fun insertDataDetaPesoPollos(data: DataDetaPesoPollosEntity): Long {
         val db = this.writableDatabase
@@ -437,6 +574,7 @@ class AppDatabase(context: Context) :
             put(KEY_TIPO, data.tipo)
             put(KEY_NUMERO_DOC_CLIENTE, data.numeroDocCliente)
             put(KEY_ID_GALPON, data.idGalpon)
+            put(KEY_ID_NUCLEO, data.idNucleo)
             put(KEY_NOMBRE_COMPLETO, data.nombreCompleto)
             put(KEY_PRECIO_K_POLLO, data.PKPollo)
         }
@@ -489,23 +627,6 @@ class AppDatabase(context: Context) :
         return db.insert(TABLE_CLIENTE, null, values)
     }
 
-    // Inserción de ListPesos
-    fun insertListPesos(pesos: PesosEntity): Long {
-        val db = this.writableDatabase
-        val currentDate = getCurrentDateTime()
-
-        val values = ContentValues().apply {
-            put(KEY_NUMERO_DOC_CLIENTE, pesos.numeroDocCliente)
-            put(KEY_NOMBRE_COMPLETO, pesos.nombreCompleto)
-            put(KEY_DATA_PESO_JSON, pesos.dataPesoJson)
-            put(KEY_DATA_DETAPESO_JSON, pesos.dataDetaPesoJson)
-            put(KEY_ID_NUCLEO, pesos.idNucleo)
-            put(KEY_ID_GALPON, pesos.idGalpon)
-            put(KEY_FECHA_REGISTRO, currentDate)
-        }
-        return db.insert(TABLE_PESOS, null, values)
-    }
-
     fun addImpresora(impresora: impresoraEntity): Long {
         val db = this.writableDatabase
 
@@ -517,20 +638,7 @@ class AppDatabase(context: Context) :
         return db.insert(TABLE_IMPRESORA, null, values)
     }
 
-    fun addPesoUsed(pesoUsed: pesoUsedEntity): Long {
-        val db = this.writableDatabase
-        val currentDate = getCurrentDateTime()
 
-        val values = ContentValues().apply {
-            put(KEY_ID, pesoUsed.idPesoUsed)
-            put(KEY_DEVICE_NAME, pesoUsed.devicedName)
-            put(KEY_DATA_PESO_JSON, pesoUsed.dataPesoPollosJson)
-            put(KEY_DATA_DETAPESO_JSON, pesoUsed.dataDetaPesoPollosJson)
-            put(KEY_FECHA_REGISTRO, currentDate)
-
-        }
-        return db.insert(TABLE_USED_PESOS, null, values)
-    }
 
     fun insertSerieDevice(serieDevice: SerieDeviceEntity): Long {
         val db = this.writableDatabase
@@ -615,11 +723,6 @@ class AppDatabase(context: Context) :
                     totalNeto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_NETO)),
                     TotalPagar = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PAGAR)),
                     idUsuario = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DNI_USUARIO)),
-                    idEstablecimiento = cursor.getString(
-                        cursor.getColumnIndexOrThrow(
-                            KEY_ID_ESTABLECIMIENTO
-                        )
-                    ),
                 )
                 dataList.add(data)
             } while (cursor.moveToNext())
@@ -685,6 +788,8 @@ class AppDatabase(context: Context) :
                             KEY_DATA_DETAPESO_JSON
                         )
                     ),
+                    idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)),
+                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)),
                     fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
                 )
                 pesosList.add(pesos)
@@ -704,31 +809,22 @@ class AppDatabase(context: Context) :
         SELECT * FROM $TABLE_PESOS
         WHERE $KEY_ID_GALPON = ? AND $KEY_ID_NUCLEO = ?
     """
-        val cursor =
-            db.rawQuery(selectQuery, arrayOf(idGalpon.toString(), idEstablecimiento.toString()))
+        val cursor = db.rawQuery(selectQuery, arrayOf(idGalpon.toString(), idEstablecimiento.toString()))
 
         if (cursor.moveToFirst()) {
             do {
+                val deviceName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)) ?: ""
+
                 val pesos = PesosEntity(
                     id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
                     idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
                     idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
-                    numeroDocCliente = cursor.getString(
-                        cursor.getColumnIndexOrThrow(
-                            KEY_NUMERO_DOC_CLIENTE
-                        )
-                    ),
-                    nombreCompleto = cursor.getString(
-                        cursor.getColumnIndexOrThrow(
-                            KEY_NOMBRE_COMPLETO
-                        )
-                    ),
+                    numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)),
+                    nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)),
                     dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)),
-                    dataDetaPesoJson = cursor.getString(
-                        cursor.getColumnIndexOrThrow(
-                            KEY_DATA_DETAPESO_JSON
-                        )
-                    ),
+                    dataDetaPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)),
+                    idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)),
+                    devicedName = deviceName,
                     fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
                 )
                 pesosList.add(pesos)
@@ -738,35 +834,6 @@ class AppDatabase(context: Context) :
         return pesosList
     }
 
-    fun getPesosUsedAll(): List<pesoUsedEntity> {
-        val pesosUsedList = mutableListOf<pesoUsedEntity>()
-        val db = this.readableDatabase
-        val selectQuery = "SELECT * FROM $TABLE_USED_PESOS"
-        val cursor = db.rawQuery(selectQuery, null)
-
-        if (cursor.moveToFirst()) {
-            do {
-                val pesos = pesoUsedEntity(
-                    idPesoUsed = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
-                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)),
-                    dataPesoPollosJson = cursor.getString(
-                        cursor.getColumnIndexOrThrow(
-                            KEY_DATA_PESO_JSON
-                        )
-                    ),
-                    dataDetaPesoPollosJson = cursor.getString(
-                        cursor.getColumnIndexOrThrow(
-                            KEY_DATA_DETAPESO_JSON
-                        )
-                    ),
-                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
-                )
-                pesosUsedList.add(pesos)
-            } while (cursor.moveToNext())
-        }
-        cursor.close()
-        return pesosUsedList
-    }
 
     fun getClienteById(numeroDocCliente: String): ClienteEntity? {
         val db = this.readableDatabase
@@ -1049,12 +1116,6 @@ class AppDatabase(context: Context) :
     // =========================================================
 
     // eliminar Peso por id:
-    fun deletePesosById(id: Int): Int {
-        val db = this.writableDatabase
-        val whereClause = "$KEY_ID = ?"
-        val whereArgs = arrayOf(id.toString())
-        return db.delete(TABLE_PESOS, whereClause, whereArgs)
-    }
 
     // Eliminar un Cliente
     fun deleteCliente(clienteId: Int): Int {
@@ -1086,27 +1147,6 @@ class AppDatabase(context: Context) :
         db.close()
     }
 
-    fun deleteAllPesoUsed() {
-//        val db = this.writableDatabase
-//        try {
-//            db.beginTransaction()
-//            db.execSQL("DELETE FROM ${AppDatabase.TABLE_USED_PESOS}")
-//
-//            // Reiniciar los IDs auto-incrementales
-////            db.execSQL("DELETE FROM sqlite_sequence WHERE name='${AppDatabase.TABLE_USED_PESOS}'")
-//
-//            db.execSQL("VACUUM")
-//            db.setTransactionSuccessful()
-//        } catch (e: Exception) {
-//            // Manejar la excepción si es necesario
-//            e.printStackTrace()
-//        } finally {
-//            db.endTransaction()
-//            db.close()
-//        }
-        val db = this.writableDatabase
-        db.delete(AppDatabase.TABLE_USED_PESOS, null, null)
-        db.close()
-    }
+
 }
 
