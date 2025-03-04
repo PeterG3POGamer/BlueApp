@@ -2,6 +2,7 @@ package app.serlanventas.mobile.ui.DataBase
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import app.serlanventas.mobile.ui.DataBase.Entities.CaptureDeviceEntity
@@ -24,7 +25,7 @@ class AppDatabase(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "SerlanVentas.db"
-        private const val DATABASE_VERSION = 10
+        private const val DATABASE_VERSION = 11
 
         // Table names
         private const val TABLE_DETA_PESO_POLLOS = "DataDetaPesoPollos"
@@ -51,6 +52,7 @@ class AppDatabase(context: Context) :
 
         // DataPesoPollos Table - column names
         private const val KEY_SERIE = "serie"
+        private const val KEY_NUMERO = "numero"
         private const val KEY_FECHA = "fecha"
         private const val KEY_TOTAL_JABAS = "totalJabas"
         private const val KEY_TOTAL_POLLOS = "totalPollos"
@@ -123,6 +125,7 @@ class AppDatabase(context: Context) :
         val CREATE_TABLE_PESO_POLLOS = ("CREATE TABLE $TABLE_PESO_POLLOS("
                 + "$KEY_ID INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "$KEY_SERIE TEXT, "
+                + "$KEY_NUMERO TEXT, "
                 + "$KEY_FECHA TEXT, "
                 + "$KEY_TOTAL_JABAS TEXT, "
                 + "$KEY_TOTAL_POLLOS TEXT, "
@@ -1031,10 +1034,10 @@ class AppDatabase(context: Context) :
         return galponesList
     }
 
-    fun getSerieDeviceByCodigo(codigo: String): SerieDeviceEntity? {
+    fun getSerieDevice(): SerieDeviceEntity? {
         val db = this.readableDatabase
-        val selectQuery = "SELECT * FROM $TABLE_SERIE_DEVICE WHERE $KEY_SERIE_CODIGO = ?"
-        val cursor = db.rawQuery(selectQuery, arrayOf(codigo))
+        val selectQuery = "SELECT * FROM $TABLE_SERIE_DEVICE"
+        val cursor = db.rawQuery(selectQuery, null)
 
         var serie: SerieDeviceEntity? = null
         if (cursor.moveToFirst()) {
@@ -1051,6 +1054,28 @@ class AppDatabase(context: Context) :
         cursor.close()
         return serie
     }
+
+    fun getSerieIdDeviceLocal(): String {
+        var macAddress = ""
+        var cursor: Cursor? = null
+        try {
+            val db = this.readableDatabase
+            val selectQuery = "SELECT $KEY_SERIE_MAC FROM $TABLE_SERIE_DEVICE LIMIT 1"
+            cursor = db.rawQuery(selectQuery, null)
+
+            if (cursor.moveToFirst()) {
+                macAddress = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE_MAC))
+            }
+        } catch (e: Exception) {
+            // Manejar la excepción según sea necesario
+            e.printStackTrace()
+        } finally {
+            cursor?.close()
+        }
+        return macAddress
+    }
+
+
 
     // =========================================================
     // UPDATE
@@ -1131,6 +1156,12 @@ class AppDatabase(context: Context) :
     fun deleteGalpon(galponId: Int): Int {
         val db = this.writableDatabase
         return db.delete(TABLE_GALPON, "$KEY_ID = ?", arrayOf(galponId.toString()))
+    }
+
+    fun deleteAllSeries() {
+        val db = this.writableDatabase
+        db.delete(TABLE_SERIE_DEVICE, null, null)
+        db.close()
     }
 
     // Delete functions

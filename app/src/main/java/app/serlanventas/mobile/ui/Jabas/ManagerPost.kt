@@ -101,11 +101,14 @@ object ManagerPost {
                     dataPesoPollos.totalPollos = totalPollos.toString()
                     dataPesoPollos.totalPeso = totalPeso.toString()
 
+                    val serie = db.getSerieDevice()
+
                     dataDetaPesoPollos.forEach { db.insertDataDetaPesoPollos(it) }
                     db.insertDataPesoPollos(
                         dataPesoPollos.copy(
                             numeroDocCliente = numeroDocumento,
-                            nombreCompleto = nombreCliente
+                            nombreCompleto = nombreCliente,
+                            serie = serie?.codigo ?: ""
                         )
                     )
 
@@ -284,6 +287,7 @@ object ManagerPost {
     ) {
         if (NetworkUtils.isNetworkAvailable(context)) {
             // Hay conexión de red, enviar datos al servidor
+            saveLocally(context, fragment, dataDetaPesoPollos, dataPesoPollos)
             sendToServer(context, fragment, dataDetaPesoPollos, dataPesoPollos)
         } else {
             // No hay conexión de red, almacenar datos localmente
@@ -339,11 +343,6 @@ object ManagerPost {
                     return@launch
                 }
 
-                // Actualizar dataPesoPollos con los totales calculados
-//                dataPesoPollos.totalJabas = totalJabas.toString()
-//                dataPesoPollos.totalPollos = totalPollos.toString()
-//                dataPesoPollos.totalPeso = totalPeso.toString()
-
                 // Verificar si dataDetaPesoPollos es null o vacío antes de usarlo
                 if (dataDetaPesoPollos.isNullOrEmpty()) {
                     withContext(Dispatchers.Main) {
@@ -392,8 +391,6 @@ object ManagerPost {
 
                         // Obtener el JSON completo de PESO_POLLO como un objeto JSON
                         val jsonDataPdf = jsonResponse.optJSONObject("DATAPDF")
-
-//                        Log.d("ManagerPost", "DATAPDF: $jsonDataPdf")
 
                         withContext(Dispatchers.Main) {
                             when (status) {

@@ -4,7 +4,7 @@ import org.json.JSONObject
 
 data class DataPesoPollosEntity(
     val id: Int,
-    val serie: String = "",
+    val serie: String,
     val fecha: String = "",
     var totalJabas: String,
     var totalPollos: String,

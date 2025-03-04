@@ -3,6 +3,7 @@ package app.serlanventas.mobile.ui.Services
 import android.annotation.SuppressLint
 import android.content.Context
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.provider.Settings
 import java.net.NetworkInterface
 import java.util.Collections
@@ -10,7 +11,7 @@ import java.util.Collections
 object getAddressMacDivice {
 
     @SuppressLint("HardwareIds")
-    fun getDeviceId(context: Context): String{
+    fun getDeviceId(context: Context): String {
         return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
     }
 
@@ -43,5 +44,18 @@ object getAddressMacDivice {
             }
         }
         return macAddress
+    }
+
+    fun getDeviceModel(): String {
+        return Build.MODEL
+    }
+
+    fun getDeviceManufacturer(): String {
+        return Build.MANUFACTURER + " " + getDeviceModel()
+    }
+
+    @SuppressLint("HardwareIds")
+    fun getDeviceSerialNumber(): String {
+        return Build.getSerial()
     }
 }

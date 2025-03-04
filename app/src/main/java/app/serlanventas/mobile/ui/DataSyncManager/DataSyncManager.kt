@@ -39,12 +39,18 @@ class DataSyncManager(private val context: Context) {
 
     private val db = AppDatabase(context)
 
-    fun sincronizarData(baseUrl: String, macDevice: String, callback: (SyncResult) -> Unit) {
+    fun sincronizarData(
+        baseUrl: String,
+        macDevice: String,
+        deviceModel: String,
+        callback: (SyncResult) -> Unit
+    ) {
         val urlString = "${baseUrl}controllers/PesoPollosController.php?op=getAllDataSynchronized"
 
         // Crea un objeto JSON con el campo mac
         val jsonBody = JSONObject().apply {
             put("mac", macDevice)
+            put("deviceModel", deviceModel)
         }
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -82,7 +88,11 @@ class DataSyncManager(private val context: Context) {
                         }
                     } catch (e: JSONException) {
                         withContext(Dispatchers.Main) {
-                            Log.e("DataSyncManager", "Error al convertir la respuesta a JSON: $inputStream", e)
+                            Log.e(
+                                "DataSyncManager",
+                                "Error al convertir la respuesta a JSON: $inputStream",
+                                e
+                            )
                             callback(SyncResult.Error("Error al convertir la respuesta a JSON"))
                         }
                     }
@@ -102,15 +112,24 @@ class DataSyncManager(private val context: Context) {
         }
     }
 
-    fun checkSincronizardData(baseUrl: String, isLoggedIn: Boolean, progressCallback: ProgressCallback, callback: (Boolean) -> Unit) {
+    fun checkSincronizardData(
+        baseUrl: String,
+        isLoggedIn: Boolean,
+        progressCallback: ProgressCallback,
+        callback: (Boolean) -> Unit
+    ) {
         if (NetworkUtils.isNetworkAvailable(context)) {
             CoroutineScope(Dispatchers.IO).launch {
                 progressCallback.onProgressUpdate("Iniciando sincronización...")
                 delay(1000)
 
-                val idDevice = getAddressMacDivice.getDeviceId(context)
+                var idDevice = db.getSerieIdDeviceLocal()
+                if (idDevice.isEmpty()) {
+                    idDevice = getAddressMacDivice.getDeviceId(context)
+                }
+                val deviceModel = getAddressMacDivice.getDeviceManufacturer()
 
-                sincronizarData(baseUrl, idDevice) { result ->
+                sincronizarData(baseUrl, idDevice, deviceModel) { result ->
                     when (result) {
                         is SyncResult.Success -> {
                             if (result.needsSync) {
@@ -118,27 +137,35 @@ class DataSyncManager(private val context: Context) {
                                 showSyncConfirmationDialog { shouldSync ->
                                     if (shouldSync) {
                                         progressCallback.onProgressUpdate("Sincronizando datos...")
-                                        sincronizarData(baseUrl, idDevice) { syncResult ->
+                                        sincronizarData(
+                                            baseUrl,
+                                            idDevice,
+                                            deviceModel
+                                        ) { syncResult ->
                                             handleSyncResult(syncResult, isLoggedIn, callback)
                                         }
                                     } else {
-                                        showCustomToast(context, "No se sincronizarán los datos.", "info")
+                                        showCustomToast(
+                                            context,
+                                            "No se sincronizarán los datos.",
+                                            "info"
+                                        )
                                         callback(false)
                                     }
                                 }
                             } else {
-//                                showCustomToast(context, "Sus datos están sincronizados.", "success")
                                 callback(true)
                             }
                         }
+
                         is SyncResult.Error -> {
                             showErrorDialog { retry ->
                                 if (retry) {
-                                    sincronizarData(baseUrl, idDevice) { syncResult ->
+                                    sincronizarData(baseUrl, idDevice, deviceModel) { syncResult ->
                                         handleSyncResult(syncResult, isLoggedIn, callback)
                                     }
                                 } else {
-                                    callback(false)
+                                    callback(true)
                                 }
                             }
                         }
@@ -150,7 +177,11 @@ class DataSyncManager(private val context: Context) {
         }
     }
 
-    private fun handleSyncResult(result: SyncResult, isLoggedIn: Boolean, callback: (Boolean) -> Unit) {
+    private fun handleSyncResult(
+        result: SyncResult,
+        isLoggedIn: Boolean,
+        callback: (Boolean) -> Unit
+    ) {
         when (result) {
             is SyncResult.Success -> {
                 if (result.needsSync) {
@@ -161,6 +192,7 @@ class DataSyncManager(private val context: Context) {
                     callback(true)
                 }
             }
+
             is SyncResult.Error -> {
                 showErrorDialog(null)
                 callback(false)
@@ -176,7 +208,7 @@ class DataSyncManager(private val context: Context) {
                         procesarGalpones(data.getJSONArray("galpones")) { success ->
                             if (success) {
                                 procesarClientes(data.getJSONArray("clientes")) { success ->
-                                    procesarSerieDevice(data.getJSONArray("series")){ success ->
+                                    procesarSerieDevice(data.getJSONArray("series")) { success ->
                                         callback(SyncResult.Success(success))
                                     }
                                 }
@@ -258,16 +290,19 @@ class DataSyncManager(private val context: Context) {
                         return false
                     }
                 }
+
                 is NucleoEntity -> {
                     if (!compararEstablecimientos(itemNube, itemLocal)) {
                         return false
                     }
                 }
+
                 is GalponEntity -> {
                     if (!compararGalpones(itemNube, itemLocal)) {
                         return false
                     }
                 }
+
                 is ClienteEntity -> {
                     if (!compararClientes(itemNube, itemLocal)) {
                         return false
@@ -287,7 +322,10 @@ class DataSyncManager(private val context: Context) {
                 usuarioNube.getString("idEstablecimiento") == usuarioLocal.idEstablecimiento
     }
 
-    private fun compararEstablecimientos(establecimientoNube: JSONObject, establecimientoLocal: NucleoEntity): Boolean {
+    private fun compararEstablecimientos(
+        establecimientoNube: JSONObject,
+        establecimientoLocal: NucleoEntity
+    ): Boolean {
         return establecimientoNube.getString("idEstablecimiento") == establecimientoLocal.idEstablecimiento &&
                 establecimientoNube.getString("nucleoName") == establecimientoLocal.nombre &&
                 establecimientoNube.getString("idEmpresa") == establecimientoLocal.idEmpresa
@@ -454,14 +492,16 @@ class DataSyncManager(private val context: Context) {
         for (i in 0 until data.length()) {
             val serie = data.getJSONObject(i)
 
-            val nuevoSerieDevice = SerieDeviceEntity(
-                idSerieDevice = serie.getInt("idSerie"),
-                codigo = serie.getString("num"),
-                mac = serie.getString("macDevice"),
-            )
-            val serieDeviceExistente = db.getSerieDeviceByCodigo(serie.getString("num"))
+            val existeDevice = db.getSerieDevice()
+            if (existeDevice == null){
+                db.deleteAllSeries()
 
-            if (serieDeviceExistente == null) {
+                val nuevoSerieDevice = SerieDeviceEntity(
+                    idSerieDevice = serie.getInt("idSerie"),
+                    codigo = serie.getString("num"),
+                    mac = serie.getString("macDevice"),
+                )
+
                 val insertResult = db.insertSerieDevice(nuevoSerieDevice)
 
                 if (insertResult == -1L) {
@@ -470,6 +510,7 @@ class DataSyncManager(private val context: Context) {
                     return
                 }
             }
+
         }
         callback(true)
     }
