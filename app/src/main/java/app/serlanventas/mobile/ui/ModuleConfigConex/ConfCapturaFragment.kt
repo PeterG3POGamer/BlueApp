@@ -120,9 +120,26 @@ class ConfCapturaFragment : Fragment() {
 
     private fun configurarBotones() {
         binding.btnGuardar.setOnClickListener { guardarConfiguracion() }
+        binding.btnInfo.setOnClickListener { abrirModalInfo() }
         binding.btnDataBloque.setOnClickListener { cambiarBloque() }
         binding.btnActualizar.setOnClickListener { actualizarConfiguracion() }
         binding.btnLimpiar.setOnClickListener { limpiarFormulario(false) }
+    }
+
+    private fun abrirModalInfo() {
+        val builder = AlertDialog.Builder(requireContext()) // Usamos 'requireContext()' para obtener el contexto del Fragment.
+
+        builder.setTitle("Información de los Bloques")
+            .setMessage(
+                "BLOQUE ENTERO:\nSon datos de caracteres completos, ejemplo: Valor: 23,54;\n\n" +
+                        "BLOQUE DISCREPANTE:\nSon datos de caracteres incompletos, ejemplo:\nValor: \n23\n.5\n4;"
+            )
+            .setPositiveButton("OK") { dialog, _ ->
+                dialog.dismiss()
+            }
+
+        val dialog = builder.create()
+        dialog.show()
     }
 
     private fun cambiarBloque() {
@@ -212,6 +229,7 @@ class ConfCapturaFragment : Fragment() {
             val resultado = db.actualizarEstadoPorMac(mac)
             if (resultado > 0) {
                 Toast.makeText(requireContext(), "Estado actualizado correctamente", Toast.LENGTH_SHORT).show()
+                sharedViewModel.actualizarPeso("0.00")
                 val configuracion = db.obtenerConfCapturePorMac(mac)
                 if (configuracion != null) {
                     cargarDatosEnFormulario(configuracion)

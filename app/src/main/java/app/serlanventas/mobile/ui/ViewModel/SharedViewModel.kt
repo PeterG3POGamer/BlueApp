@@ -46,6 +46,10 @@ class SharedViewModel : ViewModel() {
     private val _totalPesoNeto = MutableLiveData<Double>()
     val totalPesoNeto: LiveData<Double> get() = _totalPesoNeto
 
+    fun actualizarPeso(nuevoPeso: String) {
+        _pesoValue.value = nuevoPeso
+    }
+
     // Métodos de actualización para los valores
     fun updatePesoValue(message: String) {
         _pesoValue.postValue(message)

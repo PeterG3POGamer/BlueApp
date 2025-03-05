@@ -73,8 +73,7 @@ class VentasWebFragment : Fragment() {
             webViewStateRestored = true
         } else if (!webViewStateRestored) {
             // Cargar LOGIN_URL al inicio
-            val isProduction = Constants.obtenerEstadoModo(requireContext())
-            val loginUrl = Constants.buildLoginUrl(requireContext(), isProduction)
+            val loginUrl = Constants.buildLoginUrl(requireContext())
             webView.loadUrl(loginUrl)
             webViewStateRestored = true
         }
@@ -164,9 +163,8 @@ class VentasWebFragment : Fragment() {
                 Log.d(TAG, "onPageFinished: $url")
 
                 // Comparación de URLs
-                val isProduction = Constants.obtenerEstadoModo(requireContext())
-                val ventasUrl = Constants.getVentasUrl(isProduction)
-                val loginUrl = Constants.buildLoginUrl(requireContext(), isProduction)
+                val ventasUrl = Constants.getVentasUrl()
+                val loginUrl = Constants.buildLoginUrl(requireContext(),)
 
                 if (url == loginUrl) {
                     // Mantener WebView oculto y ProgressBar visible
@@ -234,8 +232,7 @@ class VentasWebFragment : Fragment() {
     private fun iniciarSesion() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val isProduction = Constants.obtenerEstadoModo(requireContext())
-                val loginUrl = Constants.buildLoginUrl(requireContext(), isProduction)
+                val loginUrl = Constants.buildLoginUrl(requireContext())
                 val url = URL(loginUrl)
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "GET"
@@ -281,8 +278,7 @@ class VentasWebFragment : Fragment() {
                 val status = jsonResponse.optString("status")
                 val message = jsonResponse.optString("message")
 
-                val isProduction = Constants.obtenerEstadoModo(requireContext())
-                val ventasUrl = Constants.getVentasUrl(isProduction)
+                val ventasUrl = Constants.getVentasUrl()
 
                 when (status) {
                     "success" -> {

@@ -39,7 +39,6 @@ import app.serlanventas.mobile.ui.ViewModel.SharedViewModel
 import app.serlanventas.mobile.ui.ViewModel.TabViewModel
 import app.serlanventas.mobile.ui.login.LogoutReceiver
 import com.google.android.material.navigation.NavigationView
-import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.PrintWriter
@@ -124,7 +123,7 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
 
         val headerView = navView.getHeaderView(0)
-        val modeSwitch: SwitchMaterial = headerView.findViewById(R.id.modeSwitch)
+//        val modeSwitch: SwitchMaterial = headerView.findViewById(R.id.modeSwitch)
 
         tabViewModel = ViewModelProvider(this).get(TabViewModel::class.java)
 
@@ -198,23 +197,23 @@ class MainActivity : AppCompatActivity() {
             performLogout()
         }
         val isProductionMode = Constants.obtenerEstadoModo(this)
-        modeSwitch.isChecked = isProductionMode
-        modeSwitch.text = if (isProductionMode) {
-            getString(R.string.mode_production)
-        } else {
-            getString(R.string.mode_testing)
-        }
+//        modeSwitch.isChecked = isProductionMode
+//        modeSwitch.text = if (isProductionMode) {
+//            getString(R.string.mode_production)
+//        } else {
+//            getString(R.string.mode_testing)
+//        }
 
-        modeSwitch.setOnCheckedChangeListener { _, isChecked ->
-            restartActivity()
-            Constants.guardarEstadoModo(this, isChecked)
-            val modeText = if (isChecked) {
-                getString(R.string.mode_production)
-            } else {
-                getString(R.string.mode_testing)
-            }
-            modeSwitch.text = modeText
-        }
+//        modeSwitch.setOnCheckedChangeListener { _, isChecked ->
+//            restartActivity()
+//            Constants.guardarEstadoModo(this, isChecked)
+//            val modeText = if (isChecked) {
+//                getString(R.string.mode_production)
+//            } else {
+//                getString(R.string.mode_testing)
+//            }
+//            modeSwitch.text = modeText
+//        }
 
         binding.drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
@@ -463,13 +462,13 @@ class MainActivity : AppCompatActivity() {
         val headerView = navView.getHeaderView(0)
         val textViewNameUser: TextView? = headerView.findViewById(R.id.userName)
         val textViewNameRole: TextView? = headerView.findViewById(R.id.userRole)
-        val swMode: TextView? = headerView.findViewById(R.id.modeSwitch)
+//        val swMode: TextView? = headerView.findViewById(R.id.modeSwitch)
 
-        if (idRol == 3) {
-            swMode?.visibility = View.VISIBLE
-        } else {
-            swMode?.visibility = View.GONE
-        }
+//        if (idRol == 3) {
+//            swMode?.visibility = View.VISIBLE
+//        } else {
+//            swMode?.visibility = View.GONE
+//        }
         textViewNameUser?.text = nameUser
         textViewNameRole?.text = nameRole
 

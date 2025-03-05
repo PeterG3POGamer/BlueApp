@@ -58,7 +58,7 @@ class LoginActivity : AppCompatActivity(), ProgressCallback {
         isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false)
 
         isProduction = Constants.obtenerEstadoModo(this)
-        baseUrl = Constants.getBaseUrl(isProduction)
+        baseUrl = Constants.getBaseUrl()
         dataSyncManager = DataSyncManager(this)
 
         // Inicializar vistas de progreso

@@ -25,8 +25,7 @@ class Login(private val context: Context) {
 
             if (NetworkUtils.isNetworkAvailable(context)) {
                 // Si hay conexión a internet, realizar la autenticación en línea
-                val isProduction = Constants.obtenerEstadoModo(context) // Obtener el modo (producción o prueba)
-                val loginUrl = "${Constants.getBaseUrl(isProduction)}controllers/LoginControllerApp.php?op=verificar&dni=$dni&pass=$password" // Construir la URL correcta
+                val loginUrl = "${Constants.getBaseUrl()}controllers/LoginControllerApp.php?op=verificar&dni=$dni&pass=$password" // Construir la URL correcta
                 val url = URL(loginUrl)
                 val connection = url.openConnection() as HttpURLConnection
 

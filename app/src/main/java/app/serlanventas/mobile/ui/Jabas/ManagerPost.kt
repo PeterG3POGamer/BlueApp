@@ -22,7 +22,6 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.PopupWindow
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import app.serlanventas.mobile.R
@@ -99,7 +98,8 @@ object ManagerPost {
                         numeroDocCliente = numeroDocumento,
                         nombreCompleto = nombreCliente,
                         serie = serie?.codigo ?: "",
-                        numero = nuevoNumero
+                        numero = nuevoNumero,
+                        idEstado = "0"
                     )
                 )
 
@@ -151,6 +151,7 @@ object ManagerPost {
         totalNeto: String,
         totalPagar: String,
         idUsuario: String,
+        idEstado: String,
     ): DataPesoPollosEntity {
         return DataPesoPollosEntity(
             id = id,
@@ -170,6 +171,7 @@ object ManagerPost {
             totalNeto = totalNeto,
             TotalPagar = totalPagar,
             idUsuario = idUsuario,
+            idEstado = idEstado,
         )
     }
 
@@ -288,8 +290,7 @@ object ManagerPost {
     ) {
         val preLoading = PreLoading(context)
 
-        val isProduction = Constants.obtenerEstadoModo(context)
-        val baseUrl = Constants.getBaseUrl(isProduction)
+        val baseUrl = Constants.getBaseUrl()
         val urlString = "${baseUrl}controllers/PesoPollosController.php?op=InsertarDataPesoPollos"
         val url = URL(urlString)
         val conn = url.openConnection() as HttpURLConnection
@@ -529,8 +530,7 @@ object ManagerPost {
         dataDetaPesoPollos: List<DataDetaPesoPollosEntity>,
         dataPesoPollos: List<DataPesoPollosEntity>,
     ) {
-        val isProduction = Constants.obtenerEstadoModo(context)
-        val baseUrl = Constants.getBaseUrl(isProduction)
+        val baseUrl = Constants.getBaseUrl()
 
         val urlString = "${baseUrl}enviar.php"
 
@@ -1153,75 +1153,6 @@ object ManagerPost {
     }
 
 
-    fun getListPesosId(
-        idPeso: Int,
-        callback: (List<PesosEntity>?, List<DataDetaPesoPollosEntity>?) -> Unit
-    ) {
-        val urlString =
-            "${Constants.BASE_URL_DEV}controllers/TempPesoPollosController.php?op=getListPesosByIdPeso&idPeso=$idPeso"
-
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val url = URL(urlString)
-                val conn = url.openConnection() as HttpURLConnection
-                conn.requestMethod = "GET"
-                conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-
-                val responseCode = conn.responseCode
-
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-
-                    try {
-                        val jsonResponse = JSONObject(inputStream)
-                        val status = jsonResponse.optString("status")
-
-                        if (status == "success") {
-                            val dataArray = jsonResponse.getJSONArray("data")
-                            val pesosList = mutableListOf<PesosEntity>()
-                            var dataDetaPesoList: List<DataDetaPesoPollosEntity>? = null
-
-                            for (i in 0 until dataArray.length()) {
-                                val item = dataArray.getJSONObject(i)
-
-                                val dataDetaPesoJson = item.getString("dataDetaPesoJson")
-                                dataDetaPesoList = parseDataDetaPesoJson(dataDetaPesoJson)
-                            }
-
-                            withContext(Dispatchers.Main) {
-                                callback(pesosList, dataDetaPesoList)
-                            }
-                        } else {
-                            withContext(Dispatchers.Main) {
-                                callback(null, null)
-                            }
-                        }
-                    } catch (e: JSONException) {
-                        withContext(Dispatchers.Main) {
-                            Log.e(
-                                "GetListPesosByIdNucleo",
-                                "Error al convertir la respuesta a JSON: $inputStream",
-                                e
-                            )
-                            callback(null, null)
-                        }
-                    }
-                } else {
-                    withContext(Dispatchers.Main) {
-                        Log.e("GetListPesosByIdNucleo", "Error al obtener datos: $responseCode")
-                        callback(null, null)
-                    }
-                }
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    Log.e("GetListPesosByIdNucleo", "Error: ${ex.message}")
-                    callback(null, null)
-                }
-            }
-        }
-    }
-
     private fun parseDataDetaPesoJson(json: String): List<DataDetaPesoPollosEntity> {
         val jabasList = JSONArray(json)
         return (0 until jabasList.length()).map { i ->
@@ -1269,8 +1200,7 @@ object ManagerPost {
         }
 
         // Intentar enviar al servidor remoto
-        val isProduction = Constants.obtenerEstadoModo(context)
-        val baseUrl = Constants.getBaseUrl(isProduction)
+        val baseUrl = Constants.getBaseUrl()
         val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=insertar"
 
         try {
@@ -1369,8 +1299,7 @@ object ManagerPost {
         }
 
         // Después de la actualización local exitosa, intentamos actualizar el servidor remoto
-        val isProduction = Constants.obtenerEstadoModo(context)
-        val baseUrl = Constants.getBaseUrl(isProduction)
+        val baseUrl = Constants.getBaseUrl()
         val urlString =
             "${baseUrl}controllers/TempPesoPollosController.php?op=insertar&idPesoShared=${idPesoShared}"
 
@@ -1462,8 +1391,7 @@ object ManagerPost {
             }
         }
 
-        val isProduction = Constants.obtenerEstadoModo(context)
-        val baseUrl = Constants.getBaseUrl(isProduction)
+        val baseUrl = Constants.getBaseUrl()
         val urlString =
             "${baseUrl}controllers/TempPesoPollosController.php?op=removeByIdPeso&idPeso=$idPeso"
 
@@ -1540,8 +1468,7 @@ object ManagerPost {
 
 
 //          Después de la actualización local exitosa, intentamos actualizar el servidor remoto
-            val isProduction = Constants.obtenerEstadoModo(context)
-            val baseUrl = Constants.getBaseUrl(isProduction)
+            val baseUrl = Constants.getBaseUrl()
             val urlString =
                 "${baseUrl}controllers/TempPesoPollosController.php?op=$status&idPeso=$idPeso&diviceName=$deviceName"
 
@@ -1579,8 +1506,7 @@ object ManagerPost {
         idPeso: Int,
         callback: (String?) -> Unit
     ) {
-        val isProduction = Constants.obtenerEstadoModo(context)
-        val baseUrl = Constants.getBaseUrl(isProduction)
+        val baseUrl = Constants.getBaseUrl()
         val urlString =
             "${baseUrl}controllers/TempPesoPollosController.php?op=getStatusPeso&idPeso=$idPeso"
 

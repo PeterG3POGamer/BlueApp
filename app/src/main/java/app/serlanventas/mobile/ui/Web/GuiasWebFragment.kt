@@ -68,8 +68,7 @@ class GuiasWebFragment : Fragment() {
             webView.restoreState(viewModel.webViewState!!)
             webViewStateRestored = true
         } else if (!webViewStateRestored) {
-            val isProduction = Constants.obtenerEstadoModo(requireContext())
-            val loginUrl = Constants.buildLoginUrl(requireContext(), isProduction)
+            val loginUrl = Constants.buildLoginUrl(requireContext())
 
             webView.loadUrl(loginUrl)
             webViewStateRestored = true
@@ -147,9 +146,8 @@ class GuiasWebFragment : Fragment() {
                 Log.d(TAG, "onPageFinished: $url")
 
                 // Comparación de URLs
-                val isProduction = Constants.obtenerEstadoModo(requireContext())
-                val loginUrl = Constants.buildLoginUrl(requireContext(), isProduction)
-                val guiaUrl = Constants.getGuiaUrl(isProduction)
+                val loginUrl = Constants.buildLoginUrl(requireContext())
+                val guiaUrl = Constants.getGuiaUrl()
 
                 if (url == loginUrl) {
                     // Mantener WebView oculto y ProgressBar visible
@@ -215,8 +213,7 @@ class GuiasWebFragment : Fragment() {
     private fun iniciarSesion() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val isProduction = Constants.obtenerEstadoModo(requireContext())
-                val loginUrl = Constants.buildLoginUrl(requireContext(), isProduction)
+                val loginUrl = Constants.buildLoginUrl(requireContext())
                 val url = URL(loginUrl)
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "GET"
@@ -261,8 +258,7 @@ class GuiasWebFragment : Fragment() {
                 val status = jsonResponse.optString("status")
                 val message = jsonResponse.optString("message")
 
-                val isProduction = Constants.obtenerEstadoModo(requireContext())
-                val guiaUrl = Constants.getGuiaUrl(isProduction)
+                val guiaUrl = Constants.getGuiaUrl()
                 when (status) {
                     "success" -> {
                         Log.d(TAG, "Success: $message")

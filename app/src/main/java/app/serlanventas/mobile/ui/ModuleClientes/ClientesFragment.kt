@@ -76,8 +76,7 @@ class ClientesFragment : Fragment() {
                 val jsonParam = JSONObject()
                 jsonParam.put("numeroDocumento", numeroCliente)
 
-                val isProduction = Constants.obtenerEstadoModo(requireContext())
-                val baseUrl = Constants.getBaseUrl(isProduction)
+                val baseUrl = Constants.getBaseUrl()
 
                 var baseUrlCliente = "${baseUrl}controllers/FuncionesController/buscarCliente.php"
                 ManagerPost.BuscarCliente(baseUrlCliente, jsonParam.toString()) { nombreCompleto ->

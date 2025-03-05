@@ -38,6 +38,7 @@ class ConfigConexFragment : Fragment() {
             onMessageReceived = { message ->
             }
         )
+
         sharedViewModel.pesoValue.observe(viewLifecycleOwner) { peso ->
             if (!peso.isNullOrBlank()) {
                 val pesoFormatted = peso.toDoubleOrNull()?.toString() ?: "0.00"
@@ -49,17 +50,12 @@ class ConfigConexFragment : Fragment() {
         var accumulatedText = ""
 
         sharedViewModel.rawData.observe(viewLifecycleOwner) { rawData ->
-            // Acumulamos el nuevo texto en la variable
             accumulatedText += rawData
 
-            // Verificamos si la longitud acumulada es mayor o igual a 300 caracteres
             if (accumulatedText.length >= 300) {
-                // Limpiar el texto en el EditText
                 binding.etPesoCrudo.setText("")
-                // Reiniciar la acumulación
                 accumulatedText = ""
             } else {
-                // Si no supera los 300 caracteres, mostramos lo acumulado en el EditText
                 binding.etPesoCrudo.setText(accumulatedText)
             }
         }

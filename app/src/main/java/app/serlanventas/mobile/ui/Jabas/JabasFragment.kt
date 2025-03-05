@@ -160,8 +160,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         val root: View = binding.root
         progressBar = binding.progressBar.findViewById(R.id.progressBar)
 
-        val isProduction = Constants.obtenerEstadoModo(requireContext())
-        val baseUrl = Constants.getBaseUrl(isProduction)
+        val baseUrl = Constants.getBaseUrl()
 
         logger = Logger(requireContext())
 
@@ -593,6 +592,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                         totalNeto = "",
                         totalPagar = binding.totalPagarPreview.text.toString(),
                         idUsuario = "",
+                        idEstado = "0",
                     )
 
                     dataPesoPollosJson = dataPesoPollos.toJson().toString()
@@ -952,6 +952,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     totalNeto = "",
                     totalPagar = "",
                     idUsuario = dni,
+                    idEstado = "0",
                 )
                 var idEstablecimiento = binding.selectEstablecimiento.selectedItemPosition
                 var precio = dataPesoPollos.PKPollo.toDoubleOrNull()
@@ -1359,8 +1360,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
 
     private fun updateSpinnerPesosIdGalpon(idNucleo: Int, idGalpon: Int) {
         val idDevice = getDeviceId(requireContext())
-        val isProduction = Constants.obtenerEstadoModo(requireContext())
-        val baseUrl = Constants.getBaseUrl(isProduction)
+        val baseUrl = Constants.getBaseUrl()
         // Obtener los pesos guardados en la base de datos
         ManagerPost.getListPesosByIdGalpon(
             baseUrl,
@@ -1675,8 +1675,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        isProduction = Constants.obtenerEstadoModo(requireContext())
-        baseUrl = Constants.getBaseUrl(isProduction)
+        baseUrl = Constants.getBaseUrl()
         dataSyncManager = DataSyncManager(requireContext())
         db = AppDatabase(requireContext())
         var isLoggedIn = true
@@ -1936,6 +1935,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                         totalNeto = "",
                         totalPagar = binding.totalPagarPreview.text.toString(),
                         idUsuario = "",
+                        idEstado = "0",
                     )
 
                     dataPesoPollosJson = dataPesoPollos.toJson().toString()
@@ -1997,6 +1997,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                 totalNeto = "",
                 totalPagar = binding.totalPagarPreview.text.toString(),
                 idUsuario = "",
+                idEstado = "0",
             )
 
             dataPesoPollosJson = dataPesoPollos.toJson().toString()

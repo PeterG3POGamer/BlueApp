@@ -3,6 +3,7 @@ package app.serlanventas.mobile.ui.DataSyncManager
 import android.util.Log
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.ClienteEntity
+import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.GalponEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.NucleoEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.UsuarioEntity
@@ -45,6 +46,14 @@ class DataComparator(private val db: AppDatabase) {
             necesitaSincronizar = true
             Log.d("DataComparator", "Clientes no coinciden Nube: ${clientesNube.length()} Locales: ${clientesLocales.size}")
         }
+
+        val ventasNube = data.getJSONArray("ventas")
+        val ventasLocales = db.getAllDataPesoPollosNotSync()
+//        if (!compararListasVentas(ventasNube, ventasLocales)) {
+//            necesitaSincronizar = true
+//            Log.d("DataComparator", "Ventas no coinciden Nube: ${ventasNube.length()} Locales: ${ventasLocales.size}")
+//        }
+
 
         return necesitaSincronizar
     }
@@ -115,4 +124,34 @@ class DataComparator(private val db: AppDatabase) {
         return clienteNube.getString("idCliente") == clienteLocal.numeroDocCliente &&
                 clienteNube.getString("nomtit") == clienteLocal.nombreCompleto
     }
+
+    private fun compararVentas(ventaNube: JSONObject, ventaLocal: DataPesoPollosEntity): Boolean {
+        return ventaNube.getInt("idPesoPollos") == ventaLocal.id &&
+                ventaNube.getString("status") == ventaLocal.idEstado
+    }
+
+//    private fun compararListasDetalles(detallesNube: JSONArray, detallesLocales: List<DataDetaPesoPollosEntity>): Boolean {
+//        if (detallesNube.length() != detallesLocales.size) {
+//            return false
+//        }
+//
+//        for (i in 0 until detallesNube.length()) {
+//            val detalleNube = detallesNube.getJSONObject(i)
+//            val detalleLocal = detallesLocales[i]
+//
+//            if (!compararDetalles(detalleNube, detalleLocal)) {
+//                return false
+//            }
+//        }
+//        return true
+//    }
+
+//    private fun compararDetalles(detalleNube: JSONObject, detalleLocal: DataDetaPesoPollosEntity): Boolean {
+//        return detalleNube.getInt("idDetaPP") == detalleLocal.idDetaPP &&
+//                detalleNube.getInt("cantJabas") == detalleLocal.cantJabas &&
+//                detalleNube.getInt("cantPollos") == detalleLocal.cantPollos &&
+//                detalleNube.getDouble("peso") == detalleLocal.peso &&
+//                detalleNube.getString("tipo") == detalleLocal.tipo &&
+//                detalleNube.getInt("idPesoPollo") == detalleLocal.idPesoPollo
+//    }
 }

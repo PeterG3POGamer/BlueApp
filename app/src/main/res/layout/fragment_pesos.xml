@@ -154,14 +154,14 @@
                                 android:dropDownHorizontalOffset="8dp"
                                 android:dropDownSelector="@android:color/transparent"/>
 
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btn_withNet"
-                                android:layout_width="65dp"
-                                android:layout_height="wrap_content"
-                                app:icon="@drawable/baseline_cloud_24"
-                                app:cornerRadius="8dp"
-                                android:layout_marginStart="8dp"
-                                android:backgroundTint="@color/cardview_dark_background"/>
+<!--                            <com.google.android.material.button.MaterialButton-->
+<!--                                android:id="@+id/btn_withNet"-->
+<!--                                android:layout_width="65dp"-->
+<!--                                android:layout_height="wrap_content"-->
+<!--                                app:icon="@drawable/baseline_cloud_24"-->
+<!--                                app:cornerRadius="8dp"-->
+<!--                                android:layout_marginStart="8dp"-->
+<!--                                android:backgroundTint="@color/cardview_dark_background"/>-->
                         </LinearLayout>
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>

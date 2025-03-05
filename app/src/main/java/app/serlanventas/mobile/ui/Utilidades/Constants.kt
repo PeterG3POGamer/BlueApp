@@ -10,9 +10,6 @@ object Constants {
 //    const val WEB_URL_GUIA_DEV = "http://192.168.161.104/VentaPollos/view/index.php?action=NucleoGalpon"
 //    const val WEB_URL_VENTAS_DEV = "http://192.168.161.104/VentaPollos/view/index.php?action=VentasApp"
 
-    const val BASE_URL_DEV = "https://emprender.guru/VentaPollos/"
-    const val WEB_URL_GUIA_DEV = "https://emprender.guru/VentaPollos/view/index.php?action=NucleoGalpon"
-    const val WEB_URL_VENTAS_DEV = "https://emprender.guru/VentaPollos/view/index.php?action=VentasApp"
 
     const val BASE_URL_PRODUCCION = "https://emprender.guru/sp_20393514630/"
     const val WEB_URL_GUIA_PRODUCCION = "https://emprender.guru/sp_20393514630/view/index.php?action=NucleoGalpon"
@@ -20,24 +17,24 @@ object Constants {
 
 
 
-    fun getBaseUrl(isProduction: Boolean): String {
-        return if (isProduction) BASE_URL_PRODUCCION else BASE_URL_DEV
+    fun getBaseUrl(): String {
+        return BASE_URL_PRODUCCION
     }
 
-    fun getGuiaUrl(isProduction: Boolean): String {
-        return if (isProduction) WEB_URL_GUIA_PRODUCCION else WEB_URL_GUIA_DEV
+    fun getGuiaUrl(): String {
+        return WEB_URL_GUIA_PRODUCCION
     }
 
-    fun getVentasUrl(isProduction: Boolean): String {
-        return if (isProduction) WEB_URL_VENTAS_PRODUCCION else WEB_URL_VENTAS_DEV
+    fun getVentasUrl(): String {
+        return WEB_URL_VENTAS_PRODUCCION
     }
     // Método para construir la URL de inicio de sesión
-    fun buildLoginUrl(context: Context, isProduction: Boolean): String {
+    fun buildLoginUrl(context: Context): String {
         val sharedPreferences: SharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         val dni = sharedPreferences.getString("dni", "default_dni") ?: "default_dni"
         val pass = sharedPreferences.getString("pass", "default_pass") ?: "default_pass"
 
-        val baseUrl = getBaseUrl(isProduction)
+        val baseUrl = getBaseUrl()
         return "$baseUrl$LOGIN_PATH&dni=$dni&pass=$pass"
     }
 
