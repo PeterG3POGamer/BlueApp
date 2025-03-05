@@ -4,7 +4,6 @@ import NetworkUtils
 import android.content.Context
 import android.util.Log
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
-import app.serlanventas.mobile.ui.DataSyncManager.SyncVentaAndDetalle.SyncVentaAndDetalle
 import app.serlanventas.mobile.ui.Interfaces.ProgressCallback
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.showCustomToast
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice
@@ -120,18 +119,21 @@ class DataSyncManager(private val context: Context) {
 
                         if (necesitaSincronizar) {
                             dataProcessor.procesarDatos(data, callback)
+                            callback(SyncResult.Success(true))
+                        } else {
+                            callback(SyncResult.Success(true))
                         }
 
-                        val syncVentaAndDetalle = SyncVentaAndDetalle(context)
-                        CoroutineScope(Dispatchers.IO).launch {
-                            syncVentaAndDetalle.procesarVentas { ventasSuccess ->
-                                if (ventasSuccess) {
-                                    callback(SyncResult.Success(true))
-                                }else {
-                                    callback(SyncResult.Success(false))
-                                }
-                            }
-                        }
+//                        val syncVentaAndDetalle = SyncVentaAndDetalle(context)
+//                        CoroutineScope(Dispatchers.IO).launch {
+//                            syncVentaAndDetalle.procesarVentas { ventasSuccess ->
+//                                if (ventasSuccess) {
+//                                    callback(SyncResult.Success(true))
+//                                }else {
+//                                    callback(SyncResult.Success(true))
+//                                }
+//                            }
+//                        }
                     } catch (e: Exception) {
                         Log.e("DataSyncManager", "Error al procesar JSON: ${e.message}")
                         callback(SyncResult.Error("Error al procesar JSON: ${e.message}"))
