@@ -121,7 +121,7 @@ class DataSyncManager(private val context: Context) {
                             dataProcessor.procesarDatos(data, callback)
                             callback(SyncResult.Success(true))
                         } else {
-                            callback(SyncResult.Success(true))
+                            callback(SyncResult.Success(false))
                         }
 
 //                        val syncVentaAndDetalle = SyncVentaAndDetalle(context)
