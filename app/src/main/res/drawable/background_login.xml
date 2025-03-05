@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Fondo degradado suave -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#FFF8E1"
+                android:endColor="#FFCC80"
+                android:angle="90" />
+        </shape>
+    </item>
+
+    <!-- Círculos grandes para un efecto de profundidad -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#FFB74D" />
+        </shape>
+        <translate
+            android:fromXDelta="300dp"
+            android:fromYDelta="600dp" />
+        <scale
+            android:scaleX="2.0"
+            android:scaleY="1.5" />
+    </item>
+
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#FFA726" />
+        </shape>
+        <translate
+            android:fromXDelta="-200dp"
+            android:fromYDelta="-200dp" />
+        <scale
+            android:scaleX="1.8"
+            android:scaleY="1.8" />
+    </item>
+
+    <!-- Círculos pequeños con degradado -->
+    <item android:left="70dp" android:top="150dp">
+        <shape android:shape="oval">
+            <gradient
+                android:startColor="#FFEB3B"
+                android:endColor="#FFC107"
+                android:angle="45" />
+            <size android:width="50dp" android:height="50dp" />
+        </shape>
+    </item>
+
+    <item android:right="90dp" android:top="300dp">
+        <shape android:shape="oval">
+            <gradient
+                android:startColor="#FF9800"
+                android:endColor="#F57C00"
+                android:angle="135" />
+            <size android:width="60dp" android:height="60dp" />
+        </shape>
+    </item>
+
+    <item android:left="150dp" android:top="400dp">
+        <shape android:shape="oval">
+            <gradient
+                android:startColor="#FFCC80"
+                android:endColor="#FB8C00"
+                android:angle="225" />
+            <size android:width="40dp" android:height="40dp" />
+        </shape>
+    </item>
+
+    <!-- Añadir un toque sutil con pequeños círculos -->
+    <item android:left="40dp" android:bottom="80dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFE0B2" />
+            <size android:width="30dp" android:height="30dp" />
+        </shape>
+    </item>
+
+    <item android:right="30dp" android:top="120dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFF3E0" />
+            <size android:width="20dp" android:height="20dp" />
+        </shape>
+    </item>
+
+</layer-list>

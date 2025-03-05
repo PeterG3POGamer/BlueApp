@@ -1,9 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.BlueApp" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.BlueApp" parent="Theme.Material3.Light.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/purple_500</item>
-        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorPrimary">@color/button_color_selector</item>
+        <item name="colorPrimaryVariant">@color/button_color_selector</item>
         <item name="colorOnPrimary">@color/white</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/teal_200</item>
@@ -11,7 +11,7 @@
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
-        <!-- Customize your theme here. -->
+        <item name="colorSecondaryContainer">#72AD7AFF</item>
     </style>
 
     <style name="Theme.BlueApp.NoActionBar">
@@ -50,10 +50,6 @@
         <!-- Margen -->
         <item name="android:layout_margin">4dp</item>
     </style>
-
-
-
-
 
     <style name="Theme.BlueApp.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 

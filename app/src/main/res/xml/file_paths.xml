@@ -5,5 +5,5 @@
         name="pdfs"
         path="." />
     <external-path name="external_files" path="." />
-    <external-path name="download" path="Download/" />
+    <external-files-path name="downloads" path="Download/" />
 </paths>

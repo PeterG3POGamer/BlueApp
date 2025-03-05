@@ -15,7 +15,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Número cliente (8-11 dígitos)"
+            android:hint="Documento (8-11 dígitos)"
             android:imeOptions="actionNext"
             android:inputType="number"
             android:maxLength="11"
@@ -27,15 +27,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Buscar"
-            android:drawableLeft="@drawable/rounded_blur_circular_24"
-            android:onClick="buscarCliente" />
+            android:drawableLeft="@drawable/baseline_youtube_searched_for_24"
+            android:onClick="buscarCliente"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@android:color/white"/>
     </LinearLayout>
 
     <EditText
         android:id="@+id/inputNombreCliente"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nombre cliente (solo letras mayúsculas)"
+        android:hint="Nombre completo"
         android:imeOptions="actionDone"
         android:inputType="textCapCharacters"
         android:maxLines="1"

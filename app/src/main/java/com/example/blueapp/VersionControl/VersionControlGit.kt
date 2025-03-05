@@ -1,6 +1,6 @@
 package com.example.blueapp.VersionControl
 
-import android.app.AlertDialog
+import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -10,8 +10,6 @@ import android.net.Uri
 import android.os.Environment
 import android.util.Log
 import androidx.core.content.FileProvider
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
@@ -21,7 +19,7 @@ data class VersionInfo(
     val version_code: Int,
     val version_name: String,
     val download_url: String,
-    val file_size: Long
+    val file_size: Long // Añadido tamaño del archivo
 )
 
 interface GithubApi {
@@ -55,36 +53,24 @@ class UpdateChecker(private val context: Context) {
         }
     }
 
-    suspend fun checkAndPromptForUpdate() {
+    suspend fun checkAndDownloadUpdate() {
         val update = checkForUpdate()
         update?.let {
-            withContext(Dispatchers.Main) {
-                showUpdateDialog(it)
-            }
+            updateManager.downloadUpdate(it)
         }
-    }
-
-    private fun showUpdateDialog(versionInfo: VersionInfo) {
-        AlertDialog.Builder(context)
-            .setTitle("Nueva actualización disponible")
-            .setMessage("La versión ${versionInfo.version_name} está disponible. ¿Deseas descargarla e instalarla?")
-            .setPositiveButton("Sí") { _, _ ->
-                updateManager.downloadUpdate(versionInfo)
-            }
-            .setNegativeButton("No", null)
-            .show()
     }
 }
 
 class UpdateManager(private val context: Context) {
     private var downloadId: Long = 0
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     fun downloadUpdate(versionInfo: VersionInfo) {
         val request = DownloadManager.Request(Uri.parse(versionInfo.download_url))
             .setTitle("Actualización de BlueApp")
             .setDescription("Descargando versión ${versionInfo.version_name}")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "blueapp_update.apk")
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "SerlanVentas.apk")
             .setAllowedOverMetered(true)
             .setAllowedOverRoaming(true)
 

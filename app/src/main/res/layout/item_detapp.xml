@@ -1,45 +1,59 @@
-<!-- item_reporte.xml -->
+<!-- item_recycler_view.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="10dp">
+    android:gravity="center"
+    android:padding="3dp"
+    android:background="@drawable/row_background">
 
     <TextView
         android:id="@+id/textViewId"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:textStyle="bold"
-        android:textSize="18sp"
-        android:text="ID: " />
+        android:layout_weight="0.1"
+        android:text="#"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:textColor="@android:color/black" />
 
     <TextView
         android:id="@+id/textViewjabas"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Jabas: " />
+        android:layout_weight="0.5"
+        android:text="N° Jabas"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:textColor="@android:color/black" />
 
     <TextView
         android:id="@+id/textViewPollos"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Pollos: " />
+        android:layout_weight="0.4"
+        android:text="N° Pollos"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:textColor="@android:color/black" />
 
     <TextView
         android:id="@+id/textViewPeso"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Peso: " />
+        android:layout_weight="0.4"
+        android:text="Peso"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:textColor="@android:color/black" />
 
     <TextView
         android:id="@+id/textViewTipo"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Tipo: " />
-
+        android:layout_weight="0.4"
+        android:text="Estado"
+        android:textSize="14sp"
+        android:textColor="@android:color/black"
+        android:gravity="center"/>
 </LinearLayout>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white">
+
+    <!-- Contenedor del acordeón -->
+    <LinearLayout
+        android:id="@+id/accordionContainer"
+        android:layout_width="match_parent"
+        android:background="@color/color_gray_low"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Título que actúa como botón para expandir/contraer -->
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Conexión y Captura"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/orange2"
+            android:gravity="center"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            tools:ignore="HardcodedText" />
+
+        <!-- Contenido del acordeón -->
+        <LinearLayout
+            android:id="@+id/accordionContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:padding="8dp">
+
+            <!-- Sección de entrada y botón -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <EditText
+                    android:id="@+id/etPesaje"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Peso Formateado"
+                    android:text="00.00"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp"
+                    android:background="@drawable/rounded_edittext_background"
+                    android:padding="12dp"
+                    android:gravity="center"
+                    android:focusable="false"
+                    android:cursorVisible="false"
+                    android:longClickable="false" />
+            </LinearLayout>
+
+            <!-- Línea separadora -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="8dp"
+                android:background="@android:color/darker_gray" />
+
+            <!-- Peso Crudo Sin Formatear -->
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:fillViewport="true">
+
+            <TextView
+                android:id="@+id/etPesoCrudo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/darker_gray"
+                android:gravity="start"
+                android:padding="12dp"
+                android:text="Peso Crudo Sin Formatear"
+                android:textColor="@android:color/black"
+                android:textSize="14sp"
+                android:scrollbars="vertical" />
+            </ScrollView>
+
+            <!-- Botones de configuración -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="16dp">
+
+                <Button
+                    android:id="@+id/btnConfConexion"
+                    android:layout_width="0dp"
+                    android:layout_height="38dp"
+                    android:layout_weight="1"
+                    android:text="Conf. Conexión"
+                    android:background="@drawable/rounded_button_background"
+                    android:textColor="@android:color/white"
+                    android:layout_marginEnd="2dp"
+                    android:padding="4dp"
+                    android:textSize="12sp"
+                    android:enabled="false" />
+
+
+                <Button
+                    android:id="@+id/btnConfCaptura"
+                    android:layout_width="0dp"
+                    android:layout_height="38dp"
+                    android:layout_weight="1"
+                    android:text="Conf. Captura"
+                    android:background="@drawable/rounded_button_background"
+                    android:textColor="@android:color/white"
+                    android:layout_marginEnd="2dp"
+                    android:padding="4dp"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Contenedor central expandible con ScrollView -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="16dp"
+        android:fillViewport="true">
+
+        <FrameLayout
+            android:id="@+id/contenedorConfiguracion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <!-- Aquí puedes agregar el contenido que desees -->
+        </FrameLayout>
+    </ScrollView>
+</LinearLayout>
