@@ -120,8 +120,19 @@ class ConfCapturaFragment : Fragment() {
 
     private fun configurarBotones() {
         binding.btnGuardar.setOnClickListener { guardarConfiguracion() }
+        binding.btnDataBloque.setOnClickListener { cambiarBloque() }
         binding.btnActualizar.setOnClickListener { actualizarConfiguracion() }
         binding.btnLimpiar.setOnClickListener { limpiarFormulario(false) }
+    }
+
+    private fun cambiarBloque() {
+        val currentText = binding.btnDataBloque.text.toString()
+
+        if (currentText == "ENTERO") {
+            binding.btnDataBloque.text = "DISCREPANTE"
+        } else {
+            binding.btnDataBloque.text = "ENTERO"
+        }
     }
 
     private fun configurarListView() {
@@ -137,6 +148,11 @@ class ConfCapturaFragment : Fragment() {
         binding.txtNombreDispositivo.text = "Nombre: ${registro._nombreDispositivo ?: "N/A"}"
         binding.txtMacDispositivo.text = "MAC: ${registro._macDispositivo ?: "N/A"}"
 
+        binding.btnDataBloque.text = when (registro._bloque) {
+            "2" -> "ENTERO"
+            "1" -> "DISCREPANTE"
+            else -> "NO DETECTADO"
+        }
     }
 
     private fun guardarConfiguracion() {
@@ -196,6 +212,12 @@ class ConfCapturaFragment : Fragment() {
             val resultado = db.actualizarEstadoPorMac(mac)
             if (resultado > 0) {
                 Toast.makeText(requireContext(), "Estado actualizado correctamente", Toast.LENGTH_SHORT).show()
+                val configuracion = db.obtenerConfCapturePorMac(mac)
+                if (configuracion != null) {
+                    cargarDatosEnFormulario(configuracion)
+                } else {
+                    limpiarFormulario(true)
+                }
                 handler.post { cargarRegistros() }
             } else {
                 mostrarAlerta("Error", "No se pudo actualizar el estado")
@@ -208,22 +230,21 @@ class ConfCapturaFragment : Fragment() {
     private fun crearCaptureDeviceDesdeUI(): CaptureDeviceEntity {
         val cadenaClave = binding.edtCadenaClave.text.toString()
         val cadenaClaveCierre = binding.edtCadenaClaveCierre.text.toString()
+
+        val Databloque = when (binding.btnDataBloque.text.toString()) {
+            "ENTERO" -> "2"
+            "DISCREPANTE" -> "1"
+            else -> "0"
+        }
+
         val longitud = binding.edtLongitud.text.toString().toIntOrNull() ?: 0
         val formatoPeso = binding.edtFormatoPeso.text.toString().toIntOrNull() ?: 0
 
         val nombreCompleto = binding.txtNombreDispositivo.text.toString()
-        val nombreDispositivo = if (nombreCompleto.startsWith("Nombre: ")) {
-            nombreCompleto.substring("Nombre: ".length)
-        } else {
-            nombreCompleto
-        }
+        val nombreDispositivo = nombreCompleto.removePrefix("Nombre: ")
 
         val macCompleta = binding.txtMacDispositivo.text.toString()
-        val macDispositivo = if (macCompleta.startsWith("MAC: ")) {
-            macCompleta.substring("MAC: ".length)
-        } else {
-            macCompleta
-        }
+        val macDispositivo = macCompleta.removePrefix("MAC: ")
 
         return CaptureDeviceEntity(
             _idCaptureDevice = 0,
@@ -233,17 +254,13 @@ class ConfCapturaFragment : Fragment() {
             _longitud = longitud,
             _formatoPeo = formatoPeso,
             _estado = 0,
-            _cadenaClaveCierre = cadenaClaveCierre
+            _cadenaClaveCierre = cadenaClaveCierre,
+            _bloque = Databloque
         )
     }
 
     private fun obtenerMacDesdeUI(): String {
-        val macCompleta = binding.txtMacDispositivo.text.toString()
-        return if (macCompleta.startsWith("MAC: ")) {
-            macCompleta.substring("MAC: ".length)
-        } else {
-            macCompleta
-        }
+        return binding.txtMacDispositivo.text.toString().removePrefix("MAC: ")
     }
 
     private fun limpiarFormulario(estado: Boolean = false) {
@@ -255,7 +272,7 @@ class ConfCapturaFragment : Fragment() {
             binding.txtNombreDispositivo.text = "Nombre: N/A"
             binding.txtMacDispositivo.text = "MAC: N/A"
         }
-
+        binding.btnDataBloque.text = "NO DETECTADO"
     }
 
     private fun cargarRegistros() {
@@ -390,7 +407,7 @@ class ConfCapturaFragment : Fragment() {
         if (configuracion != null) {
             cargarDatosEnFormulario(configuracion)
         } else {
-            limpiarFormulario(true )
+            limpiarFormulario(true)
         }
     }
 

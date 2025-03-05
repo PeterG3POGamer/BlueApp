@@ -76,6 +76,8 @@ import org.json.JSONObject
 //JabasFragment.kt // INTERACTURA CON LA UI
 class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
 
+    private lateinit var db: AppDatabase
+
     private val NOTIFICATION_PERMISSION_REQUEST_CODE = 1001
 
     private lateinit var bluetoothAdapter: BluetoothAdapter
@@ -131,8 +133,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
 
     // ENVIAR DATOS LOCALES AL SERVIDOR
     private fun checkAndSendLocalData() {
-        val db = AppDatabase(requireContext())
-
         CoroutineScope(Dispatchers.IO).launch {
             val dataDetaPesoPollos = db.getAllDataDetaPesoPollos()
             val dataPesoPollos = db.getAllDataPesoPollos()
@@ -176,9 +176,11 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             }
         )
         sharedViewModel.pesoValue.observe(viewLifecycleOwner) { peso ->
-            val pesoFormatted = peso.toDoubleOrNull()?.toString() ?: "0.00"
-            binding.inputPesoKg.setText(pesoFormatted)
-            logger.log2("PesoValue: Pesos Foramteado recibido en JabaFragment -> $pesoFormatted")
+            if (!peso.isNullOrBlank()) {
+                val pesoFormatted = peso.toDoubleOrNull()?.toString() ?: "0.00"
+                binding.inputPesoKg.setText(pesoFormatted)
+//                logger.log2("PesoValue: Peso Formateado recibido en JabaFragment -> $pesoFormatted")
+            }
         }
         showLoading()
 
@@ -804,7 +806,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             }
 
             Log.d("JabasFragment", "Cliente a Buscar: $numeroCliente")
-            val db = AppDatabase(requireContext())
 
             // Verificar disponibilidad de internet
             if (NetworkUtils.isNetworkAvailable(requireContext())) {
@@ -920,7 +921,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             showDialogLimpiarCliente()
         }
 
-
         binding.botonEnviar.setOnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
                 showLoading()
@@ -1017,7 +1017,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
     }
 
     private fun cargarDatosUsadosPeso() {
-        val db = AppDatabase(requireContext())
+        limpiarClientes()
         val pesoUsedExisted = db.getPesosUsedAll()
         if (!pesoUsedExisted.isNullOrEmpty()) {
             val peso = pesoUsedExisted.first() // Asumiendo que quieres el primer registro
@@ -1645,17 +1645,16 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         binding.textNomCli.setText(nombreCliente)
         binding.PrecioKilo.setText(precioKilo)
 
+        binding.textDocCli.isEnabled = false
+        binding.textNomCli.isEnabled = false
+        binding.botonCliente.isEnabled = false
+
         // Deshabilitar los campos solo si tienen datos
         if (docCliente.isEmpty() || nombreCliente.isEmpty() || (docCliente.isEmpty() || nombreCliente.isEmpty())) {
             binding.textDocCli.isEnabled = true
             binding.textNomCli.isEnabled = true
             binding.botonCliente.isEnabled = true
-        } else {
-            binding.textDocCli.isEnabled = false
-            binding.textNomCli.isEnabled = false
-            binding.botonCliente.isEnabled = false
         }
-
     }
 
     private fun procesarDataDetaPesoPollos(jsonArray: JSONArray): List<DataDetaPesoPollosEntity> {
@@ -1679,6 +1678,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         isProduction = Constants.obtenerEstadoModo(requireContext())
         baseUrl = Constants.getBaseUrl(isProduction)
         dataSyncManager = DataSyncManager(requireContext())
+        db = AppDatabase(requireContext())
         var isLoggedIn = true
         // Inicializa y registra el receptor de cambios en la red
         networkChangeReceiver = NetworkChangeReceiver { isConnected ->
@@ -1893,7 +1893,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         // Desregistra el receptor para evitar fugas de memoria
         requireContext().unregisterReceiver(networkChangeReceiver)
 
-        val db = AppDatabase(requireContext())
         val device = getDeviceId(requireContext())
 
         idPesoTemp = sharedViewModel.getIdListPesos() ?: 0
@@ -2051,6 +2050,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         super.onDestroyView()
         _binding = null
         coroutineScope.cancel()
+        db.close()
     }
 
     override fun onItemDeleted() {

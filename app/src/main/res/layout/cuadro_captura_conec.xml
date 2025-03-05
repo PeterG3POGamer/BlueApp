@@ -2,195 +2,259 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="8dp"
     android:background="@android:color/white">
 
-    <!-- TÍTULO -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="CONFIGURACIÓN DE CAPTURA"
-        android:textSize="14sp"
-        android:textColor="@android:color/black"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:paddingBottom="6dp" />
-
-    <!-- CADENA CLAVE -->
-    <!-- LONGITUD Y FORMATO PESO -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:paddingBottom="2dp">
+        android:orientation="vertical"
+        android:padding="0dp"
+        android:background="@drawable/toast_h_background_top"
+        android:layout_marginTop="5dp">
 
-        <LinearLayout
-            android:layout_width="0dp"
+        <!-- TÍTULO -->
+        <TextView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:paddingEnd="4dp">
+            android:text="CONFIGURACIÓN DE CAPTURA"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingBottom="6dp"
+            android:background="#D1C4B7" />
 
-            <TextView
-                android:layout_width="match_parent"
+
+        <!-- CADENA CLAVE -->
+        <!-- LONGITUD Y FORMATO PESO -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingBottom="2dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Patron Inicio"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:paddingBottom="1dp" />
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp">
 
-            <EditText
-                android:id="@+id/edtCadenaClave"
-                android:layout_width="match_parent"
-                android:layout_height="38dp"
-                android:hint="Ej: ="
-                android:background="@drawable/rounded_edittext_background"
-                android:padding="0dp"
-                android:gravity="center" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Patron Inicio"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:paddingBottom="1dp" />
+
+                <EditText
+                    android:id="@+id/edtCadenaClave"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:hint="Ej: ="
+                    android:background="@drawable/rounded_edittext_background"
+                    android:padding="0dp"
+                    android:gravity="center" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Patron Cierre"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:paddingBottom="1dp" />
+
+                <EditText
+                    android:id="@+id/edtCadenaClaveCierre"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:hint="Ej: ;"
+                    android:background="@drawable/rounded_edittext_background"
+                    android:padding="0dp"
+                    android:gravity="center" />
+            </LinearLayout>
         </LinearLayout>
 
+        <!-- LONGITUD Y FORMATO PESO -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:paddingStart="4dp">
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingBottom="2dp">
 
-            <TextView
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Patron Cierre"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:paddingBottom="1dp" />
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp">
 
-            <EditText
-                android:id="@+id/edtCadenaClaveCierre"
-                android:layout_width="match_parent"
-                android:layout_height="38dp"
-                android:hint="Ej: ;"
-                android:background="@drawable/rounded_edittext_background"
-                android:padding="0dp"
-                android:gravity="center" />
-        </LinearLayout>
-    </LinearLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Longitud de Enteros"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:paddingBottom="1dp" />
 
-    <!-- LONGITUD Y FORMATO PESO -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:paddingBottom="2dp">
+                <EditText
+                    android:id="@+id/edtLongitud"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:hint="Ej: 10"
+                    android:inputType="number"
+                    android:background="@drawable/rounded_edittext_background"
+                    android:padding="0dp"
+                    android:gravity="center" />
+            </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:paddingEnd="4dp">
-
-            <TextView
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Longitud de Enteros"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:paddingBottom="1dp" />
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp">
 
-            <EditText
-                android:id="@+id/edtLongitud"
-                android:layout_width="match_parent"
-                android:layout_height="38dp"
-                android:hint="Ej: 10"
-                android:inputType="number"
-                android:background="@drawable/rounded_edittext_background"
-                android:padding="0dp"
-                android:gravity="center" />
-        </LinearLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Longitud Decimales"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:paddingBottom="1dp" />
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:paddingStart="4dp">
+                <EditText
+                    android:id="@+id/edtFormatoPeso"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:hint="Ej: 2"
+                    android:inputType="number"
+                    android:background="@drawable/rounded_edittext_background"
+                    android:padding="0dp"
+                    android:gravity="center" />
+            </LinearLayout>
 
-            <TextView
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Longitud Decimales"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:paddingBottom="1dp" />
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp">
 
-            <EditText
-                android:id="@+id/edtFormatoPeso"
-                android:layout_width="match_parent"
-                android:layout_height="38dp"
-                android:hint="Ej: 2"
-                android:inputType="number"
-                android:background="@drawable/rounded_edittext_background"
-                android:padding="0dp"
-                android:gravity="center" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Datos en Bloques"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:paddingBottom="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDataBloque"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:text="ENTERO"
+                    app:cornerRadius="8dp"
+                    android:layout_marginStart="8dp"
+                    android:backgroundTint="@color/cardview_dark_background" />
+            </LinearLayout>
+
         </LinearLayout>
     </LinearLayout>
 
     <!-- INFORMACIÓN DE DISPOSITIVO BLUETOOTH -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Dispositivo Bluetooth"
-        android:textStyle="bold"
-        android:paddingTop="2dp" />
-
-    <RadioGroup
-        android:id="@+id/rgTipoConexion"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingVertical="1dp">
-
-        <RadioButton
-            android:id="@+id/rbPreviamenteConectados"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Previamente conectados"
-            android:checked="true"
-            android:layout_weight="1" />
-
-        <RadioButton
-            android:id="@+id/rbConectadoAhora"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Conectado ahora"
-            android:layout_weight="1" />
-    </RadioGroup>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:orientation="vertical"
+        android:padding="0dp"
+        android:background="@drawable/toast_h_background_top"
+        android:layout_marginTop="5dp">
 
-        <Spinner
-            android:id="@+id/spinnerDispositivosBluetooth"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:padding="2dp"
-            android:visibility="visible" />
 
-        <ImageButton
-            android:id="@+id/btnRefreshBluetooth"
-            android:layout_width="wrap_content"
+        <TextView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_popup_sync"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="2dp"
-            android:contentDescription="Actualizar conexión Bluetooth" />
+            android:text="DISPOSITIVO BLUETOOTH"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingBottom="6dp"
+            android:background="#D1C4B7" />
+
+        <RadioGroup
+            android:id="@+id/rgTipoConexion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="8dp">
+
+            <RadioButton
+                android:id="@+id/rbPreviamenteConectados"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Previamente conectados"
+                android:checked="true"
+                android:layout_weight="1"
+                android:padding="8dp" />
+
+            <RadioButton
+                android:id="@+id/rbConectadoAhora"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Conectado ahora"
+                android:layout_weight="1"
+                android:padding="8dp" />
+        </RadioGroup>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="8dp">
+
+            <!-- Spinner con borde negro y altura ajustada -->
+            <Spinner
+                android:id="@+id/spinnerDispositivosBluetooth"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:padding="8dp"
+                android:background="@drawable/border_black_spinner"
+                android:visibility="visible" />
+
+            <!-- ImageButton con borde negro y altura ajustada -->
+            <ImageButton
+                android:id="@+id/btnRefreshBluetooth"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/baseline_refresh_24"
+                android:background="@drawable/border_black_spinner"
+                android:padding="8dp"
+                android:contentDescription="Actualizar conexión Bluetooth" />
+        </LinearLayout>
+
     </LinearLayout>
 
     <TextView

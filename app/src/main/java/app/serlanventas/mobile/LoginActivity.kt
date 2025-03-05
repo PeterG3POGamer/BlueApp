@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -156,22 +157,31 @@ class LoginActivity : AppCompatActivity(), ProgressCallback {
     private fun setupExceptionHandler() {
         val defaultExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            val stackTrace = StringWriter()
-            throwable.printStackTrace(PrintWriter(stackTrace))
-
-            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val filename = "crash_$timestamp.txt"
-
-            val file = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), filename)
-            } else {
-                @Suppress("DEPRECATION")
-                File(Environment.getExternalStorageDirectory(), "files/crashLogs/$filename")
-            }
-
             try {
-                file.parentFile?.mkdirs()
-                file.writeText("Timestamp: $timestamp\n\n$stackTrace")
+                Log.e("CrashHandler", "Excepción no controlada", throwable)
+                val stackTrace = StringWriter()
+                throwable.printStackTrace(PrintWriter(stackTrace))
+
+                val timestamp =
+                    SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                val filename = "crash_$timestamp.txt"
+
+                val file = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), filename)
+                } else {
+                    @Suppress("DEPRECATION")
+                    (File(
+                        Environment.getExternalStorageDirectory(),
+                        "files/crashLogs/$filename"
+                    ))
+                }
+
+                try {
+                    file.parentFile?.mkdirs()
+                    file.writeText("Timestamp: $timestamp\n\n$stackTrace")
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }

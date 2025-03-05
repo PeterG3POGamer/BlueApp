@@ -39,6 +39,7 @@ import app.serlanventas.mobile.ui.Services.generateAndOpenPDF2
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice.getDeviceId
 import app.serlanventas.mobile.ui.Services.showNotification
 import app.serlanventas.mobile.ui.Services.showProgressNotification
+import app.serlanventas.mobile.ui.Services.showSuccessNotification
 import app.serlanventas.mobile.ui.Utilidades.Constants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -80,13 +81,6 @@ object ManagerPost {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val (totalJabas, totalPollos, totalPeso) = calcularTotales(dataDetaPesoPollos)
-
-                // Actualizar dataPesoPollos con los totales calculados
-                dataPesoPollos.totalJabas = totalJabas.toString()
-                dataPesoPollos.totalPollos = totalPollos.toString()
-                dataPesoPollos.totalPeso = totalPeso.toString()
-
                 val serie = db.getSerieDevice()
                 val ultimoNumero = serie?.let { db.getUltimoNumeroSerie(it.codigo) }
                 val nuevoNumero = if (ultimoNumero != null) {
@@ -109,11 +103,11 @@ object ManagerPost {
                     )
                 )
 
-//                    withContext(Dispatchers.Main) {
-//                        showSuccessNotification(context)
+                    withContext(Dispatchers.Main) {
+                        showSuccessNotification(context)
 //                        jabasFragment.limpiarCampos()
 //                        jabasFragment.limpiarClientes()
-//                    }
+                    }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     showNotification(
@@ -180,7 +174,6 @@ object ManagerPost {
     }
 
     @SuppressLint("InflateParams", "SetTextI18n")
-    var lastToast: Toast? = null
     var lastPopupWindow: PopupWindow? = null
 
     @SuppressLint("ResourceType")

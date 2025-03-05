@@ -10,7 +10,8 @@ data class CaptureDeviceEntity(
     val _longitud: Int,              // Longitud del dispositivo
     val _formatoPeo: Int,            // Formato del PE
     var _estado: Int,                // ESTADO 1 O 0
-    var _cadenaClaveCierre: String      // Cadena de clave del dispositivo Cierre
+    var _cadenaClaveCierre: String,  // Cadena de clave del dispositivo Cierre
+    var _bloque: String              // Bloque entero o discrepante
 ) {
     // Función para convertir el objeto a JSON
     fun toJson(): JSONObject {
@@ -23,6 +24,7 @@ data class CaptureDeviceEntity(
         json.put("_CC_formatoPeo", _formatoPeo)
         json.put("_CC_estado", _estado)
         json.put("_CC_cadenaClaveCierre", _cadenaClaveCierre)
+        json.put("_cc_bloque", _bloque)
         return json
     }
 }

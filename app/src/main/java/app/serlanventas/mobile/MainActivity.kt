@@ -248,27 +248,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun resetInactivityTimer() {
-        resetLogoutTimer()
-        logoutTime = System.currentTimeMillis() + INACTIVITY_TIMEOUT
+        // Eliminar operaciones redundantes
+        handler.removeCallbacks(runnable)
 
-        val currentTime = System.currentTimeMillis()
+        // Programar logout solo una vez
+        handler.postDelayed(runnable, INACTIVITY_TIMEOUT)
 
-        // Solo reinicia el temporizador si el tiempo de inactividad actual es mayor que 0
-        if (currentTime < logoutTime) {
-            logoutTime = currentTime + INACTIVITY_TIMEOUT
-
-            // Iniciar el log de tiempo restante cada segundo
-            logHandler.removeCallbacks(logRunnable)
-            logHandler.post(logRunnable)
-
-            // Reinicia el temporizador de inactividad
-            inactivityHandler.removeCallbacks(inactivityRunnable)
-            inactivityHandler.postDelayed(inactivityRunnable, INACTIVITY_TIMEOUT)
-
-            // Reinicia el temporizador del INACTIVITY_TIMEOUT
-            handler.removeCallbacks(runnable)
-            handler.postDelayed(runnable, INACTIVITY_TIMEOUT)
-        }
+        // Eliminar log cada segundo
+        logHandler.removeCallbacks(logRunnable)
     }
 
     @SuppressLint("MissingPermission", "ObsoleteSdkInt")
@@ -543,25 +530,31 @@ class MainActivity : AppCompatActivity() {
     private fun setupExceptionHandler() {
         val defaultExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            val stackTrace = StringWriter()
-            throwable.printStackTrace(PrintWriter(stackTrace))
-
-            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val filename = "crash_$timestamp.txt"
-
-            val file = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), filename)
-            } else {
-                @Suppress("DEPRECATION")
-                (File(
-                    Environment.getExternalStorageDirectory(),
-                    "files/crashLogs/$filename"
-                ))
-            }
-
             try {
-                file.parentFile?.mkdirs()
-                file.writeText("Timestamp: $timestamp\n\n$stackTrace")
+                Log.e("CrashHandler", "Excepción no controlada", throwable)
+                val stackTrace = StringWriter()
+                throwable.printStackTrace(PrintWriter(stackTrace))
+
+                val timestamp =
+                    SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                val filename = "crash_$timestamp.txt"
+
+                val file = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), filename)
+                } else {
+                    @Suppress("DEPRECATION")
+                    (File(
+                        Environment.getExternalStorageDirectory(),
+                        "files/crashLogs/$filename"
+                    ))
+                }
+
+                try {
+                    file.parentFile?.mkdirs()
+                    file.writeText("Timestamp: $timestamp\n\n$stackTrace")
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }

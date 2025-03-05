@@ -25,7 +25,7 @@ class AppDatabase(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "SerlanVentas.db"
-        private const val DATABASE_VERSION = 13
+        private const val DATABASE_VERSION = 14
 
         // Table names
         private const val TABLE_DETA_PESO_POLLOS = "DataDetaPesoPollos"
@@ -109,6 +109,7 @@ class AppDatabase(context: Context) :
         private const val KEY_CC_FORMATO_PEO = "cc_formatoPeo"
         private const val KEY_CC_ESTADO = "cc_estado"
         private const val KEY_CC_CADENA_CLAVE_CIERRE = "cc_cadenaClaveCierre"
+        private const val KEY_CC_BLOQUE = "cc_bloque"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -211,7 +212,8 @@ class AppDatabase(context: Context) :
                 + "$KEY_CC_LONGITUD INTEGER, "
                 + "$KEY_CC_FORMATO_PEO INTEGER, "
                 + "$KEY_CC_ESTADO INTEGER, "
-                + "$KEY_CC_CADENA_CLAVE_CIERRE INTEGER)")
+                + "$KEY_CC_CADENA_CLAVE_CIERRE INTEGER, "
+                + "$KEY_CC_BLOQUE INTEGER)")
         db.execSQL(TABLE_CONFCAPTURE)
     }
 
@@ -295,7 +297,8 @@ class AppDatabase(context: Context) :
                 _longitud = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_LONGITUD)),
                 _formatoPeo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_FORMATO_PEO)),
                 _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)),
-                _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE))
+                _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE)),
+                _bloque = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_BLOQUE))
             )
         }
         cursor.close()
@@ -312,6 +315,7 @@ class AppDatabase(context: Context) :
             put(KEY_CC_FORMATO_PEO, data._formatoPeo)
             put(KEY_CC_ESTADO, data._estado)
             put(KEY_CC_CADENA_CLAVE_CIERRE, data._cadenaClaveCierre)
+            put(KEY_CC_BLOQUE, data._bloque)
         }
 
         // Realizamos la actualización basado en la MAC del dispositivo
@@ -346,7 +350,8 @@ class AppDatabase(context: Context) :
                     _longitud = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_LONGITUD)),
                     _formatoPeo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_FORMATO_PEO)),
                     _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)),
-                    _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE))
+                    _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE)),
+                    _bloque = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_BLOQUE))
                 )
                 dataList.add(data)
             } while (cursor.moveToNext())
@@ -368,6 +373,7 @@ class AppDatabase(context: Context) :
             put(KEY_CC_FORMATO_PEO, data._formatoPeo)
             put(KEY_CC_ESTADO, data._estado)
             put(KEY_CC_CADENA_CLAVE_CIERRE, data._cadenaClaveCierre)
+            put(KEY_CC_BLOQUE, data._bloque)
         }
 
         // Insertar los valores en la tabla y devolver el id de la fila insertada
@@ -408,7 +414,8 @@ class AppDatabase(context: Context) :
                 _longitud = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_LONGITUD)),
                 _formatoPeo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_FORMATO_PEO)),
                 _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)),
-                _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE))
+                _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE)),
+                _bloque = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_BLOQUE))
             )
         }
         cursor.close()

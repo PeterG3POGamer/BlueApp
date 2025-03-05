@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.content.Context
+import android.util.Log
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.Services.Logger
 import java.io.IOException
@@ -20,6 +21,7 @@ class BluetoothConnectionService(
     private val bluetoothAdapter: BluetoothAdapter,
     private val onMessageReceived: (BluetoothMessage) -> Unit
 ) {
+    private val TAG = "BluetoothConnectionService"
     private val uuid: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     private var connectThread: ConnectThread? = null
     private var connectedThread: ConnectedThread? = null
@@ -61,12 +63,12 @@ class BluetoothConnectionService(
             try {
                 val method = device.javaClass.getMethod("removeBond")
                 result = method.invoke(device) as Boolean
-                logger.log("closeConnection: Dispositivo desvinculado: ${device.address}")
+                Log.d(TAG, "closeConnection: Dispositivo desvinculado: ${device.address}")
             } catch (e: Exception) {
-                logger.log("closeConnection: Error al desvincular el dispositivo", e)
+                Log.d(TAG, "closeConnection: Error al desvincular el dispositivo", e)
             }
         } catch (e: Exception) {
-            logger.log("Error al cerrar la conexión Bluetooth", e)
+            Log.d(TAG, "Error al cerrar la conexión Bluetooth", e)
         } finally {
             restartService()
         }
@@ -85,7 +87,7 @@ class BluetoothConnectionService(
             try {
                 socket.close()
             } catch (e: IOException) {
-                logger.log("closeAllSockets(): Error al cerrar el socket", e)
+                Log.d(TAG, "closeAllSockets(): Error al cerrar el socket", e)
             }
         }
         openSockets.clear()
@@ -96,7 +98,7 @@ class BluetoothConnectionService(
             interrupt()
             join(500)
         } catch (e: InterruptedException) {
-            logger.log("Thread.cancelAndJoin(): Error al esperar a que el thread termine", e)
+            Log.d(TAG, "Thread.cancelAndJoin(): Error al esperar a que el thread termine", e)
         }
     }
 
@@ -109,7 +111,7 @@ class BluetoothConnectionService(
         override fun run() {
             bluetoothAdapter.cancelDiscovery()
             if (device.bondState != BluetoothDevice.BOND_BONDED) {
-                logger.log("ConnectThread: El dispositivo no está emparejado. No se puede conectar.")
+                Log.d(TAG, "ConnectThread: El dispositivo no está emparejado. No se puede conectar.")
                 return
             }
             socket?.let {
@@ -118,11 +120,11 @@ class BluetoothConnectionService(
                     it.connect()
                     connected(it)
                 } catch (e: IOException) {
-                    logger.log("ConnectThread: No se pudo conectar", e)
+                    Log.d(TAG, "ConnectThread: No se pudo conectar", e)
                     try {
                         it.close()
                     } catch (closeException: IOException) {
-                        logger.log("ConnectThread: No se pudo cerrar el socket después de un fallo de conexión", closeException)
+                        Log.d(TAG, "ConnectThread: No se pudo cerrar el socket después de un fallo de conexión", closeException)
                     }
                     return
                 }
@@ -133,7 +135,7 @@ class BluetoothConnectionService(
             try {
                 socket?.close()
             } catch (e: IOException) {
-                logger.log("ConnectThread: No se pudo cerrar el socket en cancel", e)
+                Log.d(TAG, "ConnectThread: No se pudo cerrar el socket en cancel", e)
             }
         }
     }
@@ -147,7 +149,6 @@ class BluetoothConnectionService(
         private var ultimoTiempoRecibido = System.currentTimeMillis()
         private val tiempoEspera = 500L // Tiempo de espera en ms para considerar un mensaje completo
         private var patronesDetectados = 0
-        private var bloqueDetectado = 2 // 0: No detectado, 1: Discrepante, 2: Entero
         private var contadorRecepciones = 0
         private var ultimoValorCorrecto = "0.00" // Almacena el último valor procesado correctamente
 
@@ -158,7 +159,7 @@ class BluetoothConnectionService(
                     if (bytesDisponibles > 0) {
                         val bytes = inputStream.read(buffer, bufferPosition, Math.min(bytesDisponibles, buffer.size - bufferPosition))
                         if (bytes == -1) {
-                            logger.log("BluetoothService: Conexión Bluetooth cerrada")
+                            Log.d(TAG, "BluetoothService: Conexión Bluetooth cerrada")
                             break
                         }
                         bufferPosition += bytes
@@ -174,9 +175,9 @@ class BluetoothConnectionService(
                     }
                 }
             } catch (e: IOException) {
-                logger.log("BluetoothService: Error al leer", e)
+                Log.d(TAG, "BluetoothService: Error al leer", e)
             } catch (e: InterruptedException) {
-                logger.log("BluetoothService: Thread interrumpido", e)
+                Log.d(TAG, "BluetoothService: Thread interrumpido", e)
             } finally {
                 cancel()
             }
@@ -188,8 +189,8 @@ class BluetoothConnectionService(
             // Obtener configuración
             val db = AppDatabase(context)
             val confCapture = db.obtenerConfCaptureActivo()
-            val _CadenaClave = confCapture?._cadenaClave ?: "="
-            val _CadenaClaveCierre = confCapture?._cadenaClaveCierre ?: ";"
+            val _CadenaClave = confCapture?._cadenaClave ?: ""
+            val _CadenaClaveCierre = confCapture?._cadenaClaveCierre ?: ""
 
             // Verificar si el dato contiene patrones completos
             if (data.contains(_CadenaClave) && data.contains(_CadenaClaveCierre)) {
@@ -197,15 +198,22 @@ class BluetoothConnectionService(
             }
 
             // Después de 5 recepciones, determinar el tipo de bloque
-            if (contadorRecepciones >= 5 && bloqueDetectado == 0) {
-                bloqueDetectado = if (patronesDetectados >= 3) {
+            if (contadorRecepciones >= 5) {
+                val bloqueDetectado = if (patronesDetectados >= 3) {
                     // Si la mayoría de las recepciones contienen patrones completos, es bloque entero
-                    logger.log("$dividename -> Tipo de bloque detectado: ENTERO (2)")
+                    Log.d(TAG, "$dividename -> Tipo de bloque detectado: ENTERO (2)")
                     2
                 } else {
                     // Si pocas recepciones contienen patrones completos, es bloque discrepante
-                    logger.log("$dividename -> Tipo de bloque detectado: DISCREPANTE (1)")
+                    Log.d(TAG, "$dividename -> Tipo de bloque detectado: DISCREPANTE (1)")
                     1
+                }
+
+                // Actualizar la configuración con el tipo de bloque detectado
+                try {
+                    db.actualizarTipoBloque(bloqueDetectado)
+                } catch (e: Exception) {
+                    Log.d(TAG, "Error al actualizar tipo de bloque en la base de datos", e)
                 }
             }
         }
@@ -217,12 +225,7 @@ class BluetoothConnectionService(
                 return
             }
 
-            logger.log("$dividename -> ConnectedThread: Datos crudos recibidos: $data")
-
-            // Detectar tipo de bloque si aún no se ha determinado
-            if (bloqueDetectado == 0) {
-                detectarTipoBloque(data)
-            }
+            Log.d(TAG, "$dividename -> ConnectedThread: Datos crudos recibidos: $data")
 
             // Obtener configuración
             val db = AppDatabase(context)
@@ -231,6 +234,14 @@ class BluetoothConnectionService(
             val _CadenaClaveCierre = confCapture?._cadenaClaveCierre ?: ";"
             val _Longitud = confCapture?._longitud ?: 6
             val _Decimales = confCapture?._formatoPeo ?: 2
+
+            // Obtener el tipo de bloque de la base de datos
+            val bloqueDetectado = confCapture?._bloque?.toIntOrNull() ?: 0
+
+            // Detectar tipo de bloque si aún no se ha determinado
+            if (bloqueDetectado == 0) {
+                detectarTipoBloque(data)
+            }
 
             // Acumular datos
             datosAcumulados.append(data)
@@ -243,7 +254,7 @@ class BluetoothConnectionService(
             val tieneCierre = datosActuales.contains(_CadenaClaveCierre)
 
             // Mostrar siempre los datos crudos
-            logger.log("$dividename -> ConnectedThread: Datos acumulados: $datosActuales")
+            Log.d(TAG, "$dividename -> ConnectedThread: Datos acumulados: $datosActuales")
 
             // Si aún no se ha detectado el tipo de bloque, usar modo discrepante por defecto
             val modoBloque = if (bloqueDetectado == 0) 1 else bloqueDetectado
@@ -297,18 +308,18 @@ class BluetoothConnectionService(
                     procesarDatosCompletos(datosActuales, _CadenaClave, _CadenaClaveCierre, _Longitud, _Decimales, false)
                     datosAcumulados.clear()
                 } else {
-                    // Mostrar solo datos crudos
-                    onMessageReceived(BluetoothMessage(datosActuales, ""))
+                    // Mostrar datos crudos y el último valor correcto
+                    onMessageReceived(BluetoothMessage(datosActuales, ultimoValorCorrecto))
                 }
             }
         }
 
         private fun procesarDatosCompletos(datosCompletos: String, cadenaClave: String, cadenaClaveCierre: String, longitud: Int, decimales: Int, esDiscrepante: Boolean) {
-            logger.log("$dividename -> Procesando datos completos: $datosCompletos")
+            Log.d(TAG, "$dividename -> Procesando datos completos: $datosCompletos")
 
             // Intentar extraer valores según el patrón configurado
             val valores = extraerValores(datosCompletos, cadenaClave, cadenaClaveCierre)
-            logger.log("$dividename -> Valores extraídos: $valores")
+            Log.d(TAG, "$dividename -> Valores extraídos: $valores")
 
             if (valores.isNotEmpty()) {
                 // Tomar el último valor encontrado
@@ -316,58 +327,37 @@ class BluetoothConnectionService(
                 val valorProcesado = procesarValor(ultimoValor, longitud, decimales)
 
                 if (valorProcesado.isNotEmpty()) {
-                    logger.log("$dividename -> ConnectedThread: Valor procesado final: $valorProcesado")
+                    Log.d(TAG, "$dividename -> ConnectedThread: Valor procesado final: $valorProcesado")
 
-                    // Actualizar el último valor correcto si estamos en modo discrepante
-                    if (esDiscrepante) {
-                        ultimoValorCorrecto = valorProcesado
-                    }
+                    // Actualizar el último valor correcto
+                    ultimoValorCorrecto = valorProcesado
 
                     onMessageReceived(BluetoothMessage(datosCompletos, valorProcesado))
                     return
                 }
+            }
 
-                // Si no se pudo procesar y estamos en modo discrepante, mostrar el último valor correcto
-                if (esDiscrepante) {
-                    logger.log("$dividename -> ConnectedThread: No se pudo procesar el valor, mostrando último valor correcto: $ultimoValorCorrecto")
-                    onMessageReceived(BluetoothMessage(datosCompletos, ultimoValorCorrecto))
-                } else {
-                    // En modo entero, mostrar solo datos crudos
-                    logger.log("$dividename -> ConnectedThread: No se pudo procesar el valor según la configuración")
-                    onMessageReceived(BluetoothMessage(datosCompletos, ""))
-                }
-            } else {
-                // Si no se encontraron valores con el patrón, intentar extraer cualquier número
-                val numerosEncontrados = extraerCualquierNumero(datosCompletos)
+            // Si no se encontraron valores con el patrón, intentar extraer cualquier número
+            val numerosEncontrados = extraerCualquierNumero(datosCompletos)
 
-                if (numerosEncontrados.isNotEmpty() && datosCompletos.contains(cadenaClaveCierre)) {
-                    val ultimoNumero = numerosEncontrados.last()
-                    val valorProcesado = procesarValor(ultimoNumero, longitud, decimales)
+            if (numerosEncontrados.isNotEmpty() && datosCompletos.contains(cadenaClaveCierre)) {
+                val ultimoNumero = numerosEncontrados.last()
+                val valorProcesado = procesarValor(ultimoNumero, longitud, decimales)
 
-                    if (valorProcesado.isNotEmpty()) {
-                        logger.log("$dividename -> ConnectedThread: Valor numérico encontrado: $valorProcesado")
+                if (valorProcesado.isNotEmpty()) {
+                    Log.d(TAG, "$dividename -> ConnectedThread: Valor numérico encontrado: $valorProcesado")
 
-                        // Actualizar el último valor correcto si estamos en modo discrepante
-                        if (esDiscrepante) {
-                            ultimoValorCorrecto = valorProcesado
-                        }
+                    // Actualizar el último valor correcto
+                    ultimoValorCorrecto = valorProcesado
 
-                        onMessageReceived(BluetoothMessage(datosCompletos, valorProcesado))
-                        return
-                    }
-                }
-
-                // Si no se encontró ningún valor válido
-                if (esDiscrepante) {
-                    // En modo discrepante, mostrar el último valor correcto
-                    logger.log("$dividename -> ConnectedThread: No se encontraron valores válidos, mostrando último valor correcto: $ultimoValorCorrecto")
-                    onMessageReceived(BluetoothMessage(datosCompletos, ultimoValorCorrecto))
-                } else {
-                    // En modo entero, mostrar solo datos crudos
-                    logger.log("$dividename -> ConnectedThread: No se encontraron valores válidos según la configuración")
-                    onMessageReceived(BluetoothMessage(datosCompletos, ""))
+                    onMessageReceived(BluetoothMessage(datosCompletos, valorProcesado))
+                    return
                 }
             }
+
+            // Si no se encontró ningún valor válido, usar el último valor correcto
+            Log.d(TAG, "$dividename -> ConnectedThread: No se encontraron valores válidos, mostrando último valor correcto: $ultimoValorCorrecto")
+            onMessageReceived(BluetoothMessage(datosCompletos, ultimoValorCorrecto))
         }
 
         private fun extraerValores(datos: String, cadenaClave: String, cadenaClaveCierre: String): List<String> {
@@ -416,7 +406,7 @@ class BluetoothConnectionService(
                 return valorFormateado
 
             } catch (e: Exception) {
-                logger.log("$dividename -> Error al convertir valor: $valor, ignorando")
+                Log.d(TAG, "$dividename -> Error al convertir valor: $valor, ignorando")
                 return ""
             }
         }
@@ -426,21 +416,21 @@ class BluetoothConnectionService(
                 val message = String(bytes)
                 if (message.matches("-?\\d+(\\.\\d+)?".toRegex())) {
                     outputStream.write(bytes)
-                    logger.log("Datos enviados: ${String(bytes)}")
+                    Log.d(TAG, "Datos enviados: ${String(bytes)}")
                 } else {
-                    logger.log("Datos no válidos: ${String(bytes)}, no se enviaron")
+                    Log.d(TAG, "Datos no válidos: ${String(bytes)}, no se enviaron")
                 }
             } catch (e: IOException) {
-                logger.log("Error al escribir en el BluetoothSocket", e)
+                Log.d(TAG, "Error al escribir en el BluetoothSocket", e)
             }
         }
 
         fun cancel() {
             try {
                 socket.close()
-                logger.log("Socket cerrado")
+                Log.d(TAG, "Socket cerrado")
             } catch (e: IOException) {
-                logger.log("No se pudo cerrar el socket", e)
+                Log.d(TAG, "No se pudo cerrar el socket", e)
             }
         }
     }
@@ -452,12 +442,12 @@ class BluetoothConnectionService(
             while (!isInterrupted) {
                 try {
                     socket = serverSocket?.accept()
-                    logger.log("AcceptThread: Nueva conexión aceptada: $socket")
+                    Log.d(TAG, "AcceptThread: Nueva conexión aceptada: $socket")
                     socket?.let {
                         connected(it)
                     }
                 } catch (e: IOException) {
-                    logger.log("AcceptThread: Error al aceptar conexión", e)
+                    Log.d(TAG, "AcceptThread: Error al aceptar conexión", e)
                     break
                 }
             }
@@ -466,5 +456,12 @@ class BluetoothConnectionService(
         fun cancel() {
             interrupt()
         }
+    }
+
+    // Método para actualizar la base de datos con el tipo de bloque detectado
+    private fun AppDatabase.actualizarTipoBloque(tipoBloque: Int) {
+        // Implementar la lógica para actualizar el tipo de bloque en la base de datos
+        // Este método debe ser implementado según la estructura de la base de datos
+        Log.d(TAG, "Actualizando tipo de bloque en la base de datos: $tipoBloque")
     }
 }

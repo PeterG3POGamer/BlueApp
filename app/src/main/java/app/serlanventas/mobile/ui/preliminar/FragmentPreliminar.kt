@@ -34,6 +34,7 @@ import org.json.JSONObject
 
 class FragmentPreliminar : Fragment() {
 
+    private lateinit var db: AppDatabase
     private lateinit var sharedViewModel: SharedViewModel
     private lateinit var tabViewModel: TabViewModel
     private lateinit var reportesAdapter: ReportesAdapter
@@ -51,6 +52,11 @@ class FragmentPreliminar : Fragment() {
 
     companion object {
         private const val REQUEST_CODE_STORAGE_PERMISSION = 1001
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        db = AppDatabase(requireContext())
     }
 
     override fun onCreateView(
@@ -118,7 +124,6 @@ class FragmentPreliminar : Fragment() {
         }
 
         boton_Procesar.setOnClickListener {
-            val db = AppDatabase(requireContext())
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                 requestStoragePermission()
                 procesarDatos()
@@ -155,7 +160,6 @@ class FragmentPreliminar : Fragment() {
 
         if (!dataDetaPesoPollosJson.isNullOrEmpty() && !dataPesoPollosJson.isNullOrEmpty()) {
         }
-        val db = AppDatabase(requireContext())
         val dataPesoPollos = JSONObject(dataPesoPollosJson)
         val dataDetaPesoPollos = JSONArray(dataDetaPesoPollosJson)
 
@@ -396,18 +400,6 @@ class FragmentPreliminar : Fragment() {
         return detalles
     }
 
-//    private fun cargarReportesDetappDesdeSQLite() {
-//        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-//
-//        scope.launch {
-//            val reportesDetapp = databaseHelper.obtenerReportesDetapp()
-//
-//            withContext(Dispatchers.Main) {
-//                reportesAdapter.actualizarReportesDetapp(reportesDetapp)
-//            }
-//        }
-//    }
-
     private fun bloquearInputs(view: View) {
         editTextIds.forEach { editTextId ->
             view.findViewById<EditText>(editTextId)?.isEnabled = false
@@ -419,7 +411,6 @@ class FragmentPreliminar : Fragment() {
         var idPesoTemp = sharedViewModel.getIdListPesos() ?: 0
         var dataPesoPollosJsonTemp = sharedViewModel.getDataPesoPollosJson() ?: ""
         var dataDetaPesoPollosJsonTemp = sharedViewModel.getDataDetaPesoPollosJson() ?: ""
-        val db = AppDatabase(requireContext())
         val device = getAddressMacDivice.getDeviceId(requireContext())
 
         if (idPesoTemp != 0) {
@@ -436,7 +427,8 @@ class FragmentPreliminar : Fragment() {
         }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
+    override fun onDestroy() {
+        super.onDestroy()
+        db.close()
     }
 }
