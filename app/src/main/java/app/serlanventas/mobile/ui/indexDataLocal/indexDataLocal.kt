@@ -44,6 +44,18 @@ class indexDataLocal : Fragment() {
         binding.cardConfigBal.setOnClickListener {
             findNavController().navigate(R.id.nav_initConfConex)
         }
+
+        binding.cardVentasLocales.setOnClickListener {
+            findNavController().navigate(R.id.nav_initVentas)
+        }
+
+        binding.cardUsuarios.setOnClickListener {
+            findNavController().navigate(R.id.nav_initUsuarios)
+        }
+
+        binding.cardPesosLocales.setOnClickListener {
+            findNavController().navigate(R.id.nav_initPesos)
+        }
     }
 
     override fun onDestroyView() {

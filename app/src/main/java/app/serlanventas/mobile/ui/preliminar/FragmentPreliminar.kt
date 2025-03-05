@@ -22,10 +22,9 @@ import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.pesoUsedEntity
-import app.serlanventas.mobile.ui.Jabas.JabasFragment
 import app.serlanventas.mobile.ui.Jabas.ManagerPost
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.removeListPesosId
-import app.serlanventas.mobile.ui.Jabas.ManagerPost.sendDataToServer
+import app.serlanventas.mobile.ui.Jabas.ManagerPost.saveLocally
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice
 import app.serlanventas.mobile.ui.ViewModel.SharedViewModel
 import app.serlanventas.mobile.ui.ViewModel.TabViewModel
@@ -53,6 +52,7 @@ class FragmentPreliminar : Fragment() {
     companion object {
         private const val REQUEST_CODE_STORAGE_PERMISSION = 1001
     }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -71,45 +71,43 @@ class FragmentPreliminar : Fragment() {
 
         // Observar los datos del ViewModel y actualizar los inputs
 
-        sharedViewModel.getDataDetaPesoPollosJson()?.takeIf { it.isNotEmpty() }?.let { dataDetaPesoPollosJson ->
-            val dataDetaPesoPollos = JSONArray(dataDetaPesoPollosJson)
-            val detallesList = procesarDataDetaPesoPollos(dataDetaPesoPollos)
+        sharedViewModel.getDataDetaPesoPollosJson()?.takeIf { it.isNotEmpty() }
+            ?.let { dataDetaPesoPollosJson ->
+                val dataDetaPesoPollos = JSONArray(dataDetaPesoPollosJson)
+                val detallesList = procesarDataDetaPesoPollos(dataDetaPesoPollos)
 
-            val (totalJabas, totalPollos, totalPesoPollos, totalPesoJabas,neto) = calcularTotales(detallesList)
-            sharedViewModel.setTotales(totalJabas, totalPollos, totalPesoPollos, neto)
+                val (totalJabas, totalPollos, totalPesoPollos, totalPesoJabas, neto) = calcularTotales(
+                    detallesList
+                )
+                sharedViewModel.setTotales(totalJabas, totalPollos, totalPesoPollos, neto)
 
 
-            sharedViewModel.getDataPesoPollosJson()?.takeIf { it.isNotEmpty() }?.let { dataPesoPollosJson ->
-                val dataPesoPollos = JSONObject(dataPesoPollosJson)
-                val pesoKPollo = dataPesoPollos.getDouble("_PP_PKPollo")
-                val TotalPagar = pesoKPollo * neto
+                sharedViewModel.getDataPesoPollosJson()?.takeIf { it.isNotEmpty() }
+                    ?.let { dataPesoPollosJson ->
+                        val dataPesoPollos = JSONObject(dataPesoPollosJson)
+                        val pesoKPollo = dataPesoPollos.getDouble("_PP_PKPollo")
+                        val TotalPagar = pesoKPollo * neto
 
-                val promedioPesoPollo = if (totalPollos > 0) neto / totalPollos else 0.0
+                        val promedioPesoPollo = if (totalPollos > 0) neto / totalPollos else 0.0
 
-                dataPesoPollos.put("_PP_totalJabas", totalJabas)
-                dataPesoPollos.put("_PP_totalPollos", totalPollos)
-                dataPesoPollos.put("_PP_totalPeso", formatDecimal(totalPesoPollos))
-                dataPesoPollos.put("_PP_totalNeto", formatDecimal(neto))
-                dataPesoPollos.put("_PP_totalPesoJabas", formatDecimal(totalPesoJabas))
-                dataPesoPollos.put("_PP_PKPollo", formatDecimal(pesoKPollo))
-                dataPesoPollos.put("_PP_TotalPagar", formatDecimal(TotalPagar))
-                dataPesoPollos.put("_PP_PromedioPollo", formatDecimal(promedioPesoPollo))
+                        dataPesoPollos.put("_PP_totalJabas", totalJabas)
+                        dataPesoPollos.put("_PP_totalPollos", totalPollos)
+                        dataPesoPollos.put("_PP_totalPeso", formatDecimal(totalPesoPollos))
+                        dataPesoPollos.put("_PP_totalNeto", formatDecimal(neto))
+                        dataPesoPollos.put("_PP_totalPesoJabas", formatDecimal(totalPesoJabas))
+                        dataPesoPollos.put("_PP_PKPollo", formatDecimal(pesoKPollo))
+                        dataPesoPollos.put("_PP_TotalPagar", formatDecimal(TotalPagar))
+                        dataPesoPollos.put("_PP_PromedioPollo", formatDecimal(promedioPesoPollo))
 
-                sharedViewModel.setDataPesoPollosJson(dataPesoPollos.toString())
+                        sharedViewModel.setDataPesoPollosJson(dataPesoPollos.toString())
 
-                distribuirDatosEnInputs(dataPesoPollos, view)
-
-//                val idPesoText = view.findViewById<EditText>(R.id.idListPesos2)
-
-//                val idPeso = sharedViewModel.getIdListPesos()?: 0
-//                idPesoText.setText(idPeso.toString())
+                        distribuirDatosEnInputs(dataPesoPollos, view)
+                    }
+                // Actualizar los detalles en el adapter
+                reportesAdapter.actualizarReportesDetapp(detallesList)
             }
-            // Actualizar los detalles en el adapter
-            reportesAdapter.actualizarReportesDetapp(detallesList)
-        }
 
         requestStoragePermission()
-
         bloquearInputs(view)
 
         boton_Volver.setOnClickListener {
@@ -148,7 +146,7 @@ class FragmentPreliminar : Fragment() {
         reportesAdapter.actualizarReportesDetapp(emptyList())
     }
 
-    private fun procesarDatos(){
+    private fun procesarDatos() {
         val dataPesoPollosJson = sharedViewModel.getDataPesoPollosJson()
         val dataDetaPesoPollosJson = sharedViewModel.getDataDetaPesoPollosJson()
 
@@ -156,75 +154,83 @@ class FragmentPreliminar : Fragment() {
         Log.d("Preliminar dataDetaPesoPollosJson", dataDetaPesoPollosJson.toString());
 
         if (!dataDetaPesoPollosJson.isNullOrEmpty() && !dataPesoPollosJson.isNullOrEmpty()) {
-            val dataPesoPollos = JSONObject(dataPesoPollosJson)
-            val dataDetaPesoPollos = JSONArray(dataDetaPesoPollosJson)
-
-            val dataPesoPollosEntity = procesarDataPesoPollos(dataPesoPollos)
-            val dataDetaPesoPollosList = convertirObejtoPesoPollos(dataDetaPesoPollos)
-
-            // Enviar datos al servidor
-            var idPeso = sharedViewModel.getIdListPesos()
-
-            sendDataToServer(requireContext(), JabasFragment(), dataDetaPesoPollosList, dataPesoPollosEntity)
-
-            // CAMBIA EL ESTADO UNA VES DE HAYA COBRADO
-            if (idPeso != 0){
-                val idDevice = getAddressMacDivice.getDeviceId(requireContext())
-                ManagerPost.setStatusUsed(
-                    requireContext(),
-                    idPeso!!,
-                    "NotUsed",
-                    idDevice
-                ) { success ->
-                    if (!success) {
-                        Log.d("StatusLog", "Error al cambiar el estado del peso")
-                    }
-                }
-            }
-
-            if (idPeso != null) {
-                removeListPesosId(requireContext(), idPeso) { success ->
-                    if (success) {
-
-                    } else {
-                        Toast.makeText(requireContext(), "Error al eliminar el peso", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            } else {
-                Toast.makeText(requireContext(), "No se encontró el registro con ID $idPeso", Toast.LENGTH_SHORT).show()
-                sharedViewModel.setIdListPesos(0)
-            }
-
-            Toast.makeText(requireContext(), "Procesando...", Toast.LENGTH_SHORT).show()
-            limpiarCampos()
-            val antiguoJson = sharedViewModel.getDataPesoPollosJson()
-
-            // Conviertes el JSON antiguo a un objeto JSONObject si no está vacío
-            val jsonAntiguo = if (antiguoJson!!.isNotEmpty()) {
-                JSONObject(antiguoJson)
-            } else {
-                JSONObject()
-            }
-
-
-            // Creas un nuevo objeto JSONObject combinando los datos antiguos y nuevos
-            val nuevoJson = JSONObject()
-            nuevoJson.put("_PP_id", jsonAntiguo.optInt("_PP_id", 0))
-            nuevoJson.put("_PP_idNucleo", jsonAntiguo.optString("_PP_idNucleo", ""))
-            nuevoJson.put("_PP_IdGalpon", jsonAntiguo.optString("_PP_IdGalpon", ""))
-            nuevoJson.put("_PP_PKPollo", jsonAntiguo.optString("_PP_PKPollo", ""))
-
-            // Actualizas el JSON en tu ViewModel
-            sharedViewModel.setDataPesoPollosJson(nuevoJson.toString())
-            sharedViewModel.setDataDetaPesoPollosJson("")
-            val db = AppDatabase(requireContext())
-            db.deleteAllPesoUsed()
-
-            findNavController().navigate(R.id.action_nav_initPreliminar_to_nav_initReportePeso)
-//            tabViewModel.setNavigateToTab(1)
-        } else {
-            Toast.makeText(requireContext(), "Datos incompletos", Toast.LENGTH_SHORT).show()
         }
+        val db = AppDatabase(requireContext())
+        val dataPesoPollos = JSONObject(dataPesoPollosJson)
+        val dataDetaPesoPollos = JSONArray(dataDetaPesoPollosJson)
+
+        var numeroDocCliente = dataPesoPollos.optString("_PP_docCliente")
+        var nombreCompleto = dataPesoPollos.optString("_PP_nombreCompleto", null)
+
+        val dataPesoPollosEntity = procesarDataPesoPollos(dataPesoPollos)
+        val dataDetaPesoPollosList = convertirObejtoPesoPollos(dataDetaPesoPollos)
+
+        // Enviar datos al servidor
+        val idPeso = sharedViewModel.getIdListPesos()
+
+//      sendDataToServer(requireContext(), JabasFragment(), dataDetaPesoPollosList, dataPesoPollosEntity)
+
+        saveLocally(
+            requireContext(),
+            dataDetaPesoPollosList, dataPesoPollosEntity, numeroDocCliente, nombreCompleto
+        )
+
+
+        // CAMBIA EL ESTADO UNA VES DE HAYA COBRADO
+        val idDevice = getAddressMacDivice.getDeviceId(requireContext())
+        if (idPeso != 0) {
+            ManagerPost.setStatusUsed(
+                requireContext(),
+                idPeso!!,
+                "NotUsed",
+                idDevice
+            ) { success ->
+                if (!success) {
+                    Log.d("StatusLog", "Error al cambiar el estado del peso")
+                }
+            }
+
+            removeListPesosId(requireContext(), idPeso) { success ->
+                if (success) {
+
+                } else {
+                    Toast.makeText(
+                        requireContext(),
+                        "Error al eliminar el peso",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        } else {
+            sharedViewModel.setIdListPesos(0)
+        }
+
+        Toast.makeText(requireContext(), "Procesando...", Toast.LENGTH_SHORT).show()
+        limpiarCampos()
+        val antiguoJson = sharedViewModel.getDataPesoPollosJson()
+
+        // Conviertes el JSON antiguo a un objeto JSONObject si no está vacío
+        val jsonAntiguo = if (antiguoJson!!.isNotEmpty()) {
+            JSONObject(antiguoJson)
+        } else {
+            JSONObject()
+        }
+
+
+        // Creas un nuevo objeto JSONObject combinando los datos antiguos y nuevos
+        val nuevoJson = JSONObject()
+        nuevoJson.put("_PP_id", jsonAntiguo.optInt("_PP_id", 0))
+        nuevoJson.put("_PP_idNucleo", jsonAntiguo.optString("_PP_idNucleo", ""))
+        nuevoJson.put("_PP_IdGalpon", jsonAntiguo.optString("_PP_IdGalpon", ""))
+        nuevoJson.put("_PP_PKPollo", jsonAntiguo.optString("_PP_PKPollo", ""))
+
+        // Actualizas el JSON en tu ViewModel
+        sharedViewModel.setDataPesoPollosJson(nuevoJson.toString())
+        sharedViewModel.setDataDetaPesoPollosJson("")
+
+        db.deleteAllPesoUsed()
+
+        findNavController().navigate(R.id.action_nav_initPreliminar_to_nav_initReportePeso)
     }
 
     private fun requestStoragePermission() {
@@ -261,6 +267,7 @@ class FragmentPreliminar : Fragment() {
         return DataPesoPollosEntity(
             id = jsonObject.getInt("_PP_id"),
             serie = jsonObject.optString("_PP_serie", "1234"),
+            numero = jsonObject.optString("_PP_numero", "0"),
             fecha = jsonObject.optString("_PP_fecha", ""),
             totalJabas = jsonObject.optString("_PP_totalJabas"),
             totalPollos = jsonObject.optString("_PP_totalPollos"),
@@ -276,7 +283,7 @@ class FragmentPreliminar : Fragment() {
             TotalPagar = jsonObject.optString("_PP_TotalPagar"),
             idUsuario = jsonObject.optString("_PP_idUsuario"),
 
-        )
+            )
     }
 
     // Convierte JSONArray a List<DataDetaPesoPollosEntity>
@@ -304,7 +311,7 @@ class FragmentPreliminar : Fragment() {
         val neto: Double
     )
 
-    private fun calcularTotales(dataDetaPesoPollos: List<DataDetaPesoPollosEntity>): TotalesData  {
+    private fun calcularTotales(dataDetaPesoPollos: List<DataDetaPesoPollosEntity>): TotalesData {
         var totalJabas = 0
         var totalPollos = 0
         var totalPesoPollos = 0.0
@@ -326,29 +333,45 @@ class FragmentPreliminar : Fragment() {
     }
 
     private fun distribuirDatosEnInputs(dataPesoPollos: JSONObject, view: View) {
-        view.findViewById<EditText>(R.id.inputDniCliente)?.setText(dataPesoPollos.optString("_PP_docCliente"))
-        view.findViewById<EditText>(R.id.inputNomCliente)?.setText(dataPesoPollos.optString("_PP_nombreCompleto"))
+        view.findViewById<EditText>(R.id.inputDniCliente)
+            ?.setText(dataPesoPollos.optString("_PP_docCliente"))
+        view.findViewById<EditText>(R.id.inputNomCliente)
+            ?.setText(dataPesoPollos.optString("_PP_nombreCompleto"))
 
         view.findViewById<EditText>(R.id.inputCantPollo)?.setText(
-            formatDecimal(dataPesoPollos.optString("_PP_totalPollos").replace(",", ".").toDoubleOrNull())
+            formatDecimal(
+                dataPesoPollos.optString("_PP_totalPollos").replace(",", ".").toDoubleOrNull()
+            )
         )
         view.findViewById<EditText>(R.id.inputPesoBruto)?.setText(
-            formatDecimal(dataPesoPollos.optString("_PP_totalPeso").replace(",", ".").toDoubleOrNull())
+            formatDecimal(
+                dataPesoPollos.optString("_PP_totalPeso").replace(",", ".").toDoubleOrNull()
+            )
         )
         view.findViewById<EditText>(R.id.inputTara)?.setText(
-            formatDecimal(dataPesoPollos.optString("_PP_totalPesoJabas").replace(",", ".").toDoubleOrNull())
+            formatDecimal(
+                dataPesoPollos.optString("_PP_totalPesoJabas").replace(",", ".").toDoubleOrNull()
+            )
         )
         view.findViewById<EditText>(R.id.inputNeto)?.setText(
-            formatDecimal(dataPesoPollos.optString("_PP_totalNeto").replace(",", ".").toDoubleOrNull())
+            formatDecimal(
+                dataPesoPollos.optString("_PP_totalNeto").replace(",", ".").toDoubleOrNull()
+            )
         )
         view.findViewById<EditText>(R.id.inputKlPollo)?.setText(
-            formatDecimal(dataPesoPollos.optString("_PP_PKPollo").replace(",", ".").toDoubleOrNull())
+            formatDecimal(
+                dataPesoPollos.optString("_PP_PKPollo").replace(",", ".").toDoubleOrNull()
+            )
         )
         view.findViewById<EditText>(R.id.inputTotalPagar)?.setText(
-            formatDecimal(dataPesoPollos.optString("_PP_TotalPagar").replace(",", ".").toDoubleOrNull())
+            formatDecimal(
+                dataPesoPollos.optString("_PP_TotalPagar").replace(",", ".").toDoubleOrNull()
+            )
         )
         view.findViewById<EditText>(R.id.inputPesoPromedioPollo)?.setText(
-            formatDecimal(dataPesoPollos.optString("_PP_PromedioPollo").replace(",", ".").toDoubleOrNull())
+            formatDecimal(
+                dataPesoPollos.optString("_PP_PromedioPollo").replace(",", ".").toDoubleOrNull()
+            )
         )
     }
 
@@ -393,14 +416,14 @@ class FragmentPreliminar : Fragment() {
 
     override fun onStop() {
         super.onStop()
-        var idPesoTemp = sharedViewModel.getIdListPesos()?: 0
-        var dataPesoPollosJsonTemp = sharedViewModel.getDataPesoPollosJson()?: ""
-        var dataDetaPesoPollosJsonTemp = sharedViewModel.getDataDetaPesoPollosJson()?: ""
+        var idPesoTemp = sharedViewModel.getIdListPesos() ?: 0
+        var dataPesoPollosJsonTemp = sharedViewModel.getDataPesoPollosJson() ?: ""
+        var dataDetaPesoPollosJsonTemp = sharedViewModel.getDataDetaPesoPollosJson() ?: ""
         val db = AppDatabase(requireContext())
         val device = getAddressMacDivice.getDeviceId(requireContext())
 
-        if (idPesoTemp != 0){
-            if (!dataPesoPollosJsonTemp.isNullOrBlank() && !dataDetaPesoPollosJsonTemp.isNullOrBlank()){
+        if (idPesoTemp != 0) {
+            if (!dataPesoPollosJsonTemp.isNullOrBlank() && !dataDetaPesoPollosJsonTemp.isNullOrBlank()) {
                 val pesoUsed = pesoUsedEntity(
                     idPesoUsed = idPesoTemp,
                     devicedName = device,

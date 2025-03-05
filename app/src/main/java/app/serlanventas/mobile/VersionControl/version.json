@@ -1,12 +1,11 @@
 {
   "version_code": 3,
-  "version_name": "1.16.4",
+  "version_name": "1.16.5",
   "download_url": "https://github.com/PeterG3POGamer/BlueApp/releases/download/v.0.1-beta/app-debug.apk",
   "changes": [
     {"type": "Nuevo", "description": "Impleventacion de datos locales"},
-    {"type": "Nuevo", "description": "Sincronizacion de datos iniciales v1"},
-    {"type": "Nuevo", "description": "Nueva configuración de Conexión bluetooth. v1"},
-    {"type": "Arreglado", "description": "Cierre inesperado al conectar el bluetooth."}
+    {"type": "Actualizado", "description": "Mejoras en el Modulo de pesajes, trabajos de datos sin interenet v2"},
+    {"type": "Actualizado", "description": "Mejoras en la configuracion del bluetooth v2"}
   ],
   "inherit": true
 }

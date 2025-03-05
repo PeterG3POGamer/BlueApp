@@ -53,9 +53,4 @@ object getAddressMacDivice {
     fun getDeviceManufacturer(): String {
         return Build.MANUFACTURER + " " + getDeviceModel()
     }
-
-    @SuppressLint("HardwareIds")
-    fun getDeviceSerialNumber(): String {
-        return Build.getSerial()
-    }
 }

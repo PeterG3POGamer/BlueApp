@@ -58,7 +58,7 @@ class ConfigConexFragment : Fragment() {
         }
 
         // Muestra la configuración de conexión por defecto
-        mostrarFragmento(ConfConexionFragment())
+        mostrarFragmento(ConfCapturaFragment())
 
         binding.btnConfConexion.setOnClickListener {
             mostrarFragmento(ConfConexionFragment())

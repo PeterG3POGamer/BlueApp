@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="5dp"
+    android:gravity="center_vertical">
+
+    <!-- Contenedor para los datos del cliente -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Contenedor horizontal para el nombre y estado -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="start|center_vertical">
+
+            <!-- Mini "span" que dice "Estado" al lado del nombre -->
+            <TextView
+                android:id="@+id/estadoCliente"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Estado"
+                android:textSize="12sp"
+                android:textColor="@color/black"
+                android:layout_marginEnd="8dp"
+                android:textStyle="italic"
+                android:background="@drawable/rounded_background" />
+
+
+            <!-- Nombre del cliente -->
+            <TextView
+                android:id="@+id/nombreCliente"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:text="Juan Pérez"/>
+
+        </LinearLayout>
+
+        <!-- Información del documento -->
+        <TextView
+            android:id="@+id/documentoCliente"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/gray"
+            android:textSize="14sp"
+            android:text="12345678"/>
+
+    </LinearLayout>
+
+    <!-- Contenedor para los botones -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginStart="8dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnMostrar"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mostrar"
+            android:textSize="12sp"
+            android:padding="4dp"
+            android:layout_marginEnd="4dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEliminar"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Eliminar"
+            android:textSize="12sp"
+            android:padding="4dp"/>
+
+    </LinearLayout>
+</LinearLayout>

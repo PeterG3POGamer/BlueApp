@@ -5,6 +5,7 @@ import org.json.JSONObject
 data class DataPesoPollosEntity(
     val id: Int,
     val serie: String,
+    val numero: String,
     val fecha: String = "",
     var totalJabas: String,
     var totalPollos: String,
@@ -24,6 +25,7 @@ data class DataPesoPollosEntity(
         val json = JSONObject()
         json.put("_PP_id", id)
         json.put("_PP_serie", serie)
+        json.put("_PP_numero", numero)
         json.put("_PP_fecha", fecha)
         json.put("_PP_totalJabas", totalJabas)
         json.put("_PP_totalPollos", totalPollos)

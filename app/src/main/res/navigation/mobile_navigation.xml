@@ -65,11 +65,32 @@
         android:label="@string/menu_bt_balanza"
         tools:layout="@layout/fragment_module_galpones" />
 
+<!--==================================================-->
+    <fragment
+        android:id="@+id/nav_initVentas"
+        android:name="app.serlanventas.mobile.ui.ModuleVentas.VentasFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_module_ventas" />
+
+    <fragment
+        android:id="@+id/nav_initPesos"
+        android:name="app.serlanventas.mobile.ui.ModulesPesos.PesosFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_module_pesos" />
+
+    <fragment
+        android:id="@+id/nav_initUsuarios"
+        android:name="app.serlanventas.mobile.ui.ModuleUsuarios.UsuariosFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_module_usuarios" />
+<!--==================================================-->
+
     <fragment
         android:id="@+id/nav_impresoraConfig"
         android:name="app.serlanventas.mobile.ui.ImpresoraSettings.ImpresoraSettingsFragment"
         android:label="@string/menu_bt_balanza"
         tools:layout="@layout/fragment_impresora_settings" />
+
 
     <!-- Acciones de navegación -->
     <action

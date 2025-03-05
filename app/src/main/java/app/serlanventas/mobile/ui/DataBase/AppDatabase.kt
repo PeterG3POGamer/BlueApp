@@ -25,7 +25,7 @@ class AppDatabase(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "SerlanVentas.db"
-        private const val DATABASE_VERSION = 11
+        private const val DATABASE_VERSION = 13
 
         // Table names
         private const val TABLE_DETA_PESO_POLLOS = "DataDetaPesoPollos"
@@ -130,6 +130,10 @@ class AppDatabase(context: Context) :
                 + "$KEY_TOTAL_JABAS TEXT, "
                 + "$KEY_TOTAL_POLLOS TEXT, "
                 + "$KEY_TOTAL_PESO TEXT, "
+                + "$KEY_TOTAL_PESOJABAS TEXT, "
+                + "$KEY_TOTAL_NETO TEXT, "
+                + "$KEY_TOTAL_PAGAR TEXT, "
+                + "$KEY_DNI_USUARIO TEXT, "
                 + "$KEY_TIPO INTEGER, "
                 + "$KEY_PRECIO_K_POLLO TEXT, "
                 + "$KEY_NUMERO_DOC_CLIENTE TEXT, "
@@ -148,7 +152,7 @@ class AppDatabase(context: Context) :
         val CREATE_TABLE_PESOS = ("CREATE TABLE $TABLE_PESOS("
                 + "$KEY_ID INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "$KEY_DEVICE_NAME TEXT, "
-                + "$KEY_NUMERO_DOC_CLIENTE TEXT UNIQUE, "
+                + "$KEY_NUMERO_DOC_CLIENTE TEXT, "
                 + "$KEY_NOMBRE_COMPLETO TEXT, "
                 + "$KEY_DATA_PESO_JSON TEXT, "
                 + "$KEY_DATA_DETAPESO_JSON TEXT, "
@@ -415,6 +419,67 @@ class AppDatabase(context: Context) :
     // CRUD - List Pesos Temporales
     // =========================================================
 
+    fun getTodosLosPesos(): List<PesosEntity> {
+        val listaPesos = mutableListOf<PesosEntity>()
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_PESOS"
+        val cursor = db.rawQuery(selectQuery, null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                val peso = PesosEntity(
+                    id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)) ?: "",
+                    idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
+                    idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
+                    numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)) ?: "",
+                    nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)) ?: "",
+                    dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)) ?: "",
+                    dataDetaPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)) ?: "",
+                    idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)) ?: "0",
+                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO)) ?: ""
+                )
+                listaPesos.add(peso)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return listaPesos
+    }
+
+    fun getPesoPorId(id: Int): PesosEntity? {
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_PESOS WHERE $KEY_ID = ?"
+        val cursor = db.rawQuery(selectQuery, arrayOf(id.toString()))
+
+        var peso: PesosEntity? = null
+        if (cursor.moveToFirst()) {
+            peso = PesosEntity(
+                id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)) ?: "",
+                idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
+                idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
+                numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)) ?: "",
+                nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)) ?: "",
+                dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)) ?: "",
+                dataDetaPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)) ?: "",
+                idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)) ?: "0",
+                fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO)) ?: ""
+            )
+        }
+        cursor.close()
+        return peso
+    }
+
+    fun deletePeso(id: Int): Int {
+        val db = this.writableDatabase
+        val whereClause = "$KEY_ID = ?"
+        val whereArgs = arrayOf(id.toString())
+
+        // Ejecutamos la eliminación y devolvemos el número de filas afectadas
+        return db.delete(TABLE_PESOS, whereClause, whereArgs)
+    }
+
+
     fun insertListPesos(pesos: PesosEntity): Long {
         val db = this.writableDatabase
         val currentDate = getCurrentDateTime()
@@ -535,7 +600,6 @@ class AppDatabase(context: Context) :
         val currentDate = getCurrentDateTime()
 
         val values = ContentValues().apply {
-            put(KEY_ID, pesoUsed.idPesoUsed)
             put(KEY_DEVICE_NAME, pesoUsed.devicedName)
             put(KEY_DATA_PESO_JSON, pesoUsed.dataPesoPollosJson)
             put(KEY_DATA_DETAPESO_JSON, pesoUsed.dataDetaPesoPollosJson)
@@ -551,6 +615,24 @@ class AppDatabase(context: Context) :
         db.close()
     }
     // =========================================================
+    // MODULE VENTAS
+    // =========================================================
+
+    fun getUltimoNumeroSerie(serie: String): String? {
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_PESO_POLLOS WHERE $KEY_SERIE = ? ORDER BY $KEY_NUMERO DESC LIMIT 1"
+        val cursor = db.rawQuery(selectQuery, arrayOf(serie))
+
+        var ultimoNumero: String? = null
+        if (cursor.moveToFirst()) {
+            ultimoNumero = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO))
+        }
+        cursor.close()
+        return ultimoNumero
+    }
+
+
+// =========================================================
     // INSERTS
     // =========================================================
 
@@ -570,10 +652,15 @@ class AppDatabase(context: Context) :
         val currentDate = getCurrentDateTime()
         val values = ContentValues().apply {
             put(KEY_SERIE, data.serie)
+            put(KEY_NUMERO, data.numero)
             put(KEY_FECHA, currentDate)
             put(KEY_TOTAL_JABAS, data.totalJabas)
             put(KEY_TOTAL_POLLOS, data.totalPollos)
             put(KEY_TOTAL_PESO, data.totalPeso)
+            put(KEY_TOTAL_PESOJABAS, data.totalPesoJabas)
+            put(KEY_TOTAL_NETO, data.totalNeto)
+            put(KEY_TOTAL_PAGAR, data.TotalPagar)
+            put(KEY_DNI_USUARIO, data.idUsuario)
             put(KEY_TIPO, data.tipo)
             put(KEY_NUMERO_DOC_CLIENTE, data.numeroDocCliente)
             put(KEY_ID_GALPON, data.idGalpon)
@@ -699,12 +786,13 @@ class AppDatabase(context: Context) :
             do {
                 val data = DataPesoPollosEntity(
                     id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
-                    serie = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE)),  // Leemos el nuevo campo
-                    fecha = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA)),  // Leemos el nuevo campo
-                    totalJabas = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_JABAS)),  // Leemos el nuevo campo
-                    totalPollos = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_POLLOS)),  // Leemos el nuevo campo
-                    totalPeso = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PESO)),  // Leemos el nuevo campo
-                    tipo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TIPO)),  // Leemos el campo actualizado
+                    serie = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE)),
+                    numero = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO)),
+                    fecha = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA)),
+                    totalJabas = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_JABAS)),
+                    totalPollos = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_POLLOS)),
+                    totalPeso = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PESO)),
+                    tipo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TIPO)),
                     numeroDocCliente = cursor.getString(
                         cursor.getColumnIndexOrThrow(
                             KEY_NUMERO_DOC_CLIENTE
@@ -1164,6 +1252,17 @@ class AppDatabase(context: Context) :
         db.close()
     }
 
+    fun eliminarUsuarioById(idUsuario: String): Boolean {
+        val db = this.writableDatabase
+        val whereClause = "$KEY_ID = ?"
+        val whereArgs = arrayOf(idUsuario)
+
+        val rowsDeleted = db.delete(TABLE_USUARIO, whereClause, whereArgs)
+
+        db.close()
+        return rowsDeleted > 0 // Devuelve 'true' si el usuario fue eliminado con éxito
+    }
+
     // Delete functions
     fun deleteAllData() {
         val db = this.writableDatabase
@@ -1177,6 +1276,8 @@ class AppDatabase(context: Context) :
         db.delete(AppDatabase.TABLE_PESOS, null, null)
         db.close()
     }
+
+
 
 
 }

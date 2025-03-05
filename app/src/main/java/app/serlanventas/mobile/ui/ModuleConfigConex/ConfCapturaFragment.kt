@@ -1,10 +1,12 @@
 package app.serlanventas.mobile.ui.ModuleConfigConex
 
+import android.Manifest
 import android.app.AlertDialog
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -16,6 +18,7 @@ import android.widget.ArrayAdapter
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import app.serlanventas.mobile.R
@@ -116,63 +119,45 @@ class ConfCapturaFragment : Fragment() {
     }
 
     private fun configurarBotones() {
-        // Configurar botón Guardar
-        binding.btnGuardar.setOnClickListener {
-            guardarConfiguracion()
-        }
-
-        // Configurar botón Actualizar
-        binding.btnActualizar.setOnClickListener {
-            actualizarConfiguracion()
-        }
-
-        binding.btnLimpiar.setOnClickListener {
-            limpiarFormulario()
-        }
+        binding.btnGuardar.setOnClickListener { guardarConfiguracion() }
+        binding.btnActualizar.setOnClickListener { actualizarConfiguracion() }
+        binding.btnLimpiar.setOnClickListener { limpiarFormulario(false) }
     }
 
     private fun configurarListView() {
-        // Eliminar los eventos de clic y doble clic en las filas
-        // Ahora los botones en cada fila manejarán las acciones
         binding.listViewRegistros.onItemClickListener = null
         binding.listViewRegistros.setOnItemLongClickListener(null)
     }
 
     private fun cargarDatosEnFormulario(registro: CaptureDeviceEntity) {
-        binding.edtCadenaClave.setText(registro._cadenaClave)
-        binding.edtLongitud.setText(registro._longitud.toString())
-        binding.edtFormatoPeso.setText(registro._formatoPeo.toString())
-        binding.edtCadenaClaveCierre.setText(registro._cadenaClaveCierre)
-        binding.txtNombreDispositivo.text = "Nombre: ${registro._nombreDispositivo}"
-        binding.txtMacDispositivo.text = "MAC: ${registro._macDispositivo}"
+        binding.edtCadenaClave.setText(registro._cadenaClave ?: "")
+        binding.edtLongitud.setText(registro._longitud?.toString() ?: "")
+        binding.edtFormatoPeso.setText(registro._formatoPeo?.toString() ?: "")
+        binding.edtCadenaClaveCierre.setText(registro._cadenaClaveCierre ?: "")
+        binding.txtNombreDispositivo.text = "Nombre: ${registro._nombreDispositivo ?: "N/A"}"
+        binding.txtMacDispositivo.text = "MAC: ${registro._macDispositivo ?: "N/A"}"
+
     }
 
     private fun guardarConfiguracion() {
         try {
             val macDispositivo = obtenerMacDesdeUI()
-
-            // Verificar si ya existe un registro con esta MAC
             val existente = db.obtenerConfCapturePorMac(macDispositivo)
             if (existente != null) {
                 mostrarAlerta("Error al guardar", "Ya existe una configuración para este dispositivo. Use Actualizar en su lugar.")
                 return
             }
 
-            // Crear el dispositivo desde la UI
             val captureDevice = crearCaptureDeviceDesdeUI()
-
-            // Validar que el nombre del dispositivo y la MAC no sean "N/A" o vacíos
             if (captureDevice._nombreDispositivo == "N/A" || captureDevice._macDispositivo == "N/A") {
                 mostrarAlerta("Error", "El nombre o la MAC del dispositivo no son válidos.")
                 return
             }
 
-            // Intentamos insertar la configuración
             val resultado = db.insertarConfCapture(captureDevice)
-
             if (resultado > 0) {
                 mostrarAlerta("Éxito", "Configuración guardada correctamente")
-                limpiarFormulario()
+                limpiarFormulario(false)
                 cargarRegistros()
             } else {
                 mostrarAlerta("Error", "No se pudo guardar la configuración")
@@ -182,12 +167,9 @@ class ConfCapturaFragment : Fragment() {
         }
     }
 
-
     private fun actualizarConfiguracion() {
         try {
             val macDispositivo = obtenerMacDesdeUI()
-
-            // Verificar si existe un registro con esta MAC
             val existente = db.obtenerConfCapturePorMac(macDispositivo)
             if (existente == null) {
                 mostrarAlerta("Error al actualizar", "No existe una configuración para este dispositivo. Use Guardar en su lugar.")
@@ -195,10 +177,9 @@ class ConfCapturaFragment : Fragment() {
             }
 
             val captureDevice = crearCaptureDeviceDesdeUI()
-            captureDevice._idCaptureDevice = existente._idCaptureDevice // Mantener el mismo ID
+            captureDevice._idCaptureDevice = existente._idCaptureDevice
 
             val resultado = db.actualizarConfCapture(captureDevice)
-
             if (resultado > 0) {
                 mostrarAlerta("Éxito", "Configuración actualizada correctamente")
                 cargarRegistros()
@@ -213,10 +194,9 @@ class ConfCapturaFragment : Fragment() {
     private fun actualizarEstadoPorMac(mac: String) {
         try {
             val resultado = db.actualizarEstadoPorMac(mac)
-
             if (resultado > 0) {
                 Toast.makeText(requireContext(), "Estado actualizado correctamente", Toast.LENGTH_SHORT).show()
-                handler.post { cargarRegistros() } // Asegurar que se ejecuta en el hilo principal
+                handler.post { cargarRegistros() }
             } else {
                 mostrarAlerta("Error", "No se pudo actualizar el estado")
             }
@@ -231,7 +211,6 @@ class ConfCapturaFragment : Fragment() {
         val longitud = binding.edtLongitud.text.toString().toIntOrNull() ?: 0
         val formatoPeso = binding.edtFormatoPeso.text.toString().toIntOrNull() ?: 0
 
-        // Extraer solo el nombre del dispositivo (después de "Nombre: ")
         val nombreCompleto = binding.txtNombreDispositivo.text.toString()
         val nombreDispositivo = if (nombreCompleto.startsWith("Nombre: ")) {
             nombreCompleto.substring("Nombre: ".length)
@@ -239,7 +218,6 @@ class ConfCapturaFragment : Fragment() {
             nombreCompleto
         }
 
-        // Extraer solo la MAC del dispositivo (después de "MAC: ")
         val macCompleta = binding.txtMacDispositivo.text.toString()
         val macDispositivo = if (macCompleta.startsWith("MAC: ")) {
             macCompleta.substring("MAC: ".length)
@@ -248,7 +226,7 @@ class ConfCapturaFragment : Fragment() {
         }
 
         return CaptureDeviceEntity(
-            _idCaptureDevice = 0, // Se asignará automáticamente o se actualizará después
+            _idCaptureDevice = 0,
             _cadenaClave = cadenaClave,
             _nombreDispositivo = nombreDispositivo,
             _macDispositivo = macDispositivo,
@@ -259,7 +237,6 @@ class ConfCapturaFragment : Fragment() {
         )
     }
 
-
     private fun obtenerMacDesdeUI(): String {
         val macCompleta = binding.txtMacDispositivo.text.toString()
         return if (macCompleta.startsWith("MAC: ")) {
@@ -269,30 +246,26 @@ class ConfCapturaFragment : Fragment() {
         }
     }
 
-    private fun limpiarFormulario() {
-        // Limpiar campos de texto
+    private fun limpiarFormulario(estado: Boolean = false) {
         binding.edtCadenaClave.setText("")
         binding.edtLongitud.setText("")
         binding.edtFormatoPeso.setText("")
         binding.edtCadenaClaveCierre.setText("")
+        if (!estado) {
+            binding.txtNombreDispositivo.text = "Nombre: N/A"
+            binding.txtMacDispositivo.text = "MAC: N/A"
+        }
 
-        // Limpiar los TextViews
-        binding.txtNombreDispositivo.text = "Nombre: N/A"
-        binding.txtMacDispositivo.text = "MAC: N/A"
     }
-
 
     private fun cargarRegistros() {
         try {
             listaRegistros = db.obtenerTodosLosDatosConfCapture()
-
             if (registrosAdapter == null) {
-                // Primera carga - crear nuevo adaptador
                 registrosAdapter = DispositivosAdapter(requireContext(), listaRegistros)
                 binding.listViewRegistros.adapter = registrosAdapter
             } else {
-                // Actualizar datos existentes
-                (registrosAdapter as? DispositivosAdapter)?.updateData(listaRegistros)
+                registrosAdapter?.updateData(listaRegistros)
             }
         } catch (e: Exception) {
             mostrarAlerta("Error", "Error al cargar registros: ${e.message}")
@@ -315,6 +288,12 @@ class ConfCapturaFragment : Fragment() {
     }
 
     private fun cargarDispositivosVinculados() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_CONNECT)
+            != PackageManager.PERMISSION_GRANTED) {
+            mostrarAlerta("Permisos requeridos", "Es necesario habilitar los permisos solicitados por la aplicación para poder llevar a cabo la captura de los datos de los pesos.")
+            return
+        }
+
         if (!bluetoothAdapter.isEnabled) {
             actualizarUIBluetoothDesactivado()
             mostrarAlerta("Estado Bluetooth", "Bluetooth desactivado")
@@ -391,11 +370,9 @@ class ConfCapturaFragment : Fragment() {
             binding.txtMacDispositivo.text = "MAC: $deviceAddress"
             mostrarEstadoConexion(true, deviceName)
 
-            // Verificar si existe configuración para este dispositivo
             val configuracion = db.obtenerConfCapturePorMac(deviceAddress)
             if (configuracion != null) {
                 cargarDatosEnFormulario(configuracion)
-                // Removido el Toast innecesario
             }
         } else {
             binding.txtNombreDispositivo.text = "Nombre: N/A"
@@ -405,17 +382,15 @@ class ConfCapturaFragment : Fragment() {
     }
 
     private fun mostrarInformacionDispositivo(device: BluetoothDevice, esConexionActiva: Boolean) {
-        binding.txtNombreDispositivo.text = "Nombre: ${device.name ?: "Desconocido"}"
+        binding.txtNombreDispositivo.text = "Nombre: ${device.name ?: "N/A"}"
         binding.txtMacDispositivo.text = "MAC: ${device.address}"
         mostrarEstadoConexion(esConexionActiva, device.name)
 
-        // Verificar si existe configuración para este dispositivo
         val configuracion = db.obtenerConfCapturePorMac(device.address)
         if (configuracion != null) {
             cargarDatosEnFormulario(configuracion)
-            // Removido el Toast innecesario
         } else {
-            limpiarFormulario()
+            limpiarFormulario(true )
         }
     }
 
@@ -426,7 +401,6 @@ class ConfCapturaFragment : Fragment() {
             "Sin conexión activa"
         }
 
-        // Mostrar un indicador visual del estado de conexión
         activity?.runOnUiThread {
             val colorEstado = if (conectado) {
                 android.graphics.Color.GREEN
@@ -457,7 +431,7 @@ class ConfCapturaFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
-    // Adaptador personalizado para mostrar los dispositivos con botones de acción
+
     inner class DispositivosAdapter(
         context: Context,
         dispositivos: List<CaptureDeviceEntity>
@@ -487,31 +461,24 @@ class ConfCapturaFragment : Fragment() {
 
             val dispositivo = getItem(position) ?: return view
 
-            // Configurar el texto del dispositivo (sin cambiar el tipo de ImageButton)
             val txtDispositivo = view.findViewById<TextView>(R.id.txtDispositivo)
             txtDispositivo.text = "${dispositivo._nombreDispositivo} (${dispositivo._macDispositivo})"
 
-            // Configurar el ImageButton de estado (sin texto, solo cambio de color o imagen)
             val btnEstado = view.findViewById<ImageButton>(R.id.btnEstado)
-
-            // Cambiar la imagen del ImageButton según el estado del dispositivo
             val estadoDrawable = if (dispositivo._estado == 1) {
-                R.drawable.ic_success // Asegúrate de tener este recurso en tus drawables
+                R.drawable.ic_success
             } else {
-                R.drawable.ic_error // Asegúrate de tener este recurso en tus drawables
+                R.drawable.ic_error
             }
-
             btnEstado.setImageResource(estadoDrawable)
 
-            // Cambiar el color de fondo o aplicar un filtro de color, si es necesario
             val colorEstado = if (dispositivo._estado == 1) {
-                android.graphics.Color.parseColor("#4CAF50") // Verde más suave
+                android.graphics.Color.parseColor("#4CAF50")
             } else {
-                android.graphics.Color.parseColor("#F44336") // Rojo más suave
+                android.graphics.Color.parseColor("#F44336")
             }
             btnEstado.setColorFilter(colorEstado)
 
-            // Configurar el evento de clic del ImageButton de estado
             btnEstado.setOnClickListener {
                 AlertDialog.Builder(context)
                     .setTitle("Confirmar cambio de estado")
@@ -523,7 +490,6 @@ class ConfCapturaFragment : Fragment() {
                     .show()
             }
 
-            // Configurar ImageButton para mostrar detalles (al lado del ImageButton de estado)
             val btnMostrar = view.findViewById<ImageButton>(R.id.btnMostrar)
             btnMostrar.setOnClickListener {
                 cargarDatosEnFormulario(dispositivo)
@@ -531,7 +497,6 @@ class ConfCapturaFragment : Fragment() {
                 Toast.makeText(context, "Configuración cargada", Toast.LENGTH_SHORT).show()
             }
 
-            // Configurar ImageButton para eliminar
             val btnEliminar = view.findViewById<ImageButton>(R.id.btnEliminar)
             btnEliminar.setOnClickListener {
                 AlertDialog.Builder(context)
@@ -541,7 +506,7 @@ class ConfCapturaFragment : Fragment() {
                         val resultado = db.eliminarConfCapturePorMac(dispositivo._macDispositivo)
                         if (resultado > 0) {
                             Toast.makeText(context, "Configuración eliminada", Toast.LENGTH_SHORT).show()
-                            limpiarFormulario()
+                            limpiarFormulario(false)
                             cargarRegistros()
                         } else {
                             mostrarAlerta("Error", "No se pudo eliminar la configuración")
@@ -553,6 +518,5 @@ class ConfCapturaFragment : Fragment() {
 
             return view
         }
-
     }
 }
