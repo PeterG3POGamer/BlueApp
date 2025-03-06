@@ -3,6 +3,7 @@ package app.serlanventas.mobile.ui.DataSyncManager
 import android.util.Log
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.ClienteEntity
+import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.GalponEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.NucleoEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.UsuarioEntity
@@ -19,7 +20,10 @@ class DataComparator(private val db: AppDatabase) {
         val usuariosLocales = db.getAllUsuarios()
         if (!compararListas(usuariosNube, usuariosLocales)) {
             necesitaSincronizar = true
-            Log.d("DataComparator", "Usuarios no coinciden Nube: ${usuariosNube.length()} Locales: ${usuariosLocales.size}")
+            Log.d(
+                "DataComparator",
+                "Usuarios no coinciden Nube: ${usuariosNube.length()} Locales: ${usuariosLocales.size}"
+            )
         }
 
         // Comparar establecimientos
@@ -27,7 +31,10 @@ class DataComparator(private val db: AppDatabase) {
         val establecimientosLocales = db.getAllNucleos()
         if (!compararListas(establecimientosNube, establecimientosLocales)) {
             necesitaSincronizar = true
-            Log.d("DataComparator", "Establecimientos no coinciden Nube: ${establecimientosNube.length()} Locales: ${establecimientosLocales.size}")
+            Log.d(
+                "DataComparator",
+                "Establecimientos no coinciden Nube: ${establecimientosNube.length()} Locales: ${establecimientosLocales.size}"
+            )
         }
 
         // Comparar galpones
@@ -35,7 +42,10 @@ class DataComparator(private val db: AppDatabase) {
         val galponesLocales = db.getAllGalpones()
         if (!compararListas(galponesNube, galponesLocales)) {
             necesitaSincronizar = true
-            Log.d("DataComparator", "Galpones no coinciden Nube: ${galponesNube.length()} Locales: ${galponesLocales.size}")
+            Log.d(
+                "DataComparator",
+                "Galpones no coinciden Nube: ${galponesNube.length()} Locales: ${galponesLocales.size}"
+            )
         }
 
         // Comparar clientes
@@ -43,16 +53,27 @@ class DataComparator(private val db: AppDatabase) {
         val clientesLocales = db.getAllClientes()
         if (!compararListas(clientesNube, clientesLocales)) {
             necesitaSincronizar = true
-            Log.d("DataComparator", "Clientes no coinciden Nube: ${clientesNube.length()} Locales: ${clientesLocales.size}")
+            Log.d(
+                "DataComparator",
+                "Clientes no coinciden Nube: ${clientesNube.length()} Locales: ${clientesLocales.size}"
+            )
         }
 
-//        val ventasNube = data.getJSONArray("ventas")
-//        val ventasLocales = db.getAllDataPesoPollosNotSync()
-//        if (!compararListasVentas(ventasNube, ventasLocales)) {
+//        val ventasLocalesNotSync = db.getAllDataPesoPollosNotSync()
+//        if (ventasLocalesNotSync.isNotEmpty()) {
 //            necesitaSincronizar = true
-//            Log.d("DataComparator", "Ventas no coinciden Nube: ${ventasNube.length()} Locales: ${ventasLocales.size}")
+//            Log.d("DataComparator", "Ventas que faltan sincronizar ${ventasLocalesNotSync.size}")
+//        } else {
+//            val ventasNube = data.getJSONArray("ventas")
+//            val ventasLocales = db.getAllDataPesoPollos()
+//            if (compararListasVentas(ventasNube, ventasLocales)) {
+//                necesitaSincronizar = true
+//                Log.d(
+//                    "DataComparator",
+//                    "Ventas que faltan enviar ${ventasLocales.size}, Ventas que faltan recibir ${ventasNube.length()}"
+//                )
+//            }
 //        }
-
 
         return necesitaSincronizar
     }
@@ -124,32 +145,27 @@ class DataComparator(private val db: AppDatabase) {
                 clienteNube.getString("nomtit") == clienteLocal.nombreCompleto
     }
 
-//    private fun compararVentas(ventaNube: JSONObject, ventaLocal: DataPesoPollosEntity): Boolean {
-//        return ventaNube.getInt("idPesoPollos") == ventaLocal.id &&
-//                ventaNube.getString("status") == ventaLocal.idEstado
-//    }
-//
-//    private fun compararListasDetalles(detallesNube: JSONArray, detallesLocales: List<DataDetaPesoPollosEntity>): Boolean {
-//        if (detallesNube.length() != detallesLocales.size) {
-//            return false
-//        }
-//
-//        for (i in 0 until detallesNube.length()) {
-//            val detalleNube = detallesNube.getJSONObject(i)
-//            val detalleLocal = detallesLocales[i]
-//
-//            if (!compararDetalles(detalleNube, detalleLocal)) {
-//                return false
-//            }
-//        }
-//        return true
-//    }
+    private fun compararListasVentas(
+        ventasNube: JSONArray,
+        ventasLocales: List<DataPesoPollosEntity>
+    ): Boolean {
+        if (ventasNube.length() != ventasLocales.size) {
+            return true
+        }
 
-//    private fun compararDetalles(detalleNube: JSONObject, detalleLocal: DataDetaPesoPollosEntity): Boolean {
-//        return detalleNube.getInt("idDetaPP") == detalleLocal.idDetaPP &&
-//                detalleNube.getInt("cantJabas") == detalleLocal.cantJabas &&
-//                detalleNube.getInt("cantPollos") == detalleLocal.cantPollos &&
-//                detalleNube.getDouble("peso") == detalleLocal.peso &&
-//                detalleNube.getString("tipo") == detalleLocal.tipo
-//    }
+        for (i in 0 until ventasNube.length()) {
+            val ventaNube = ventasNube.getJSONObject(i)
+            val ventaLocal = ventasLocales[i]
+
+            if (!compararVentas(ventaNube, ventaLocal)) {
+                return false
+            }
+        }
+        return true
+    }
+
+    private fun compararVentas(ventaNube: JSONObject, ventaLocal: DataPesoPollosEntity): Boolean {
+        return ventaNube.getInt("idPesoPollos") == ventaLocal.id &&
+                ventaNube.getString("serie") + "-" + ventaNube.getString("numero") == ventaLocal.serie
+    }
 }

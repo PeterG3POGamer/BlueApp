@@ -86,10 +86,6 @@ class LoginActivity : AppCompatActivity(), ProgressCallback {
     }
 
     private fun navigateBasedOnLoginState(isLoggedIn: Boolean) {
-//        progressBar.visibility = View.GONE
-//        statusMessage.visibility = View.GONE
-//        progressDetails.visibility = View.GONE
-
         if (isLoggedIn) {
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
