@@ -92,8 +92,7 @@ object ManagerPost {
                     "1"
                 }
 
-                dataDetaPesoPollos.forEach { db.insertDataDetaPesoPollos(it) }
-                db.insertDataPesoPollos(
+                val idPesoPollo = db.insertDataPesoPollos(
                     dataPesoPollos.copy(
                         numeroDocCliente = numeroDocumento,
                         nombreCompleto = nombreCliente,
@@ -103,7 +102,18 @@ object ManagerPost {
                     )
                 )
 
-                    withContext(Dispatchers.Main) {
+                if (idPesoPollo != -1L) {
+                    dataDetaPesoPollos.forEach {
+                        val detaPeso = it.copy(idPesoPollo = idPesoPollo.toString())
+                        db.insertDataDetaPesoPollos(detaPeso)
+                    }
+                } else {
+                    Log.e("Insert", "Error al insertar el registro en la tabla de peso pollos")
+                }
+
+
+
+                withContext(Dispatchers.Main) {
                         showSuccessNotification(context)
 //                        jabasFragment.limpiarCampos()
 //                        jabasFragment.limpiarClientes()
@@ -128,7 +138,8 @@ object ManagerPost {
                 cantJabas = it.numeroJabas,
                 cantPollos = it.numeroPollos,
                 peso = it.pesoKg,
-                tipo = it.conPollos
+                tipo = it.conPollos,
+                idPesoPollo = it.idPesoPollo
             )
         }
     }
@@ -1162,7 +1173,8 @@ object ManagerPost {
                 cantJabas = jaba.getInt("numeroJabas"),
                 cantPollos = jaba.getInt("numeroPollos"),
                 peso = jaba.getDouble("pesoKg"),
-                tipo = jaba.getString("conPollos")
+                tipo = jaba.getString("conPollos"),
+                idPesoPollo = jaba.getString("idPesoPollo")
             )
         }
     }

@@ -11,7 +11,7 @@ import app.serlanventas.mobile.ui.Interfaces.OnItemClickListener
 import app.serlanventas.mobile.ui.ViewModel.SharedViewModel
 
 
-data class JabasItem(val id: Int, val numeroJabas: Int, val numeroPollos: Int, val pesoKg: Double, val conPollos: String,)
+data class JabasItem(val id: Int, val numeroJabas: Int, val numeroPollos: Int, val pesoKg: Double, val conPollos: String, val idPesoPollo: String,)
 
 class JabasAdapter(private val itemList: MutableList<JabasItem>, private val listener: OnItemClickListener, private val sharedViewModel: SharedViewModel) : RecyclerView.Adapter<JabasAdapter.JabasViewHolder>() {
 

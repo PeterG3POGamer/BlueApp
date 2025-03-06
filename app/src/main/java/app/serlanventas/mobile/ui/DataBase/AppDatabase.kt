@@ -660,6 +660,7 @@ class AppDatabase(context: Context) :
             put(KEY_NUMERO_POLLOS, data.cantPollos)
             put(KEY_PESO_KG, data.peso)
             put(KEY_CON_POLLOS, data.tipo)
+            put(KEY_ID_PESO_POLLO, data.idPesoPollo)
         }
         return db.insert(TABLE_DETA_PESO_POLLOS, null, values)
     }
@@ -796,7 +797,8 @@ class AppDatabase(context: Context) :
                     cantJabas = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_NUMERO_JABAS)),
                     cantPollos = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_NUMERO_POLLOS)),
                     peso = cursor.getDouble(cursor.getColumnIndexOrThrow(KEY_PESO_KG)),
-                    tipo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CON_POLLOS))
+                    tipo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CON_POLLOS)),
+                    idPesoPollo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_PESO_POLLO))
                 )
                 dataList.add(data)
             } while (cursor.moveToNext())
@@ -819,6 +821,104 @@ class AppDatabase(context: Context) :
         )
     }
 
+    // -------------------------------------------
+    // Consulta para obtener el detalle de DetaPesoPollos por ID
+    fun obtenerDetaPesoPollosPorId(idPesoPollo: Int): List<DataDetaPesoPollosEntity> {
+        val db = this.readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_DETA_PESO_POLLOS WHERE $KEY_ID_PESO_POLLO = ?", arrayOf(idPesoPollo.toString()))
+
+        val listaDetaPesoPollos = mutableListOf<DataDetaPesoPollosEntity>()
+
+        // Iteramos sobre los registros, y los agregamos a la lista
+        if (cursor.moveToFirst()) {
+            do {
+                val detalle = DataDetaPesoPollosEntity(
+                    idDetaPP = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_PESO_POLLO)),
+                    cantJabas = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_NUMERO_JABAS)),
+                    cantPollos = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_NUMERO_POLLOS)),
+                    peso = cursor.getDouble(cursor.getColumnIndexOrThrow(KEY_PESO_KG)),
+                    tipo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CON_POLLOS)),
+                    idPesoPollo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_PESO_POLLO))
+                )
+                listaDetaPesoPollos.add(detalle)
+            } while (cursor.moveToNext())
+        }
+
+        cursor.close()
+        return listaDetaPesoPollos  // Devuelve todos los registros encontrados
+    }
+
+    // Consulta para obtener el detalle de PesoPollos por ID
+    fun obtenerPesoPollosPorId(idPesoPollo: Int): DataPesoPollosEntity? {
+        val db = this.readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_PESO_POLLOS WHERE $KEY_ID = ?", arrayOf(idPesoPollo.toString()))
+
+        // Verificamos si existe un registro
+        return if (cursor.moveToFirst()) {
+            val detalle = DataPesoPollosEntity(
+                id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                serie = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE)),
+                numero = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO)),
+                fecha = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA)),
+                totalJabas = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_JABAS)),
+                totalPollos = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_POLLOS)),
+                totalPeso = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PESO)),
+                tipo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TIPO)),
+                numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)),
+                idGalpon = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
+                idNucleo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
+                PKPollo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_PRECIO_K_POLLO)),
+                totalPesoJabas = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PESOJABAS)),
+                totalNeto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_NETO)),
+                TotalPagar = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PAGAR)),
+                idUsuario = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DNI_USUARIO)),
+                idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO))
+            )
+            cursor.close()
+            detalle
+        } else {
+            cursor.close()
+            null  // Retorna null si no hay registros
+        }
+    }
+
+    // Consulta para obtener un Nucleo por ID
+    fun obtenerNucleoPorId(id: Int): NucleoEntity? {
+        val db = this.readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_NUCLEO WHERE $KEY_ID = ?", arrayOf(id.toString()))
+
+        return if (cursor.moveToFirst()) {
+            val nucleo = NucleoEntity(
+                idEstablecimiento = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID)),
+                nombre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUCLEO_NAME)),
+                idEmpresa = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUCLEO_NAME))
+            )
+            cursor.close()
+            nucleo
+        } else {
+            cursor.close()
+            null  // Retorna null si no hay registros
+        }
+    }
+
+    // Consulta para obtener un Galpon por ID
+    fun obtenerGalponPorId(id: Int): GalponEntity? {
+        val db = this.readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_GALPON WHERE $KEY_ID = ?", arrayOf(id.toString()))
+
+        return if (cursor.moveToFirst()) {
+            val galpon = GalponEntity(
+                idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                nombre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_GALPON_NAME)),
+                idEstablecimiento = cursor.getString(cursor.getColumnIndexOrThrow(KEY_GALPON_NAME))
+            )
+            cursor.close()
+            galpon
+        } else {
+            cursor.close()
+            null  // Retorna null si no hay registros
+        }
+    }
 
 // =========================================================
     // INSERTS

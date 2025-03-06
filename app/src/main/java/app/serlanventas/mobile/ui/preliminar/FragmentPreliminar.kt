@@ -300,7 +300,9 @@ class FragmentPreliminar : Fragment() {
                 cantJabas = jsonObject.getInt("_DPP_cantJabas"),
                 cantPollos = jsonObject.getInt("_DPP_cantPolllos"),
                 peso = jsonObject.getDouble("_DPP_peso"),
-                tipo = jsonObject.getString("_DPP_tipo")
+                tipo = jsonObject.getString("_DPP_tipo"),
+                idPesoPollo = jsonObject.optString("_DPP_idPesoPollo", "")
+
             )
             detalles.add(detalle)
         }
@@ -393,7 +395,9 @@ class FragmentPreliminar : Fragment() {
                 cantJabas = jsonObject.getInt("_DPP_cantJabas"),
                 cantPollos = jsonObject.getInt("_DPP_cantPolllos"),
                 peso = jsonObject.getDouble("_DPP_peso"),
-                tipo = jsonObject.getString("_DPP_tipo")
+                tipo = jsonObject.getString("_DPP_tipo"),
+                idPesoPollo = jsonObject.optString("_DPP_idPesoPollo", "")
+
             )
             detalles.add(detalle)
         }

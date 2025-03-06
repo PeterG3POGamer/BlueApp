@@ -384,7 +384,8 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                                                             numeroJabas = detalle.cantJabas,
                                                             numeroPollos = detalle.cantPollos,
                                                             pesoKg = detalle.peso,
-                                                            conPollos = detalle.tipo
+                                                            conPollos = detalle.tipo,
+                                                            idPesoPollo = detalle.idPesoPollo
                                                         )
 
                                                         jabasAdapter.addItem(newItem)
@@ -450,7 +451,8 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                                                             numeroJabas = detalle.cantJabas,
                                                             numeroPollos = detalle.cantPollos,
                                                             pesoKg = detalle.peso,
-                                                            conPollos = detalle.tipo
+                                                            conPollos = detalle.tipo,
+                                                            idPesoPollo = detalle.idPesoPollo
                                                         )
 
                                                         jabasAdapter.addItem(newItem)
@@ -777,7 +779,8 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     numeroJabas = numeroJabas.toInt(),
                     numeroPollos = if (binding.checkboxConPollos.isChecked) numeroPollos.toInt() else 0,
                     pesoKg = pesoKg.toDouble(),
-                    conPollos = conPollos
+                    conPollos = conPollos,
+                    idPesoPollo = ""
                 )
                 jabasAdapter.addItem(newItem)
 
@@ -1044,7 +1047,8 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     numeroJabas = detalle.cantJabas,
                     numeroPollos = detalle.cantPollos,
                     pesoKg = detalle.peso,
-                    conPollos = detalle.tipo
+                    conPollos = detalle.tipo,
+                    idPesoPollo = detalle.idPesoPollo
                 )
                 jabasAdapter.addItem(newItem)
             }
@@ -1666,12 +1670,14 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                 cantJabas = jsonObject.getInt("_DPP_cantJabas"),
                 cantPollos = jsonObject.getInt("_DPP_cantPolllos"),
                 peso = jsonObject.getDouble("_DPP_peso"),
-                tipo = jsonObject.getString("_DPP_tipo")
+                tipo = jsonObject.getString("_DPP_tipo"),
+                idPesoPollo = jsonObject.optString("_DPP_idPesoPollo", "")
             )
             detalles.add(detalle)
         }
         return detalles
     }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

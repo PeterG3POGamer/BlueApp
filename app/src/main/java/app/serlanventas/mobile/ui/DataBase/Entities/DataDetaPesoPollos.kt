@@ -8,7 +8,7 @@ data class DataDetaPesoPollosEntity(
     val cantPollos: Int,
     val peso: Double,
     val tipo: String,
-//    val idPesoPollo: String
+    val idPesoPollo: String
 ) {
     fun toJson(): JSONObject {
         val json = JSONObject()
@@ -17,7 +17,7 @@ data class DataDetaPesoPollosEntity(
         json.put("_DPP_cantPolllos", cantPollos)
         json.put("_DPP_peso", peso)
         json.put("_DPP_tipo", tipo)
-//        json.put("_DPP_idPesoPollo", idPesoPollo)
+        json.put("_DPP_idPesoPollo", idPesoPollo)
         return json
     }
 }
