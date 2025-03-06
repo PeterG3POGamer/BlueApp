@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:marginBottom="16dp">
+        android:layout_marginBottom="16dp"> <!-- Usa layout_marginBottom en lugar de marginBottom -->
 
         <TextView
             android:id="@+id/tvNombreComprobante"
@@ -32,7 +32,7 @@
             android:text="123456789"
             android:textSize="16sp"
             android:textColor="#000000"
-            android:marginTop="8dp"/>
+            android:layout_marginTop="8dp"/>
 
         <TextView
             android:id="@+id/tvRSEmpresa"
@@ -42,7 +42,7 @@
             android:text="SerlanVentas"
             android:textSize="16sp"
             android:textColor="#000000"
-            android:marginTop="4dp"/>
+            android:layout_marginTop="4dp"/>
 
         <TextView
             android:id="@+id/tvCorrelativo"
@@ -52,7 +52,7 @@
             android:text="ED95-2"
             android:textSize="16sp"
             android:textColor="#000000"
-            android:marginTop="4dp"/>
+            android:layout_marginTop="4dp"/>
     </LinearLayout>
 
     <!-- SECCIÓN 2: Cliente Nombre e ID -->
@@ -61,14 +61,14 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:marginBottom="16dp">
+        android:layout_marginBottom="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_horizontal"
-            android:marginBottom="16dp">
+            android:layout_marginBottom="16dp">
 
             <TextView
                 android:id="@+id/tvFecha"
@@ -105,7 +105,7 @@
             android:text="N° DOC: 75238151"
             android:textSize="14sp"
             android:textColor="#000000"
-            android:marginTop="4dp"/>
+            android:layout_marginTop="4dp"/>
     </LinearLayout>
 
     <!-- ventas List -->
@@ -122,7 +122,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:marginBottom="16dp">
+        android:layout_marginBottom="16dp">
 
         <TextView
             android:id="@+id/tvTotalJabas"
@@ -139,7 +139,7 @@
             android:text="Total Pollos: 20"
             android:textSize="14sp"
             android:textColor="#000000"
-            android:marginTop="4dp"/>
+            android:layout_marginTop="4dp"/>
 
         <TextView
             android:id="@+id/tvTotalPeso"
@@ -148,7 +148,7 @@
             android:text="Total Peso: 148.00 kg"
             android:textSize="14sp"
             android:textColor="#000000"
-            android:marginTop="4dp"/>
+            android:layout_marginTop="4dp"/>
 
         <TextView
             android:id="@+id/tvTotalNeto"
@@ -157,7 +157,7 @@
             android:text="Total Neto: 108.00"
             android:textSize="14sp"
             android:textColor="#000000"
-            android:marginTop="4dp"/>
+            android:layout_marginTop="4dp"/>
 
         <TextView
             android:id="@+id/tvPKPollo"
@@ -166,7 +166,7 @@
             android:text="Peso Pollo: 5.00 kg"
             android:textSize="14sp"
             android:textColor="#000000"
-            android:marginTop="4dp"/>
+            android:layout_marginTop="4dp"/>
 
         <TextView
             android:id="@+id/tvTotalPagar"
@@ -175,7 +175,7 @@
             android:text="Total a Pagar: 540.00"
             android:textSize="14sp"
             android:textColor="#000000"
-            android:marginTop="4dp"/>
+            android:layout_marginTop="4dp"/>
     </LinearLayout>
 
     <!-- SECCIÓN 4: Mensaje y Sede -->
@@ -184,7 +184,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:marginTop="16dp">
+        android:layout_marginTop="16dp">
 
         <TextView
             android:id="@+id/tvMensaje"
@@ -195,7 +195,7 @@
             android:textSize="16sp"
             android:textColor="#000000"
             android:textStyle="bold"
-            android:marginBottom="8dp"/>
+            android:layout_marginBottom="8dp"/>
 
         <TextView
             android:id="@+id/tvSede"
