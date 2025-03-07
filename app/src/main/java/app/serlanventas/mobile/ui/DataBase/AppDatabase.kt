@@ -640,15 +640,20 @@ class AppDatabase(context: Context) :
     // MODULE VENTAS
     // =========================================================
 
-    fun getUltimoNumeroSerie(serie: String): String? {
+    fun getUltimoNumeroSerie(serie: String): Int {
+        if (serie.isEmpty()) {
+            return 0
+        }
         val db = this.readableDatabase
         val selectQuery = "SELECT * FROM $TABLE_PESO_POLLOS WHERE $KEY_SERIE = ? ORDER BY $KEY_NUMERO DESC LIMIT 1"
         val cursor = db.rawQuery(selectQuery, arrayOf(serie))
 
-        var ultimoNumero: String? = null
+        var ultimoNumero = 0
+
         if (cursor.moveToFirst()) {
-            ultimoNumero = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO))
+            ultimoNumero = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_NUMERO))
         }
+
         cursor.close()
         return ultimoNumero
     }
@@ -814,11 +819,58 @@ class AppDatabase(context: Context) :
         }
 
         return db.update(
-            TABLE_DETA_PESO_POLLOS,
+            TABLE_PESO_POLLOS,
             contentValues,
             "$KEY_ID = ?",
             arrayOf(id.toString())
         )
+    }
+
+    fun getAllDataPesoPollosBySerie(serie: String, numero: String): List<DataPesoPollosEntity>{
+        val dataList = mutableListOf<DataPesoPollosEntity>()
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_PESO_POLLOS WHERE $KEY_SERIE = ? AND $KEY_NUMERO = ?"
+        val cursor = db.rawQuery(selectQuery, arrayOf(serie, numero))
+
+        if (cursor.moveToFirst()) {
+            do {
+                val data = DataPesoPollosEntity(
+                    id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                    serie = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE)),
+                    numero = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO)),
+                    fecha = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA)),
+                    totalJabas = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_JABAS)),
+                    totalPollos = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_POLLOS)),
+                    totalPeso = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PESO)),
+                    tipo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TIPO)),
+                    numeroDocCliente = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NUMERO_DOC_CLIENTE
+                        )
+                    ),
+                    idGalpon = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
+                    idNucleo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
+                    nombreCompleto = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NOMBRE_COMPLETO
+                        )
+                    ),
+                    PKPollo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_PRECIO_K_POLLO)),
+                    totalPesoJabas = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_TOTAL_PESOJABAS
+                        )
+                    ),
+                    totalNeto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_NETO)),
+                    TotalPagar = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PAGAR)),
+                    idUsuario = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DNI_USUARIO)),
+                    idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)),
+                )
+                dataList.add(data)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return dataList
     }
 
     // -------------------------------------------
@@ -1464,6 +1516,17 @@ class AppDatabase(context: Context) :
 
 
 
+    fun beginTransaction() {
+        writableDatabase.beginTransaction()
+    }
+
+    fun setTransactionSuccessful() {
+        writableDatabase.setTransactionSuccessful()
+    }
+
+    fun endTransaction() {
+        writableDatabase.endTransaction()
+    }
 
 }
 

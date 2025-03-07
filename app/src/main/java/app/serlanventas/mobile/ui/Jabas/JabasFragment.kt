@@ -1566,11 +1566,12 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
     }
 
     fun limpiarClientes() {
+        binding.textNomCli.setText("")
+        binding.textDocCli.setText("")
+
         binding.textDocCli.isEnabled = true
         binding.textNomCli.isEnabled = true
         binding.botonCliente.isEnabled = true
-        binding.textNomCli.setText("")
-        binding.textDocCli.setText("")
     }
 
     fun limpiarCampos() {
@@ -1688,7 +1689,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         // Inicializa y registra el receptor de cambios en la red
         networkChangeReceiver = NetworkChangeReceiver { isConnected ->
             if (isConnected) {
-                dataSyncManager.checkSincronizardData(baseUrl, isLoggedIn, this) { success ->
+                dataSyncManager.checkSincronizarData(baseUrl, isLoggedIn, this) { success ->
                     if (success) {
                         //
                     }
