@@ -1,166 +1,360 @@
 package app.serlanventas.mobile.ui.DataSyncManager
 
 import android.content.Context
+import android.util.Log
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.ClienteEntity
+import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
+import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.GalponEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.NucleoEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.SerieDeviceEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.UsuarioEntity
-import app.serlanventas.mobile.ui.Jabas.ManagerPost.showCustomToast
 import org.json.JSONArray
 import org.json.JSONObject
 
 class DataProcessor(private val context: Context, private val db: AppDatabase) {
+    var needsSync = false
 
-    fun procesarDatos(data: JSONObject, callback: (SyncResult) -> Unit) {
-        procesarUsuarios(data.getJSONArray("usuarios")) { success ->
-            if (success) {
-                procesarEstablecimientos(data.getJSONArray("establecimientos")) { success ->
-                    if (success) {
-                        procesarGalpones(data.getJSONArray("galpones")) { success ->
-                            if (success) {
-                                procesarClientes(data.getJSONArray("clientes")) { success ->
-                                    procesarSerieDevice(data.getJSONArray("series")) { success ->
-                                        callback(SyncResult.Success(success))
-                                    }
-                                }
-                            } else {
-                                callback(SyncResult.Error("Error al procesar galpones"))
-                            }
-                        }
+    // Procesa los datos recibidos del servidor y los guarda en la base de datos local
+    fun processServerData(
+        ventasNube: JSONArray,
+        detallesVentasNube: JSONArray,
+        usuariosNube: JSONArray,
+        clientesNube: JSONArray,
+        establecimientosNube: JSONArray,
+        galponesNube: JSONArray,
+        serieNube: JSONArray
+    ): Boolean {
+        try {
+            needsSync = false
+            // Procesar usuarios
+            processUsuarios(usuariosNube)
+
+            // Procesar establecimientos
+            processEstablecimientos(establecimientosNube)
+
+            // Procesar galpones
+            processGalpones(galponesNube)
+
+            // Procesar clientes
+            processClientes(clientesNube)
+
+            // Procesar series
+            processSeries(serieNube)
+
+            // Procesar ventas y sus detalles
+            needsSync = processVentas(ventasNube, detallesVentasNube)
+
+            return needsSync
+        } catch (e: Exception) {
+            Log.e("DataProcessor", "Error procesando datos: ${e.message}")
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    private fun processUsuarios(usuariosNube: JSONArray): Boolean {
+        try {
+            db.beginTransaction()
+            try {
+                // Implementar lógica para guardar usuarios en la base de datos local
+                for (i in 0 until usuariosNube.length()) {
+                    val usuario = usuariosNube.getJSONObject(i)
+                    var idUsuario = usuario.getString("idUsuario")
+
+                    // Extraer datos del usuario según tu estructura JSON
+                    val usuariosEntity = UsuarioEntity(
+                        idUsuario = idUsuario,
+                        userName = usuario.getString("nombres") + " " + usuario.getString("apellidos"),
+                        pass = usuario.getString("pass"),
+                        idRol = usuario.getString("idRol"),
+                        rolName = usuario.getString("rolname"),
+                        idEstablecimiento = usuario.getString("idEstablecimiento")
+                    )
+
+                    val existeUsuario = db.getUsuarioById(idUsuario)
+                    if (existeUsuario == null) {
+                        db.insertUsuario(usuariosEntity)
                     } else {
-                        callback(SyncResult.Error("Error al procesar establecimientos"))
+//                    db.updateUsuario(usuariosEntity)
                     }
                 }
-            } else {
-                callback(SyncResult.Error("Error al procesar usuarios"))
+                db.setTransactionSuccessful()
+
+                return true
+            } finally {
+                db.endTransaction()
             }
+        } catch (e: Exception) {
+            Log.e("DataProcessor", "Error procesando usuarios: ${e.message}")
+            e.printStackTrace()
+            return false
         }
     }
 
-    private fun procesarUsuarios(usuarios: JSONArray, callback: (Boolean) -> Unit) {
-        for (i in 0 until usuarios.length()) {
-            val usuario = usuarios.getJSONObject(i)
+    private fun processEstablecimientos(establecimientosNube: JSONArray): Boolean {
+        try {
+            db.beginTransaction()
+            try {
+                for (i in 0 until establecimientosNube.length()) {
+                    val establecimiento = establecimientosNube.getJSONObject(i)
+                    val nombre = establecimiento.getString("nucleoName")
 
-            val nuevoUsuario = UsuarioEntity(
-                idUsuario = usuario.getString("idUsuario"),
-                userName = usuario.getString("nombres"),
-                pass = usuario.getString("pass"),
-                idRol = usuario.getString("idRol"),
-                rolName = usuario.getString("rolname"),
-                idEstablecimiento = usuario.getString("idEstablecimiento"),
-            )
-            val usuarioExistente = db.getUsuarioById(usuario.getString("idUsuario"))
+                    val nucleoEntity = NucleoEntity(
+                        idEstablecimiento = establecimiento.getString("idEstablecimiento"),
+                        nombre = establecimiento.getString("nucleoName"),
+                        idEmpresa = establecimiento.getString("idEmpresa"),
 
-            if (usuarioExistente == null) {
-                val insertResult = db.insertUsuario(nuevoUsuario)
+                        )
 
-                if (insertResult == -1L) {
-                    showCustomToast(context, "Error al guardar el usuario", "error")
-                    callback(false)
-                    return
+                    val nucleoExistente = db.getNucleoByName(nombre)
+                    if (nucleoExistente == null) {
+                        db.insertNucleo(nucleoEntity)
+                    } else {
+                        db.updateNucleo(nucleoEntity)
+                    }
                 }
+                db.setTransactionSuccessful()
+
+                return true
+            } finally {
+                db.endTransaction()
             }
+        } catch (e: Exception) {
+            Log.e("DataProcessor", "Error procesando establecimientos: ${e.message}")
+            e.printStackTrace()
+            return false
         }
-        callback(true)
     }
 
-    private fun procesarEstablecimientos(establecimientos: JSONArray, callback: (Boolean) -> Unit) {
-        for (i in 0 until establecimientos.length()) {
-            val establecimiento = establecimientos.getJSONObject(i)
+    private fun processGalpones(galponesNube: JSONArray): Boolean {
+        try {
+            db.beginTransaction()
+            try {
+                for (i in 0 until galponesNube.length()) {
+                    val galpon = galponesNube.getJSONObject(i)
+                    val nombre = galpon.getString("nombreGalpon")
+                    val galponEntity = GalponEntity(
+                        idGalpon = galpon.getInt("idGalpon"),
+                        nombre = nombre,
+                        idEstablecimiento = galpon.getString("idEstablecimiento")
+                    )
 
-            val nuevoNucleo = NucleoEntity(
-                idEstablecimiento = establecimiento.getString("idEstablecimiento"),
-                nombre = establecimiento.getString("nucleoName"),
-                idEmpresa = establecimiento.getString("idEmpresa"),
-            )
-            val nucleoExistente = db.getNucleoByName(establecimiento.getString("nucleoName"))
-
-            if (nucleoExistente == null) {
-                val insertResult = db.insertNucleo(nuevoNucleo)
-
-                if (insertResult == -1L) {
-                    showCustomToast(context, "Error al guardar el nucleo", "error")
-                    callback(false)
-                    return
+                    val existeGalpon = db.getGalponByName(nombre)
+                    if (existeGalpon == null) {
+                        db.insertGalpon(galponEntity)
+                    } else {
+                        db.updateGalpon(galponEntity)
+                    }
                 }
+                db.setTransactionSuccessful()
+
+                return true
+            } finally {
+                db.endTransaction()
             }
+        } catch (e: Exception) {
+            Log.e("DataProcessor", "Error procesando galpones: ${e.message}")
+            e.printStackTrace()
+            return false
         }
-        callback(true)
     }
 
-    private fun procesarGalpones(galpones: JSONArray, callback: (Boolean) -> Unit) {
-        for (i in 0 until galpones.length()) {
-            val galpon = galpones.getJSONObject(i)
+    private fun processClientes(clientesNube: JSONArray): Boolean {
+        try {
+            db.beginTransaction()
+            try {
+                // Implementar lógica para guardar usuarios en la base de datos local
+                for (i in 0 until clientesNube.length()) {
+                    val cliente = clientesNube.getJSONObject(i)
+                    var idCliente = cliente.getString("idCliente")
 
-            val nuevoGalpon = GalponEntity(
-                idGalpon = galpon.getInt("idGalpon"),
-                nombre = galpon.getString("nombreGalpon"),
-                idEstablecimiento = galpon.getString("idEstablecimiento"),
-            )
-            val galponExistente = db.getGalponByName(galpon.getString("nombreGalpon"))
 
-            if (galponExistente == null) {
-                val insertResult = db.insertGalpon(nuevoGalpon)
+                    // Extraer datos del usuario según tu estructura JSON
+                    val clienteEntity = ClienteEntity(
+                        numeroDocCliente= idCliente,
+                        nombreCompleto = cliente.getString("rs"),
+                        fechaRegistro = ""
+                    )
 
-                if (insertResult == -1L) {
-                    showCustomToast(context, "Error al guardar el galpon", "error")
-                    callback(false)
-                    return
+                    val existeCliente = db.getClienteById(idCliente)
+                    if (existeCliente == null) {
+                        db.insertCliente(clienteEntity)
+                    } else {
+                    db.updateCliente(clienteEntity)
+                    }
                 }
+                db.setTransactionSuccessful()
+
+                return true
+            } finally {
+                db.endTransaction()
             }
+        } catch (e: Exception) {
+            Log.e("DataProcessor", "Error procesando clientes: ${e.message}")
+            e.printStackTrace()
+            return false
         }
-        callback(true)
     }
 
-    private fun procesarClientes(clientes: JSONArray, callback: (Boolean) -> Unit) {
-        for (i in 0 until clientes.length()) {
-            val cliente = clientes.getJSONObject(i)
+    private fun processSeries(serieNube: JSONArray): Boolean {
+        try {
+            db.beginTransaction()
+            try {
+                for (i in 0 until serieNube.length()) {
+                    val serie = serieNube.getJSONObject(i)
 
-            val nuevoCliente = ClienteEntity(
-                numeroDocCliente = cliente.getString("idCliente"),
-                nombreCompleto = cliente.getString("nomtit"),
-                fechaRegistro = ""
-            )
-            val clienteExistente = db.getClienteById(cliente.getString("idCliente"))
+                    val nombre = serie.getString("num")
 
-            if (clienteExistente == null) {
-                val insertResult = db.insertCliente(nuevoCliente)
+                    val serieDeviceEntity = SerieDeviceEntity(
+                        idSerieDevice = serie.getInt("idSerie"),
+                        codigo = nombre,
+                        mac = serie.getString("macDevice"),
+                    )
 
-                if (insertResult == -1L) {
-                    showCustomToast(context, "Error al guardar el cliente", "error")
-                    callback(false)
-                    return
+                    val existeSerie = db.getSerieDevice()
+
+                    if (existeSerie == null) {
+                        db.insertSerieDevice(serieDeviceEntity)
+
+                    }
                 }
+                db.setTransactionSuccessful()
+
+                return true
+            } finally {
+                db.endTransaction()
             }
+        } catch (e: Exception) {
+            Log.e("DataProcessor", "Error procesando series: ${e.message}")
+            e.printStackTrace()
+            return false
         }
-        callback(true)
     }
 
-    fun procesarSerieDevice(data: JSONArray, callback: (Boolean) -> Unit) {
-        for (i in 0 until data.length()) {
-            val serie = data.getJSONObject(i)
+    private fun processVentas(ventaNube: JSONArray, detallesVentaNube: JSONArray): Boolean {
+        var needsSync = false
+        try {
+            db.beginTransaction()
+            try {
+                // Mapear detalles por idPesoPollo para acceso rápido
+                val detallesMap = HashMap<String, MutableList<JSONObject>>()
 
-            val existeDevice = db.getSerieDevice()
-            if (existeDevice == null){
-                db.deleteAllSeries()
+                for (i in 0 until detallesVentaNube.length()) {
+                    val detalle = detallesVentaNube.getJSONObject(i)
+                    val idPesoPollo = detalle.getString("idPesoPollo")
 
-                val nuevoSerieDevice = SerieDeviceEntity(
-                    idSerieDevice = serie.getInt("idSerie"),
-                    codigo = serie.getString("num"),
-                    mac = serie.getString("macDevice"),
+                    if (!detallesMap.containsKey(idPesoPollo)) {
+                        detallesMap[idPesoPollo] = mutableListOf()
+                    }
+
+                    detallesMap[idPesoPollo]?.add(detalle)
+                }
+
+                // Procesar pesos (ventas)
+                for (i in 0 until ventaNube.length()) {
+                    val venta = ventaNube.getJSONObject(i)
+                    val idVenta = venta.getInt("idPesoPollos")
+
+                    // Extraer datos del peso
+                    var serieNum = venta.getString("serie")
+                    var partes = serieNum.split("-")
+                    var serie = partes[0] // "CA48"
+                    var correlativo = partes[1]
+                    // Verificar si el peso ya existe localmente
+
+                    val existeVenta = db.getAllDataPesoPollosBySerie(serie, correlativo)
+
+                    if (existeVenta.isEmpty()) {
+                        guardarVentaAndDetalles(
+                            venta,
+                            detallesMap[idVenta.toString()] ?: mutableListOf()
+                        )
+                    }
+                }
+
+                // Verificar si hay pesos locales que no están en la nube (necesitan sincronización)
+                val pesosLocales = db.getAllDataPesoPollosNotSync()
+                if (pesosLocales.isNotEmpty()) {
+                    needsSync = true
+                }
+                db.setTransactionSuccessful()
+                return needsSync
+            } finally {
+                db.endTransaction()
+            }
+        } catch (e: Exception) {
+            Log.e("DataProcessor", "Error procesando pesos y detalles: ${e.message}")
+            e.printStackTrace()
+            return false
+        }
+    }
+
+
+    // FUNCION AUXILIAR PARA VENTAS
+    private fun guardarVentaAndDetalles(venta: JSONObject, detalles: List<JSONObject>) {
+        try {
+            db.beginTransaction()
+            try {
+
+                val idVenta = venta.getInt("idPesoPollos")
+
+                val serieNum = venta.getString("serie")
+                val partes = serieNum.split("-")
+                val serie = partes[0] // "CA48"
+                val correlativo = partes[1]
+
+                val pesoEntity = DataPesoPollosEntity(
+                    id = idVenta,
+                    serie = serie,
+                    numero = correlativo,
+                    fecha = venta.getString("fecha"),
+                    totalJabas = venta.getString("totalJabas"),
+                    totalPollos = venta.getString("totalPollos"),
+                    totalPeso = venta.getString("totalPeso"),
+                    totalPesoJabas = venta.getString("tara"),
+                    totalNeto = venta.getString("neto"),
+                    PKPollo = venta.getString("precio_kilo"),
+                    TotalPagar = venta.getString("total_pagar"),
+                    tipo = venta.getString("fecha"),
+                    numeroDocCliente = venta.getString("docCliente"),
+                    nombreCompleto = venta.getString("nomCliente"),
+                    idGalpon = venta.getString("IdGalpon"),
+                    idNucleo = "",
+                    idUsuario = "",
+                    idEstado = "1"
                 )
 
-                val insertResult = db.insertSerieDevice(nuevoSerieDevice)
+                db.insertDataPesoPollos(pesoEntity)
 
-                if (insertResult == -1L) {
-                    showCustomToast(context, "Error al guardar la serie", "error")
-                    callback(false)
-                    return
+                // Guardar detalles del peso
+                for (detalleJson in detalles) {
+                    val idDetaPP = detalleJson.getInt("idDetaPP")
+                    val cantJabas = detalleJson.getInt("cantJabas")
+                    val cantPollos = detalleJson.getInt("cantPollos")
+                    val pesoValue = detalleJson.getDouble("peso")
+                    val tipo = detalleJson.getString("tipo")
+                    val idPesoPollo = detalleJson.getString("idPesoPollo")
+
+                    val detalleEntity = DataDetaPesoPollosEntity(
+                        idDetaPP = idDetaPP,
+                        cantJabas = cantJabas,
+                        cantPollos = cantPollos,
+                        peso = pesoValue,
+                        tipo = tipo,
+                        idPesoPollo = idPesoPollo
+                    )
+
+                    db.insertDataDetaPesoPollos(detalleEntity)
                 }
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
             }
+        } catch (e: Exception) {
+            Log.e("DataProcessor", "Error guardando peso y detalles: ${e.message}")
+            e.printStackTrace()
         }
-        callback(true)
     }
 }

@@ -61,7 +61,8 @@ object ManagerPost {
         dataDetaPesoPollos: List<DataDetaPesoPollosEntity>,
         dataPesoPollos: DataPesoPollosEntity,
         numeroDocCliente: String,
-        nombreCompleto: String
+        nombreCompleto: String,
+        idNucleo: String
     ) {
 
         val numeroDocumento = numeroDocCliente
@@ -77,46 +78,52 @@ object ManagerPost {
         }
 
         val db = AppDatabase(context)
-
         CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val serie = db.getSerieDevice()
-                val ultimoNumero = serie?.let { db.getUltimoNumeroSerie(it.codigo) }
-                val nuevoNumero = if (ultimoNumero != null) {
-                    try {
-                        (ultimoNumero.toInt() + 1).toString()
-                    } catch (e: NumberFormatException) {
-                        ultimoNumero
-                    }
-                } else {
-                    "1"
-                }
+//            try {
+//                db.beginTransaction()
+                try {
+                    val serie = db.getSerieDevice()
+                    if (serie != null){
+                        val ultimoNumero = db.getUltimoNumeroSerie(serie.codigo)
+                        val nuevoNumero = ultimoNumero + 1
 
-                val idPesoPollo = db.insertDataPesoPollos(
-                    dataPesoPollos.copy(
-                        numeroDocCliente = numeroDocumento,
-                        nombreCompleto = nombreCliente,
-                        serie = serie?.codigo ?: "",
-                        numero = nuevoNumero,
-                        idEstado = "0"
-                    )
-                )
+                        val idPesoPollo = db.insertDataPesoPollos(
+                            dataPesoPollos.copy(
+                                numeroDocCliente = numeroDocumento,
+                                nombreCompleto = nombreCliente,
+                                serie = serie.codigo,
+                                numero = nuevoNumero.toString(),
+                                idEstado = "0",
+                                idNucleo = idNucleo
+                            )
+                        )
 
-                if (idPesoPollo != -1L) {
-                    dataDetaPesoPollos.forEach {
-                        val detaPeso = it.copy(idPesoPollo = idPesoPollo.toString())
-                        db.insertDataDetaPesoPollos(detaPeso)
-                    }
-                } else {
-                    Log.e("Insert", "Error al insertar el registro en la tabla de peso pollos")
-                }
-
-
-
-                withContext(Dispatchers.Main) {
-                        showSuccessNotification(context)
-//                        jabasFragment.limpiarCampos()
-//                        jabasFragment.limpiarClientes()
+                        if (idPesoPollo != -1L) {
+                            dataDetaPesoPollos.forEach {
+                                val detaPeso = it.copy(idPesoPollo = idPesoPollo.toString())
+                                val result = db.insertDataDetaPesoPollos(detaPeso)
+                                if (result == -1L) {
+                                    Log.e(
+                                        "ManagerPost",
+                                        "Error al insertar el registro en la tabla de peso pollos"
+                                    )
+                                }
+                            }
+//                            db.setTransactionSuccessful()
+                        } else {
+                            Log.e(
+                                "ManagerPost",
+                                "Error al insertar el registro en la tabla de peso pollos"
+                            )
+                        }
+                        withContext(Dispatchers.Main) {
+                            showSuccessNotification(context)
+                        }
+                    }else{
+                        Log.e(
+                            "ManagerPost",
+                            "No se encontró una serie de dispositivo válida"
+                        )
                     }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
@@ -128,6 +135,8 @@ object ManagerPost {
                 }
             }
         }
+
+
     }
 
 
@@ -154,7 +163,7 @@ object ManagerPost {
         totalPeso: String,
         tipo: String,
         numeroDocCliente: String,
-        nombreCompleto: String?,
+        nombreCompleto: String,
         idGalpon: String,
         idNucleo: String,
         PKPollo: String,
@@ -1164,21 +1173,6 @@ object ManagerPost {
     }
 
 
-    private fun parseDataDetaPesoJson(json: String): List<DataDetaPesoPollosEntity> {
-        val jabasList = JSONArray(json)
-        return (0 until jabasList.length()).map { i ->
-            val jaba = jabasList.getJSONObject(i)
-            DataDetaPesoPollosEntity(
-                idDetaPP = jaba.getInt("id"),
-                cantJabas = jaba.getInt("numeroJabas"),
-                cantPollos = jaba.getInt("numeroPollos"),
-                peso = jaba.getDouble("pesoKg"),
-                tipo = jaba.getString("conPollos"),
-                idPesoPollo = jaba.getString("idPesoPollo")
-            )
-        }
-    }
-
     suspend fun addListPesos(
         context: Context,
         fragment: JabasFragment,
@@ -1212,48 +1206,48 @@ object ManagerPost {
         }
 
         // Intentar enviar al servidor remoto
-        val baseUrl = Constants.getBaseUrl()
-        val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=insertar"
-
-        try {
-            val url = URL(urlString)
-            val conn = url.openConnection() as HttpURLConnection
-            conn.requestMethod = "POST"
-            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-            conn.doOutput = true
-
-            // Convertir PesosEntity a JSON
-            val jsonInputString = pesosEntity.toJson().toString()
-
-            // Escribir JSON en el cuerpo de la solicitud
-            conn.outputStream.use { os ->
-                val input = jsonInputString.toByteArray(Charsets.UTF_8)
-                os.write(input, 0, input.size)
-            }
-
-            val responseCode = conn.responseCode
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-                Log.d("AddListPesos", "Response: $inputStream")
-
-                val jsonResponse = JSONObject(inputStream)
-                val status = jsonResponse.optString("status")
-
-                if (status == "success") {
-                    withContext(Dispatchers.Main) {
-                        showCustomToast(context, "Datos enviados correctamente", "success")
-                    }
-                    return@withContext true
-                } else {
-                    val message = jsonResponse.optString("message")
-                    Log.e("AddListPesos", "Error: $message")
-                }
-            } else {
-                Log.e("addListPesos", "Server response: $responseCode ${conn.responseMessage}")
-            }
-        } catch (ex: Exception) {
-            Log.e("addListPesos", "Network exception: ${ex.message}")
-        }
+//        val baseUrl = Constants.getBaseUrl()
+//        val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=insertar"
+//
+//        try {
+//            val url = URL(urlString)
+//            val conn = url.openConnection() as HttpURLConnection
+//            conn.requestMethod = "POST"
+//            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+//            conn.doOutput = true
+//
+//            // Convertir PesosEntity a JSON
+//            val jsonInputString = pesosEntity.toJson().toString()
+//
+//            // Escribir JSON en el cuerpo de la solicitud
+//            conn.outputStream.use { os ->
+//                val input = jsonInputString.toByteArray(Charsets.UTF_8)
+//                os.write(input, 0, input.size)
+//            }
+//
+//            val responseCode = conn.responseCode
+//            if (responseCode == HttpURLConnection.HTTP_OK) {
+//                val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
+//                Log.d("AddListPesos", "Response: $inputStream")
+//
+//                val jsonResponse = JSONObject(inputStream)
+//                val status = jsonResponse.optString("status")
+//
+//                if (status == "success") {
+//                    withContext(Dispatchers.Main) {
+//                        showCustomToast(context, "Datos enviados correctamente", "success")
+//                    }
+//                    return@withContext true
+//                } else {
+//                    val message = jsonResponse.optString("message")
+//                    Log.e("AddListPesos", "Error: $message")
+//                }
+//            } else {
+//                Log.e("addListPesos", "Server response: $responseCode ${conn.responseMessage}")
+//            }
+//        } catch (ex: Exception) {
+//            Log.e("addListPesos", "Network exception: ${ex.message}")
+//        }
 
         // Si falla el envío al servidor, los datos ya están guardados localmente
         return@withContext true
@@ -1285,8 +1279,7 @@ object ManagerPost {
             }
         } else {
             val existeLocalmente = db.getPesoPorId(idPesoShared)
-            if (existeLocalmente != null)
-            {
+            if (existeLocalmente != null) {
                 val result2 = db.updatePesoById(idPesoShared, pesosEntity)
                 if (result2 <= 0) {
                     withContext(Dispatchers.Main) {
@@ -1294,7 +1287,7 @@ object ManagerPost {
                     }
                     return@withContext false
                 }
-            }else{
+            } else {
                 val result = db.addPesoUsed(pesoUsedEntity)
                 if (result == -1L) {
                     withContext(Dispatchers.Main) {
@@ -1311,67 +1304,67 @@ object ManagerPost {
         }
 
         // Después de la actualización local exitosa, intentamos actualizar el servidor remoto
-        val baseUrl = Constants.getBaseUrl()
-        val urlString =
-            "${baseUrl}controllers/TempPesoPollosController.php?op=insertar&idPesoShared=${idPesoShared}"
-
-        try {
-            val url = URL(urlString)
-            val conn = url.openConnection() as HttpURLConnection
-            conn.requestMethod = "POST"
-            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-            conn.doOutput = true
-
-            // Convertir PesosEntity a JSON
-            val jsonInputString = pesosEntity.toJson().toString()
-
-            // Escribir JSON en el cuerpo de la solicitud
-            conn.outputStream.use { os ->
-                val input = jsonInputString.toByteArray(Charsets.UTF_8)
-                os.write(input, 0, input.size)
-            }
-
-            val responseCode = conn.responseCode
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-                Log.e("UpdateListPesos", "Response: $inputStream")
-
-                try {
-                    val jsonResponse = JSONObject(inputStream)
-                    val status = jsonResponse.optString("status")
-                    val message = jsonResponse.optString("message")
-
-                    if (status == "success") {
-                        withContext(Dispatchers.Main) {
-                            showCustomToast(context, "Peso actualizado correctamente ", "success")
-                        }
-                        return@withContext true
-                    } else {
-                        withContext(Dispatchers.Main) {
-                            showCustomToast(
-                                context,
-                                "Ocurrió un error al actualizar en el servidor",
-                                "error"
-                            )
-                        }
-                        Log.e("UpdateListPesos", "Error: $message")
-                    }
-                } catch (e: JSONException) {
-                    withContext(Dispatchers.Main) {
-                        showCustomToast(
-                            context,
-                            "Error al procesar la respuesta del servidor",
-                            "error"
-                        )
-                    }
-                    Log.e("updateListPesos", "JSON Exception: ${e.message}")
-                }
-            } else {
-                Log.e("updateListPesos", "Server response: $responseCode ${conn.responseMessage}")
-            }
-        } catch (ex: Exception) {
-            Log.e("updateListPesos", "Exception: ${ex.message}")
-        }
+//        val baseUrl = Constants.getBaseUrl()
+//        val urlString =
+//            "${baseUrl}controllers/TempPesoPollosController.php?op=insertar&idPesoShared=${idPesoShared}"
+//
+//        try {
+//            val url = URL(urlString)
+//            val conn = url.openConnection() as HttpURLConnection
+//            conn.requestMethod = "POST"
+//            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+//            conn.doOutput = true
+//
+//            // Convertir PesosEntity a JSON
+//            val jsonInputString = pesosEntity.toJson().toString()
+//
+//            // Escribir JSON en el cuerpo de la solicitud
+//            conn.outputStream.use { os ->
+//                val input = jsonInputString.toByteArray(Charsets.UTF_8)
+//                os.write(input, 0, input.size)
+//            }
+//
+//            val responseCode = conn.responseCode
+//            if (responseCode == HttpURLConnection.HTTP_OK) {
+//                val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
+//                Log.e("UpdateListPesos", "Response: $inputStream")
+//
+//                try {
+//                    val jsonResponse = JSONObject(inputStream)
+//                    val status = jsonResponse.optString("status")
+//                    val message = jsonResponse.optString("message")
+//
+//                    if (status == "success") {
+//                        withContext(Dispatchers.Main) {
+//                            showCustomToast(context, "Peso actualizado correctamente ", "success")
+//                        }
+//                        return@withContext true
+//                    } else {
+//                        withContext(Dispatchers.Main) {
+//                            showCustomToast(
+//                                context,
+//                                "Ocurrió un error al actualizar en el servidor",
+//                                "error"
+//                            )
+//                        }
+//                        Log.e("UpdateListPesos", "Error: $message")
+//                    }
+//                } catch (e: JSONException) {
+//                    withContext(Dispatchers.Main) {
+//                        showCustomToast(
+//                            context,
+//                            "Error al procesar la respuesta del servidor",
+//                            "error"
+//                        )
+//                    }
+//                    Log.e("updateListPesos", "JSON Exception: ${e.message}")
+//                }
+//            } else {
+//                Log.e("updateListPesos", "Server response: $responseCode ${conn.responseMessage}")
+//            }
+//        } catch (ex: Exception) {
+//            Log.e("updateListPesos", "Exception: ${ex.message}")
+//        }
 
         // Si llegamos aquí, significa que la actualización remota falló, pero la local fue exitosa
         return@withContext true

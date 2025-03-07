@@ -74,7 +74,7 @@ class LoginActivity : AppCompatActivity(), ProgressCallback {
         // Primero, verificar si es necesario sincronizar los datos
         networkChangeReceiver = NetworkChangeReceiver { isConnected ->
             if (isConnected) {
-                dataSyncManager.checkSincronizardData(baseUrl, isLoggedIn, this) { success ->
+                dataSyncManager.checkSincronizarData(baseUrl, isLoggedIn, this) { success ->
                     if (success) {
                         navigateBasedOnLoginState(isLoggedIn)
                     }
@@ -86,10 +86,6 @@ class LoginActivity : AppCompatActivity(), ProgressCallback {
     }
 
     private fun navigateBasedOnLoginState(isLoggedIn: Boolean) {
-//        progressBar.visibility = View.GONE
-//        statusMessage.visibility = View.GONE
-//        progressDetails.visibility = View.GONE
-
         if (isLoggedIn) {
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)

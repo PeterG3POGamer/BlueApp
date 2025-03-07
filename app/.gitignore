@@ -3,3 +3,4 @@
 /build/kotlin
 /build/kotlinsnapshot
 /build/tmp
+/build/tmp/outputs/logs

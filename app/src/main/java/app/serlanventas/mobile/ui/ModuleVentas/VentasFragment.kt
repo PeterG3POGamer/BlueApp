@@ -3,15 +3,13 @@ package app.serlanventas.mobile.ui.ModuleVentas
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import app.serlanventas.mobile.R
@@ -20,6 +18,7 @@ import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.Services.generateAndOpenPDF2
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -45,11 +44,11 @@ class VentasFragment : Fragment() {
         db = AppDatabase(requireContext())
 
         ventasAdapter = VentasAdapter(emptyList()) { venta ->
-            val pesoPollos = db.obtenerPesoPollosPorId(venta.id.toLong())
+            val pesoPollos = db.obtenerPesoPollosPorId(venta.id)
 
             pesoPollos?.let {
-                val dataNucleo = db.obtenerNucleoPorId(it.idGalpon.toInt())
-                val dataGalpon = db.obtenerGalponPorId(it.idNucleo.toInt())
+                val dataNucleo = db.obtenerNucleoPorId(it.idNucleo.toInt())
+                val dataGalpon = db.obtenerGalponPorId(it.idGalpon.toInt())
 
                 // Preparar los datos
                 val nombreComprobante = "Nota de Venta"
@@ -77,10 +76,10 @@ class VentasFragment : Fragment() {
                 val sede = "SEDE: ${dataNucleo?.nombre} - ${dataGalpon?.nombre}"
 
                 // Obtener los detalles de peso de pollos
-                val detallesPesoPollos = db.obtenerDetaPesoPollosPorId(it.id.toLong())
+                val detallesPesoPollos = db.obtenerDetaPesoPollosPorId(it.id)
 
                 // Mostrar el modal con los detalles de la venta
-                showModal(venta.id.toLong(), nombreComprobante, idEmpresa, rsEmpresa, correlativo, fecha, hora, nombreCliente, idCliente, totalJabas, totalPollos, totalPesoJabas, totalPeso, totalNeto, pkPollo, totalPagar, mensaje, sede, detallesPesoPollos, psPromedio)
+                showModal(venta.id, nombreComprobante, idEmpresa, rsEmpresa, correlativo, fecha, hora, nombreCliente, idCliente, totalJabas, totalPollos, totalPesoJabas, totalPeso, totalNeto, pkPollo, totalPagar, mensaje, sede, detallesPesoPollos, psPromedio)
             }
         }
 
@@ -97,7 +96,7 @@ class VentasFragment : Fragment() {
 
     @SuppressLint("MissingInflatedId")
     private fun showModal(
-        ventaId: Long,
+        ventaId: Int,
         nombreComprobante: String, idEmpresa: String, rsEmpresa: String, correlativo: String,
         fecha: String, hora: String, nombreCliente: String, idCliente: String,
         totalJabas: String, totalPollos: String, totalPesoJabas: String, totalPeso: String,
@@ -158,7 +157,7 @@ class VentasFragment : Fragment() {
         dialog.show()
     }
 
-    private suspend fun imprimirDetalleVenta(ventaId: Long) {
+    private suspend fun imprimirDetalleVenta(ventaId: Int) {
         val pesoPollos = db.obtenerPesoPollosPorId(ventaId)
         val detallesPesoPollos = db.obtenerDetaPesoPollosPorId(ventaId)
 

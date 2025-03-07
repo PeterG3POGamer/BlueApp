@@ -12,7 +12,7 @@ data class DataPesoPollosEntity(
     var totalPeso: String,
     val tipo: String,
     val numeroDocCliente: String,
-    var nombreCompleto: String? = null,
+    var nombreCompleto: String,
     val idGalpon: String,
     val idNucleo: String,
     val PKPollo: String,

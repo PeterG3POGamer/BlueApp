@@ -165,6 +165,7 @@ class FragmentPreliminar : Fragment() {
 
         var numeroDocCliente = dataPesoPollos.optString("_PP_docCliente")
         var nombreCompleto = dataPesoPollos.optString("_PP_nombreCompleto", null)
+        var idNucleo = dataPesoPollos.optString("_PP_idNucleo")
 
         val dataPesoPollosEntity = procesarDataPesoPollos(dataPesoPollos)
         val dataDetaPesoPollosList = convertirObejtoPesoPollos(dataDetaPesoPollos)
@@ -176,7 +177,7 @@ class FragmentPreliminar : Fragment() {
 
         saveLocally(
             requireContext(),
-            dataDetaPesoPollosList, dataPesoPollosEntity, numeroDocCliente, nombreCompleto
+            dataDetaPesoPollosList, dataPesoPollosEntity, numeroDocCliente, nombreCompleto, idNucleo
         )
 
 
