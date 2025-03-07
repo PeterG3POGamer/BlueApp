@@ -19,13 +19,15 @@ import androidx.core.content.FileProvider
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.preliminar.FragmentPreliminar
 import com.itextpdf.io.font.constants.StandardFonts
+import com.itextpdf.kernel.colors.ColorConstants
 import com.itextpdf.kernel.font.PdfFontFactory
 import com.itextpdf.kernel.geom.PageSize
 import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfWriter
 import com.itextpdf.layout.Document
 import com.itextpdf.layout.borders.Border
-import com.itextpdf.layout.borders.DottedBorder
+import com.itextpdf.layout.borders.DashedBorder
+import com.itextpdf.layout.borders.SolidBorder
 import com.itextpdf.layout.element.Cell
 import com.itextpdf.layout.element.Paragraph
 import com.itextpdf.layout.element.Table
@@ -33,14 +35,18 @@ import com.itextpdf.layout.element.Text
 import com.itextpdf.layout.property.HorizontalAlignment
 import com.itextpdf.layout.property.TextAlignment
 import com.itextpdf.layout.property.UnitValue
+import com.itextpdf.layout.property.VerticalAlignment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
-suspend fun generateAndOpenPDF2(jsonDataPdf: JSONObject, context: Context) {
+suspend fun generateAndOpenPDF2(jsonDataPdf: JSONObject, context: Context, paperWidth: Int = 80) {
     try {
+        // Validar que el ancho del papel sea 58mm o 80mm
+        val validPaperWidth = if (paperWidth == 80) 80 else 58
+
         val PESO_POLLO = jsonDataPdf.optJSONArray("PESO_POLLO") ?: JSONArray()
         val CLIENTE = jsonDataPdf.optJSONArray("CLIENTE") ?: JSONArray()
         val GALPON = jsonDataPdf.optJSONArray("GALPON") ?: JSONArray()
@@ -66,189 +72,401 @@ suspend fun generateAndOpenPDF2(jsonDataPdf: JSONObject, context: Context) {
         val pesoPromedio = PESO_POLLO.optJSONObject(0)?.optString("pesoPromedio", "N/A") ?: "N/A"
         val total_pagar = PESO_POLLO.optJSONObject(0)?.optString("total_pagar", "N/A") ?: "N/A"
 
-        val fileName = "$nroRuc-$serie.pdf"
+        // Agregar el formato al nombre del archivo
+        val fileName = "$nroRuc-$serie-${validPaperWidth}mm.pdf"
         val directory = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "PDFs")
         if (!directory.exists()) {
             directory.mkdirs()
         }
         val file = File(directory, fileName)
 
-        // Establecer el ancho fijo en puntos
-        val widthInPoints = 58f * 72 / 25.4f
+        // Verificar si el archivo ya existe para evitar regenerarlo
+        if (file.exists()) {
+            Log.d("PdfManager", "El archivo PDF ya existe, omitiendo generación: ${file.absolutePath}")
+
+            // Preparar el texto formateado para impresión térmica
+            val formattedText = buildString {
+                // Encabezado
+                appendLine("TITLE:NOTA DE VENTA")
+                appendLine("CENTER:RUC: $nroRuc")
+                appendLine("CENTER:$nombreComercial")
+                appendLine("CENTER:Serie: $serie   Fecha: $fecha")
+                appendLine("LINE")
+
+                // Datos del cliente
+                appendLine("LEFT:N° Documento: $dni")
+                appendLine("LEFT:Cliente: $rs")
+                appendLine("LINE")
+
+                // Encabezado de la tabla con 5 columnas
+                appendLine("TABLE: ${"#"}| ${"Jabas".padStart(4)}| ${"Pollos".padStart(4)}| ${"Peso".padStart(5)}| ${"Tipo".padStart(8)}")
+                appendLine("LINE")
+
+                // Datos de la tabla
+                for (i in 0 until DETA_PESOPOLLOS.length()) {
+                    val item = DETA_PESOPOLLOS.optJSONObject(i) ?: JSONObject()
+                    appendLine("TABLE: ${(i + 1).toString()}| ${item.optString("cantJabas", "").padStart(6)}| ${item.optString("cantPollos", "").padStart(6)}| ${item.optString("peso", "").padStart(6).padEnd(6)}| ${item.optString("tipo", "").padStart(2)}")
+                }
+
+                // Línea final de la tabla
+                appendLine("LINE")
+
+                // Totales
+                appendLine("TOTAL:T. Jabas:${totalJabas.padEnd(36)}")
+                appendLine("TOTAL:T. Pollos:${totalPollos.padEnd(36)}")
+                appendLine("TOTAL:Ps. Bruto:${pesoBruto.padEnd(36)}")
+                appendLine("TOTAL:Tara:${tara.padEnd(36)}")
+                appendLine("TOTAL:Neto:${neto.padEnd(36)}")
+                appendLine("TOTAL:Precio/Kilo:${precio_kilo.padEnd(36)}")
+                appendLine("TOTAL:Ps. Promedio:${pesoPromedio.padEnd(36)}")
+                appendLine("TOTAL:T. PAGAR:${total_pagar.padEnd(36)}")
+                appendLine("LINE")
+
+                // Pie de página
+                appendLine("CENTER:$nombre - $nomgal")
+                appendLine("CENTER:¡GRACIAS POR SU COMPRA!")
+            }
+
+            // Continuar con el proceso de impresión y notificación
+            var db = AppDatabase(context)
+            val impresora = db.getImpresoraById("1")
+            if (impresora != null) {
+                val printerIp = impresora.ip
+                val printerPort = impresora.puerto.toInt()
+
+                val printerManager = PrinterManager(context, printerIp, printerPort)
+
+                withContext(Dispatchers.IO) {
+                    try {
+                        printerManager.printFormattedText(formattedText)
+                        showPdfGeneratedNotification(context, file)
+                    } catch (e: Exception) {
+                        showPdfGeneratedNotification(context, file)
+                    }
+                }
+            } else {
+                withContext(Dispatchers.IO) {
+                    showPdfGeneratedNotification(context, file)
+                }
+            }
+            return
+        }
+
+        // Establecer el ancho en puntos según el formato seleccionado
+        val widthInPoints = validPaperWidth * 72 / 25.4f
 
         // Calcular la altura necesaria en función del número de elementos en la tabla de detalles
-        val baseHeightInPoints = 120f * 72 / 25.4f // Altura base en puntos, ajusta esto según sea necesario
-        val itemHeight = 10f // Altura estimada por fila de la tabla
-        val additionalHeight = DETA_PESOPOLLOS.length() * itemHeight // Altura adicional basada en el número de filas
-        val totalHeightInPoints = baseHeightInPoints + additionalHeight
+        val baseHeightInPoints = 200f * 72 / 25.4f
+        val itemHeight = 15f
+        val additionalHeight = DETA_PESOPOLLOS.length() * itemHeight
+        val totalHeightInPoints = baseHeightInPoints + additionalHeight + 200f
 
         val pdfWriter = PdfWriter(file)
         val pdfDocument = PdfDocument(pdfWriter)
+        // Configurar una página única sin cortes
         pdfDocument.setDefaultPageSize(PageSize(widthInPoints, totalHeightInPoints))
+        // Desactivar la división automática de páginas
+        pdfDocument.defaultPageSize = PageSize(widthInPoints, totalHeightInPoints)
 
         val document = Document(pdfDocument)
-        document.setMargins(2f, 0f, 2f, 0f)
 
-        // Cambiar la fuente a una más apropiada para tickets
-        val font = PdfFontFactory.createFont(StandardFonts.COURIER)
-        val boldFont = PdfFontFactory.createFont(StandardFonts.COURIER_BOLD)
-        val titleFontSize = 10f
-        val normalFontSize = 7f
-        val smallFontSize = 6f
-        val smallFontSize2 = 5f
+        // ===== CONFIGURACIÓN DE MÁRGENES =====
+        // AJUSTE MANUAL: Aumenta estos valores si necesitas más espacio en los bordes
+        // Margen izquierdo: aumentado para dar más espacio a las etiquetas (N° Doc, Cliente, T.Jabas)
+        // Margen derecho: aumentado para evitar cortes en los valores
+        val leftMargin = if (validPaperWidth == 80) 20f else 15f  // Aumentado para dar más espacio a las etiquetas
+        val rightMargin = if (validPaperWidth == 80) 25f else 20f // Aumentado aún más para el lado derecho
+        val topMargin = 10f
+        val bottomMargin = 10f
 
-        // Título
-        document.add(Paragraph("NOTA DE VENTA")
+        document.setMargins(leftMargin, rightMargin, topMargin, bottomMargin)
+        // ===== FIN CONFIGURACIÓN DE MÁRGENES =====
+
+        // Usar fuentes en negrita para mejor impresión térmica
+        val boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD)
+
+        // Usar un único tamaño de fuente para todo el documento
+        val uniformFontSize = 7f
+
+        // Título con fondo gris claro para destacar
+        val titleCell = Cell()
+            .add(Paragraph("NOTA DE VENTA")
+                .setFont(boldFont)
+                .setFontSize(uniformFontSize)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setBold())
+            .setBorder(Border.NO_BORDER)
+            .setBackgroundColor(ColorConstants.LIGHT_GRAY)
+            .setPadding(3f)
+
+        val titleTable = Table(UnitValue.createPercentArray(floatArrayOf(100f)))
+            .setWidth(UnitValue.createPercentValue(100f))
+            .addCell(titleCell)
+
+        document.add(titleTable)
+
+        // Información de la empresa en una tabla compacta
+        val infoTable = Table(UnitValue.createPercentArray(floatArrayOf(100f)))
+            .setWidth(UnitValue.createPercentValue(100f))
+            .setMarginTop(0f)
+            .setMarginBottom(0f)
+
+        infoTable.addCell(Cell()
+            .add(Paragraph("RUC: $nroRuc")
+                .setFont(boldFont)
+                .setFontSize(uniformFontSize)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setBold())
+            .setBorder(Border.NO_BORDER)
+            .setPadding(1f))
+
+        infoTable.addCell(Cell()
+            .add(Paragraph(nombreComercial)
+                .setFont(boldFont)
+                .setFontSize(uniformFontSize)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setBold())
+            .setBorder(Border.NO_BORDER)
+            .setPadding(1f))
+
+        infoTable.addCell(Cell()
+            .add(Paragraph("Serie: $serie   Fecha: $fecha")
+                .setFont(boldFont)
+                .setFontSize(uniformFontSize)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setBold())
+            .setBorder(Border.NO_BORDER)
+            .setPadding(1f))
+
+        document.add(infoTable)
+
+        // ===== AJUSTE DE LÍNEAS SEPARADORAS =====
+        // AJUSTE MANUAL: Cambia el valor de lineLength para hacer las líneas más cortas o largas
+        // Línea separadora más gruesa pero más corta para evitar los bordes
+        val lineLength = if (validPaperWidth == 80) 25 else 20 // Reducido para evitar llegar a los bordes
+        // ===== FIN AJUSTE DE LÍNEAS SEPARADORAS =====
+
+        document.add(Paragraph("=".repeat(lineLength))
             .setFont(boldFont)
-            .setFontSize(titleFontSize)
-            .setTextAlignment(TextAlignment.CENTER))
+            .setFontSize(uniformFontSize)
+            .setTextAlignment(TextAlignment.CENTER)
+            .setMarginTop(0f)
+            .setMarginBottom(0f))
 
-        // Información de la empresa
-        document.add(Paragraph("RUC: $nroRuc")
-            .setFont(font)
-            .setFontSize(normalFontSize)
-            .setTextAlignment(TextAlignment.CENTER))
+        // ===== AJUSTE DE TABLA DE CLIENTE =====
+        // AJUSTE MANUAL: Modifica estos valores para ajustar el ancho de las columnas
+        // Primera columna (45f): etiquetas como "N° Documento:" y "Cliente:"
+        // Segunda columna (55f): valores como el DNI y nombre del cliente
+        val clienteTableColWidths = floatArrayOf(45f, 55f) // Aumentado el ancho de la primera columna
+        // ===== FIN AJUSTE DE TABLA DE CLIENTE =====
 
-        document.add(Paragraph("$nombreComercial")
-            .setFont(font)
-            .setFontSize(normalFontSize)
-            .setTextAlignment(TextAlignment.CENTER))
+        // Información del cliente en una tabla de dos columnas
+        val clienteTable = Table(UnitValue.createPercentArray(clienteTableColWidths))
+            .setWidth(UnitValue.createPercentValue(100f))
+            .setMarginTop(0f)
+            .setMarginBottom(0f)
 
-        // Información general
-        document.add(Paragraph("Serie: $serie   Fecha: $fecha")
-            .setFont(font)
-            .setFontSize(smallFontSize)
-            .setTextAlignment(TextAlignment.CENTER))
+        clienteTable.addCell(Cell()
+            .add(Paragraph("N° Documento:")
+                .setFont(boldFont)
+                .setFontSize(uniformFontSize)
+                .setBold())
+            .setBorder(Border.NO_BORDER)
+            .setPadding(1f))
 
-        document.add(Paragraph("-".repeat(45))
-            .setFont(font)
-            .setFontSize(smallFontSize)
-            .setTextAlignment(TextAlignment.CENTER))
-            .setMargins(0f, 0f,0f,0f)
+        clienteTable.addCell(Cell()
+            .add(Paragraph(dni)
+                .setFont(boldFont)
+                .setFontSize(uniformFontSize)
+                .setBold())
+            .setBorder(Border.NO_BORDER)
+            .setPadding(1f))
 
-        // Información del cliente
-        document.add(
-            Paragraph().add(
-                Text("N° Documento: ").setFont(boldFont).setFontSize(normalFontSize)
-            ).add(
-                Text(dni).setFont(font).setFontSize(normalFontSize)
-            )
-                .setMargins(0f, 0f,0f,0f)
-        )
+        clienteTable.addCell(Cell()
+            .add(Paragraph("Cliente:")
+                .setFont(boldFont)
+                .setFontSize(uniformFontSize)
+                .setBold())
+            .setBorder(Border.NO_BORDER)
+            .setPadding(1f))
 
-        document.add(
-            Paragraph().add(
-                Text("Cliente: ").setFont(boldFont).setFontSize(normalFontSize)
-            ).add(
-                Text(rs).setFont(font).setFontSize(normalFontSize)
-            )
-                .setMargins(0f, 0f,0f,0f)
-        )
+        clienteTable.addCell(Cell()
+            .add(Paragraph(rs)
+                .setFont(boldFont)
+                .setFontSize(uniformFontSize)
+                .setBold())
+            .setBorder(Border.NO_BORDER)
+            .setPadding(1f))
 
-        document.add(Paragraph("-".repeat(45))
-            .setFont(font)
-            .setFontSize(smallFontSize)
-            .setTextAlignment(TextAlignment.CENTER))
-            .setMargins(0f, 0f,0f,0f)
+        document.add(clienteTable)
 
-        // Crear una tabla sin líneas y bordes visibles
-        val detailsTable = Table(UnitValue.createPercentArray(floatArrayOf(1f, 1f, 1f, 1f, 3f)))
+        // Línea separadora más gruesa pero más corta
+        document.add(Paragraph("=".repeat(lineLength))
+            .setFont(boldFont)
+            .setFontSize(uniformFontSize)
+            .setTextAlignment(TextAlignment.CENTER)
+            .setMarginTop(0f)
+            .setMarginBottom(0f))
+
+        // ===== AJUSTE DE TABLA DE DETALLES =====
+        // AJUSTE MANUAL: Modifica estos valores para ajustar el ancho de las columnas de la tabla de detalles
+        // Valores actuales: 10% para #, 20% para Jabas, 20% para Pollos, 20% para Peso, 30% para Tipo
+        val detailsTableColWidths = floatArrayOf(10f, 20f, 20f, 20f, 30f)
+        // ===== FIN AJUSTE DE TABLA DE DETALLES =====
+
+        // Tabla de detalles con diseño más compacto y texto más grueso
+        val detailsTable = Table(UnitValue.createPercentArray(detailsTableColWidths))
             .setWidth(UnitValue.createPercentValue(100f))
             .setHorizontalAlignment(HorizontalAlignment.CENTER)
-            .setBorderBottom(DottedBorder(1f))
+            .setMarginTop(0f)
+            .setMarginBottom(0f)
 
-        arrayOf("#", "N° Jabas", "Pollos", "Peso", "Tipo").forEachIndexed { index, header ->
-            val cell = Cell().add(Paragraph(header)
-                .setFont(boldFont)
-                .setFontSize(smallFontSize2))
+        // Encabezados de la tabla
+        val headers = arrayOf("#", "Jabas", "Pollos", "Peso", "Tipo")
+        headers.forEach { header ->
+            detailsTable.addHeaderCell(Cell()
+                .add(Paragraph(header)
+                    .setFont(boldFont)
+                    .setFontSize(uniformFontSize)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setBold())
                 .setBorder(Border.NO_BORDER)
-                .setTextAlignment(TextAlignment.CENTER)
-            cell.setBorderBottom(DottedBorder(1f))
-            detailsTable.addHeaderCell(cell)
+                .setBorderBottom(SolidBorder(1f))
+                .setPadding(1f)
+                .setVerticalAlignment(VerticalAlignment.MIDDLE))
         }
 
+        // Filas de datos con texto más grueso
         for (i in 0 until DETA_PESOPOLLOS.length()) {
             val item = DETA_PESOPOLLOS.optJSONObject(i) ?: JSONObject()
-            detailsTable.addCell(Cell().add(Paragraph((i + 1).toString())
-                .setFont(font)
-                .setFontSize(smallFontSize2))
+
+            // Número de fila
+            detailsTable.addCell(Cell()
+                .add(Paragraph((i + 1).toString())
+                    .setFont(boldFont)
+                    .setFontSize(uniformFontSize)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setBold())
                 .setBorder(Border.NO_BORDER)
-                .setTextAlignment(TextAlignment.CENTER)
-                .setMargins(1f,1f,1f,1f)
-                .setPadding(4f))
+                .setPadding(1f)
+                .setVerticalAlignment(VerticalAlignment.MIDDLE))
+
+            // Datos de la fila
             arrayOf(
                 item.optString("cantJabas", ""),
                 item.optString("cantPollos", ""),
                 item.optString("peso", ""),
                 item.optString("tipo", "")
-            ).forEach {
-                detailsTable.addCell(Cell().add(Paragraph(it)
-                    .setFont(font)
-                    .setFontSize(smallFontSize2))
+            ).forEach { value ->
+                detailsTable.addCell(Cell()
+                    .add(Paragraph(value)
+                        .setFont(boldFont)
+                        .setFontSize(uniformFontSize)
+                        .setTextAlignment(TextAlignment.CENTER)
+                        .setBold())
                     .setBorder(Border.NO_BORDER)
-                    .setTextAlignment(TextAlignment.CENTER)
-                    .setMargins(1f,1f,1f,1f)
-                    .setPadding(4f))
+                    .setPadding(1f)
+                    .setVerticalAlignment(VerticalAlignment.MIDDLE))
             }
         }
 
         document.add(detailsTable)
 
-        // Tabla de totales al lado derecho
-        val totalsTable = Table(UnitValue.createPercentArray(floatArrayOf(60f, 40f)))
-            .setWidth(UnitValue.createPercentValue(50f))
-            .setHorizontalAlignment(HorizontalAlignment.RIGHT)
+        // Línea separadora más gruesa pero más corta
+        document.add(Paragraph("=".repeat(lineLength))
+            .setFont(boldFont)
+            .setFontSize(uniformFontSize)
+            .setTextAlignment(TextAlignment.CENTER)
+            .setMarginTop(0f)
+            .setMarginBottom(0f))
 
-        fun addTotalRow(label: String, value: String, isBold: Boolean = false, isLast: Boolean = false) {
-            val labelCell = Cell().add(Paragraph(label)
-                .setFont(if (isBold) boldFont else font)
-                .setFontSize(smallFontSize))
-                .setBorderRight(Border.NO_BORDER)
-                .setTextAlignment(TextAlignment.LEFT)
-                .setPaddingRight(0f)
+        // ===== AJUSTE DE TABLA DE TOTALES =====
+        // AJUSTE MANUAL: Modifica estos valores para ajustar el ancho de las columnas de totales
+        // Primera columna (50f): etiquetas como "T. Jabas:", "T. Pollos:", etc.
+        // Segunda columna (50f): valores de los totales
+        val totalsTableColWidths = floatArrayOf(50f, 50f) // Aumentado el ancho de la primera columna
+        // ===== FIN AJUSTE DE TABLA DE TOTALES =====
 
-            val valueCell = Cell().add(Paragraph(value)
-                .setFont(if (isBold) boldFont else font)
-                .setFontSize(smallFontSize))
-                .setBorderLeft(Border.NO_BORDER)
-                .setTextAlignment(TextAlignment.RIGHT)
-                .setPaddingLeft(0f)
+        // Tabla de totales con diseño mejorado y texto más grueso
+        val totalsTable = Table(UnitValue.createPercentArray(totalsTableColWidths))
+            .setWidth(UnitValue.createPercentValue(100f))
+            .setMarginTop(0f)
+            .setMarginBottom(0f)
 
-            if (!isLast) {
-                labelCell.setBorderBottom(Border.NO_BORDER)
-                valueCell.setBorderBottom(Border.NO_BORDER)
-            }
+        // Función para agregar filas de totales
+        fun addTotalRow(label: String, value: String) {
+            totalsTable.addCell(Cell()
+                .add(Paragraph(label)
+                    .setFont(boldFont)
+                    .setFontSize(uniformFontSize)
+                    .setTextAlignment(TextAlignment.LEFT)
+                    .setBold())
+                .setBorder(Border.NO_BORDER)
+                .setPadding(1f))
 
-            totalsTable.addCell(labelCell)
-            totalsTable.addCell(valueCell)
+            totalsTable.addCell(Cell()
+                .add(Paragraph(value)
+                    .setFont(boldFont)
+                    .setFontSize(uniformFontSize)
+                    .setTextAlignment(TextAlignment.RIGHT)
+                    .setBold())
+                .setBorder(Border.NO_BORDER)
+                .setPadding(1f))
         }
 
+        // Agregar filas de totales
         addTotalRow("T. Jabas:", totalJabas)
         addTotalRow("T. Pollos:", totalPollos)
         addTotalRow("Ps. Bruto:", pesoBruto)
         addTotalRow("Tara:", tara)
         addTotalRow("Neto:", neto)
         addTotalRow("Precio/Kilo:", precio_kilo)
-        addTotalRow("Ps. Promedio:", pesoPromedio, true, true)
-        addTotalRow("T. Pagar:", total_pagar, true, true)
+        addTotalRow("Ps. Promedio:", pesoPromedio)
+
+        // ===== AJUSTE DE CELDA DE TOTAL A PAGAR =====
+        // AJUSTE MANUAL: Puedes modificar el padding o el borde para ajustar la apariencia
+        // ===== FIN AJUSTE DE CELDA DE TOTAL A PAGAR =====
+
+        // Total a pagar destacado con borde más grueso
+        val totalCell = Cell(1, 2)
+            .add(Paragraph("TOTAL A PAGAR: $total_pagar")
+                .setFont(boldFont)
+                .setFontSize(uniformFontSize)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setBold())
+            .setBorder(DashedBorder(0.5f))
+            .setBackgroundColor(ColorConstants.LIGHT_GRAY)
+            .setPadding(3f)
+
+        totalsTable.addCell(totalCell)
 
         document.add(totalsTable)
 
-        // Pie de página
+        // Pie de página con texto más grueso
         document.add(Paragraph("$nombre - $nomgal")
-            .setFont(font)
-            .setFontSize(smallFontSize2)
+            .setFont(boldFont)
+            .setFontSize(uniformFontSize)
             .setTextAlignment(TextAlignment.CENTER)
-            .setMarginTop(5f))
+            .setBold()
+            .setMarginTop(3f))
+
+        document.add(Paragraph("¡GRACIAS POR SU COMPRA!")
+            .setFont(boldFont)
+            .setFontSize(uniformFontSize)
+            .setTextAlignment(TextAlignment.CENTER)
+            .setBold()
+            .setMarginTop(1f))
 
         document.close()
 
         Log.d("PdfManager", "PDF creado en: ${file.absolutePath}")
 
+        // Formato para impresión térmica con texto más grueso
         val formattedText = buildString {
             // Encabezado
             appendLine("TITLE:NOTA DE VENTA")
             appendLine("CENTER:RUC: $nroRuc")
+            appendLine("CENTER:$nombreComercial")
             appendLine("CENTER:Serie: $serie   Fecha: $fecha")
             appendLine("LINE")
 
@@ -258,7 +476,7 @@ suspend fun generateAndOpenPDF2(jsonDataPdf: JSONObject, context: Context) {
             appendLine("LINE")
 
             // Encabezado de la tabla con 5 columnas
-            appendLine("TABLE: ${"#"}| ${"N° Jabas".padStart(4)}| ${"N° Pollos".padStart(4)}| ${"Peso".padStart(5)}| ${"Tipo".padStart(8)}")
+            appendLine("TABLE: ${"#"}| ${"Jabas".padStart(4)}| ${"Pollos".padStart(4)}| ${"Peso".padStart(5)}| ${"Tipo".padStart(8)}")
             appendLine("LINE")
 
             // Datos de la tabla
@@ -277,32 +495,32 @@ suspend fun generateAndOpenPDF2(jsonDataPdf: JSONObject, context: Context) {
             appendLine("TOTAL:Tara:${tara.padEnd(36)}")
             appendLine("TOTAL:Neto:${neto.padEnd(36)}")
             appendLine("TOTAL:Precio/Kilo:${precio_kilo.padEnd(36)}")
-            appendLine("TOTAL:T. Pagar:${total_pagar.padEnd(36)}")
+            appendLine("TOTAL:Ps. Promedio:${pesoPromedio.padEnd(36)}")
+            appendLine("TOTAL:T. PAGAR:${total_pagar.padEnd(36)}")
             appendLine("LINE")
             // Pie de página
             appendLine("CENTER:$nombre - $nomgal")
+            appendLine("CENTER:¡GRACIAS POR SU COMPRA!")
         }
 
+        // Obtener información de la impresora y enviar a imprimir
         var db = AppDatabase(context)
         val impresora = db.getImpresoraById("1")
         if (impresora != null) {
             val printerIp = impresora.ip
-            val printerPort = impresora.puerto.toInt() // Asegúrate de convertir el puerto a Int
+            val printerPort = impresora.puerto.toInt()
 
-            // Crear instancia de PrinterManager con los valores obtenidos
             val printerManager = PrinterManager(context, printerIp, printerPort)
 
-            // Llamar a la función para imprimir el texto formateado
             withContext(Dispatchers.IO) {
                 try {
                     printerManager.printFormattedText(formattedText)
-                    // Mostrar notificación después de imprimir
                     showPdfGeneratedNotification(context, file)
                 } catch (e: Exception) {
                     showPdfGeneratedNotification(context, file)
                 }
             }
-        }else{
+        } else {
             withContext(Dispatchers.IO) {
                 showPdfGeneratedNotification(context, file)
             }
@@ -358,11 +576,8 @@ private fun showPdfGeneratedNotification(context: Context, file: File) {
         .setSound(defaultSoundUri)
         .setVibrate(longArrayOf(1000, 1000, 1000, 1000))
         .setDefaults(NotificationCompat.DEFAULT_ALL)
-        .setFullScreenIntent(pendingIntent, true) // Esto fuerza la notificación a aparecer como heads-up
-
-//        .addAction(android.R.drawable.ic_menu_send, "Imprimir", printPendingIntent)
+        .setFullScreenIntent(pendingIntent, true)
         .build()
-
 
     notificationManager.notify(1, notification)
 
@@ -402,3 +617,4 @@ private fun sharePdfFile(context: Context, file: File) {
         Log.e("PDF Share", "No se encontró ninguna aplicación para compartir PDF")
     }
 }
+

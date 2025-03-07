@@ -70,7 +70,7 @@
                             android:id="@+id/serieNumero"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="F001-00001"
+                            android:text="N/A"
                             android:textColor="@color/black"
                             android:textSize="14sp"/>
                     </LinearLayout>

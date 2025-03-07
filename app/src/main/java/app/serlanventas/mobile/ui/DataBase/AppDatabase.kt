@@ -823,7 +823,7 @@ class AppDatabase(context: Context) :
 
     // -------------------------------------------
     // Consulta para obtener el detalle de DetaPesoPollos por ID
-    fun obtenerDetaPesoPollosPorId(idPesoPollo: Int): List<DataDetaPesoPollosEntity> {
+    fun obtenerDetaPesoPollosPorId(idPesoPollo: Long): List<DataDetaPesoPollosEntity> {
         val db = this.readableDatabase
         val cursor = db.rawQuery("SELECT * FROM $TABLE_DETA_PESO_POLLOS WHERE $KEY_ID_PESO_POLLO = ?", arrayOf(idPesoPollo.toString()))
 
@@ -849,7 +849,7 @@ class AppDatabase(context: Context) :
     }
 
     // Consulta para obtener el detalle de PesoPollos por ID
-    fun obtenerPesoPollosPorId(idPesoPollo: Int): DataPesoPollosEntity? {
+    fun obtenerPesoPollosPorId(idPesoPollo: Long): DataPesoPollosEntity? {
         val db = this.readableDatabase
         val cursor = db.rawQuery("SELECT * FROM $TABLE_PESO_POLLOS WHERE $KEY_ID = ?", arrayOf(idPesoPollo.toString()))
 
@@ -891,7 +891,7 @@ class AppDatabase(context: Context) :
             val nucleo = NucleoEntity(
                 idEstablecimiento = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID)),
                 nombre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUCLEO_NAME)),
-                idEmpresa = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUCLEO_NAME))
+                idEmpresa = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUCLEO_EMPRESA_RUC))
             )
             cursor.close()
             nucleo

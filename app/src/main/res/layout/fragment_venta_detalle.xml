@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
     android:background="#FFFFFF">
 
-    <!-- SECCIÓN 1: Centro todo, ocupara todo el ancho -->
+    <!-- SECCIÓN 1: Información del Comprobante -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:layout_marginBottom="16dp"> <!-- Usa layout_marginBottom en lugar de marginBottom -->
+        android:layout_marginBottom="8dp"
+        android:background="#F5F5F5"
+        android:padding="16dp">
 
         <TextView
             android:id="@+id/tvNombreComprobante"
@@ -22,27 +23,27 @@
             android:text="Comprobante de Venta"
             android:textSize="18sp"
             android:textColor="#000000"
-            android:textStyle="bold"/>
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tviDEmpresa"
             android:gravity="center"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="123456789"
+            android:text="20393514630"
             android:textSize="16sp"
             android:textColor="#000000"
-            android:layout_marginTop="8dp"/>
+            android:layout_marginTop="8dp" />
 
         <TextView
             android:id="@+id/tvRSEmpresa"
             android:gravity="center"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="SerlanVentas"
+            android:text="MULTIGRANJAS SERLAN S.A.C."
             android:textSize="16sp"
             android:textColor="#000000"
-            android:layout_marginTop="4dp"/>
+            android:layout_marginTop="4dp" />
 
         <TextView
             android:id="@+id/tvCorrelativo"
@@ -52,23 +53,23 @@
             android:text="ED95-2"
             android:textSize="16sp"
             android:textColor="#000000"
-            android:layout_marginTop="4dp"/>
+            android:layout_marginTop="4dp" />
     </LinearLayout>
 
-    <!-- SECCIÓN 2: Cliente Nombre e ID -->
+    <!-- SECCIÓN 2: Cliente y Fecha -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="8dp"
+        android:background="#E3F2FD"
+        android:padding="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="8dp">
 
             <TextView
                 android:id="@+id/tvFecha"
@@ -77,7 +78,7 @@
                 android:layout_weight="1"
                 android:text="Fecha: 2025-03-05"
                 android:textSize="14sp"
-                android:textColor="#000000"/>
+                android:textColor="#000000" />
 
             <TextView
                 android:id="@+id/tvHora"
@@ -87,7 +88,7 @@
                 android:text="Hora: 19:52:21"
                 android:textSize="14sp"
                 android:textColor="#000000"
-                android:gravity="end"/>
+                android:gravity="end" />
         </LinearLayout>
 
         <TextView
@@ -96,7 +97,7 @@
             android:layout_height="wrap_content"
             android:text="Cliente: JUANITO VENTURA"
             android:textSize="14sp"
-            android:textColor="#000000"/>
+            android:textColor="#000000" />
 
         <TextView
             android:id="@+id/tvIdCliente"
@@ -105,77 +106,145 @@
             android:text="N° DOC: 75238151"
             android:textSize="14sp"
             android:textColor="#000000"
-            android:layout_marginTop="4dp"/>
+            android:layout_marginTop="4dp" />
     </LinearLayout>
 
-    <!-- ventas List -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewPesos"
+    <!-- Contenedor Scrollable -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:background="@color/white"
-        android:elevation="2dp"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewDetallesPesos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:background="@color/white"
+                android:elevation="2dp" />
+        </androidx.core.widget.NestedScrollView>
+
+    </LinearLayout>
 
     <!-- SECCIÓN 3: Detalles de la Venta -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginBottom="16dp">
+        android:background="#FFF9C4"
+        android:padding="16dp">
 
-        <TextView
-            android:id="@+id/tvTotalJabas"
+        <TableLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Total Jabas: 10"
-            android:textSize="14sp"
-            android:textColor="#000000"/>
+            android:stretchColumns="*">
 
-        <TextView
-            android:id="@+id/tvTotalPollos"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Total Pollos: 20"
-            android:textSize="14sp"
-            android:textColor="#000000"
-            android:layout_marginTop="4dp"/>
+            <!-- Fila 1 -->
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-        <TextView
-            android:id="@+id/tvTotalPeso"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Total Peso: 148.00 kg"
-            android:textSize="14sp"
-            android:textColor="#000000"
-            android:layout_marginTop="4dp"/>
+                <TextView
+                    android:id="@+id/tvTotalPesoJabas"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="TARA: 50.00"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:gravity="center|start"/>
 
-        <TextView
-            android:id="@+id/tvTotalNeto"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Total Neto: 108.00"
-            android:textSize="14sp"
-            android:textColor="#000000"
-            android:layout_marginTop="4dp"/>
+                <TextView
+                    android:id="@+id/tvTotalNeto"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="NETO: 210.00"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:gravity="center" />
 
-        <TextView
-            android:id="@+id/tvPKPollo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Peso Pollo: 5.00 kg"
-            android:textSize="14sp"
-            android:textColor="#000000"
-            android:layout_marginTop="4dp"/>
+                <TextView
+                    android:id="@+id/tvTotalPeso"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="PESO BRUTO: 260.00"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:gravity="center|end" />
+            </TableRow>
 
-        <TextView
-            android:id="@+id/tvTotalPagar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Total a Pagar: 540.00"
-            android:textSize="14sp"
-            android:textColor="#000000"
-            android:layout_marginTop="4dp"/>
+            <!-- Fila 2 -->
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tvTotalPollos"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="C. DE POLLO: 10.00"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:gravity="center|start" />
+
+                <TextView
+                    android:id="@+id/tvTotalJabas"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="C. DE JABAS: 10.00"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:gravity="center|end" />
+            </TableRow>
+
+            <!-- Fila 3 -->
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tvPKPollo"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="PRECIO X KG: 5.00"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:gravity="center|start" />
+
+                <TextView
+                    android:id="@+id/tvTotalPagar"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="T. A PAGAR: 1050.00"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:gravity="center|end" />
+            </TableRow>
+
+            <!-- Fila 4 -->
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tvPesoPromedio"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="PESO PROMEDIO: 21.00"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:gravity="center|start"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"/>
+            </TableRow>
+        </TableLayout>
+
+
     </LinearLayout>
 
     <!-- SECCIÓN 4: Mensaje y Sede -->
@@ -184,7 +253,8 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:layout_marginTop="16dp">
+        android:background="#C8E6C9"
+        android:padding="16dp">
 
         <TextView
             android:id="@+id/tvMensaje"
@@ -195,7 +265,7 @@
             android:textSize="16sp"
             android:textColor="#000000"
             android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="8dp" />
 
         <TextView
             android:id="@+id/tvSede"
@@ -204,7 +274,7 @@
             android:layout_height="wrap_content"
             android:text="GALPON 1 NUCLEO 4"
             android:textSize="14sp"
-            android:textColor="#000000"/>
+            android:textColor="#000000" />
     </LinearLayout>
 
 </LinearLayout>
