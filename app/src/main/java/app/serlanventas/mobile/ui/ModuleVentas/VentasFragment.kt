@@ -47,8 +47,8 @@ class VentasFragment : Fragment() {
             val pesoPollos = db.obtenerPesoPollosPorId(venta.id)
 
             pesoPollos?.let {
-                val dataNucleo = db.obtenerNucleoPorId(it.idNucleo.toInt())
-                val dataGalpon = db.obtenerGalponPorId(it.idGalpon.toInt())
+                val dataNucleo = db.obtenerNucleoPorId(it.idNucleo)
+                val dataGalpon = db.obtenerGalponPorId(it.idGalpon)
 
                 // Preparar los datos
                 val nombreComprobante = "Nota de Venta"
@@ -76,7 +76,7 @@ class VentasFragment : Fragment() {
                 val sede = "SEDE: ${dataNucleo?.nombre} - ${dataGalpon?.nombre}"
 
                 // Obtener los detalles de peso de pollos
-                val detallesPesoPollos = db.obtenerDetaPesoPollosPorId(it.id)
+                val detallesPesoPollos = db.obtenerDetaPesoPollosPorId(it.id.toString())
 
                 // Mostrar el modal con los detalles de la venta
                 showModal(venta.id, nombreComprobante, idEmpresa, rsEmpresa, correlativo, fecha, hora, nombreCliente, idCliente, totalJabas, totalPollos, totalPesoJabas, totalPeso, totalNeto, pkPollo, totalPagar, mensaje, sede, detallesPesoPollos, psPromedio)
@@ -90,8 +90,11 @@ class VentasFragment : Fragment() {
 
     // Método para cargar los datos de ventas en el RecyclerView
     private fun cargarVentas() {
-        listaVentas = db.getAllDataPesoPollos()
-        ventasAdapter.setVentas(listaVentas)
+        var serie = db.getSerieDevice()
+        if (serie != null){
+            listaVentas = db.getAllDataPesoPollosForDevice(serie.codigo)
+            ventasAdapter.setVentas(listaVentas)
+        }
     }
 
     @SuppressLint("MissingInflatedId")
@@ -159,11 +162,11 @@ class VentasFragment : Fragment() {
 
     private suspend fun imprimirDetalleVenta(ventaId: Int) {
         val pesoPollos = db.obtenerPesoPollosPorId(ventaId)
-        val detallesPesoPollos = db.obtenerDetaPesoPollosPorId(ventaId)
+        val detallesPesoPollos = db.obtenerDetaPesoPollosPorId(ventaId.toString())
 
         pesoPollos?.let { it ->
-            val dataNucleo = db.obtenerNucleoPorId(it.idNucleo.toInt())
-            val dataGalpon = db.obtenerGalponPorId(it.idGalpon.toInt())
+            val dataNucleo = db.obtenerNucleoPorId(it.idNucleo)
+            val dataGalpon = db.obtenerGalponPorId(it.idGalpon)
 
             val totalPollos = it.totalPollos.toIntOrNull() ?: 0
             val totalNeto = it.totalNeto.toDoubleOrNull() ?: 0.0

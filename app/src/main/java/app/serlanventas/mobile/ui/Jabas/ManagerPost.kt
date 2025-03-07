@@ -84,8 +84,11 @@ object ManagerPost {
                 try {
                     val serie = db.getSerieDevice()
                     if (serie != null){
-                        val ultimoNumero = db.getUltimoNumeroSerie(serie.codigo)
-                        val nuevoNumero = ultimoNumero + 1
+                        var ultimoNumero = db.getUltimoNumeroSerie(serie.codigo)
+                        if (ultimoNumero == null){
+                            ultimoNumero = "0"
+                        }
+                        val nuevoNumero = ultimoNumero.toInt() + 1
 
                         val idPesoPollo = db.insertDataPesoPollos(
                             dataPesoPollos.copy(
@@ -868,89 +871,104 @@ object ManagerPost {
     ) {
         val db = AppDatabase(context)
 
-        if (NetworkUtils.isNetworkAvailable(context)) {
-            val urlString =
-                "${baseUrl}controllers/PesoPollosController.php?op=getSelectGalpon&idNucleo=$idNucleo"
-
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    val url = URL(urlString)
-                    val conn = url.openConnection() as HttpURLConnection
-                    conn.requestMethod = "GET"
-                    conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-
-                    val responseCode = conn.responseCode
-                    val responseMessage = conn.responseMessage
-
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-
-                        try {
-                            val jsonResponse = JSONObject(inputStream)
-                            val status = jsonResponse.optString("status")
-                            val message = jsonResponse.optString("message")
-
-                            if (status == "success") {
-                                val dataGalpones = jsonResponse.optJSONArray("dataGalpones")
-                                val galponesList = mutableListOf<GalponEntity>()
-
-                                for (i in 0 until dataGalpones.length()) {
-                                    val galponObj = dataGalpones.optJSONObject(i)
-                                    val idGalpon = galponObj.optInt("idgalpones")
-                                    val nombre = galponObj.optString("nomgal")
-                                    val galpon = GalponEntity(idGalpon, nombre, "")
-                                    galponesList.add(galpon)
-                                }
-
-                                withContext(Dispatchers.Main) {
-                                    callback(galponesList)
-                                }
-                            } else {
-                                withContext(Dispatchers.Main) {
-                                    callback(null)
-                                }
-                            }
-                        } catch (e: JSONException) {
-                            withContext(Dispatchers.Main) {
-                                Log.e(
-                                    "ManagerPost",
-                                    "Error al convertir la respuesta a JSON: $inputStream",
-                                    e
-                                )
-                                callback(null)
-                            }
-                        }
-                    } else {
-                        withContext(Dispatchers.Main) {
-                            Log.e("ManagerPost", "Error al obtener datos: $responseCode")
-                            callback(null)
-                        }
-                    }
-                } catch (ex: Exception) {
-                    ex.printStackTrace()
-                    withContext(Dispatchers.Main) {
-                        Log.e("ManagerPost", "Error: ${ex.message}")
-                        callback(null)
-                    }
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val galponList = getGalponFromLocalDatabase(db, idNucleo)
+                withContext(Dispatchers.Main) {
+                    callback(galponList)
                 }
-            }
-        } else {
-            // Si no hay conexión a internet, obtener datos de la base de datos local
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    val galponList = getGalponFromLocalDatabase(db, idNucleo)
-                    withContext(Dispatchers.Main) {
-                        callback(galponList)
-                    }
-                } catch (ex: Exception) {
-                    ex.printStackTrace()
-                    withContext(Dispatchers.Main) {
-                        Log.e("ManagerPost", "Error al obtener datos locales: ${ex.message}")
-                        callback(null)
-                    }
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Log.e("ManagerPost", "Error al obtener datos locales: ${ex.message}")
+                    callback(null)
                 }
             }
         }
+
+//        if (NetworkUtils.isNetworkAvailable(context)) {
+//            val urlString =
+//                "${baseUrl}controllers/PesoPollosController.php?op=getSelectGalpon&idNucleo=$idNucleo"
+//
+//            CoroutineScope(Dispatchers.IO).launch {
+//                try {
+//                    val url = URL(urlString)
+//                    val conn = url.openConnection() as HttpURLConnection
+//                    conn.requestMethod = "GET"
+//                    conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+//
+//                    val responseCode = conn.responseCode
+//                    val responseMessage = conn.responseMessage
+//
+//                    if (responseCode == HttpURLConnection.HTTP_OK) {
+//                        val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
+//
+//                        try {
+//                            val jsonResponse = JSONObject(inputStream)
+//                            val status = jsonResponse.optString("status")
+//                            val message = jsonResponse.optString("message")
+//
+//                            if (status == "success") {
+//                                val dataGalpones = jsonResponse.optJSONArray("dataGalpones")
+//                                val galponesList = mutableListOf<GalponEntity>()
+//
+//                                for (i in 0 until dataGalpones.length()) {
+//                                    val galponObj = dataGalpones.optJSONObject(i)
+//                                    val idGalpon = galponObj.optInt("idgalpones")
+//                                    val nombre = galponObj.optString("nomgal")
+//                                    val galpon = GalponEntity(idGalpon, nombre, "")
+//                                    galponesList.add(galpon)
+//                                }
+//
+//                                withContext(Dispatchers.Main) {
+//                                    callback(galponesList)
+//                                }
+//                            } else {
+//                                withContext(Dispatchers.Main) {
+//                                    callback(null)
+//                                }
+//                            }
+//                        } catch (e: JSONException) {
+//                            withContext(Dispatchers.Main) {
+//                                Log.e(
+//                                    "ManagerPost",
+//                                    "Error al convertir la respuesta a JSON: $inputStream",
+//                                    e
+//                                )
+//                                callback(null)
+//                            }
+//                        }
+//                    } else {
+//                        withContext(Dispatchers.Main) {
+//                            Log.e("ManagerPost", "Error al obtener datos: $responseCode")
+//                            callback(null)
+//                        }
+//                    }
+//                } catch (ex: Exception) {
+//                    ex.printStackTrace()
+//                    withContext(Dispatchers.Main) {
+//                        Log.e("ManagerPost", "Error: ${ex.message}")
+//                        callback(null)
+//                    }
+//                }
+//            }
+//        } else {
+//            // Si no hay conexión a internet, obtener datos de la base de datos local
+//            CoroutineScope(Dispatchers.IO).launch {
+//                try {
+//                    val galponList = getGalponFromLocalDatabase(db, idNucleo)
+//                    withContext(Dispatchers.Main) {
+//                        callback(galponList)
+//                    }
+//                } catch (ex: Exception) {
+//                    ex.printStackTrace()
+//                    withContext(Dispatchers.Main) {
+//                        Log.e("ManagerPost", "Error al obtener datos locales: ${ex.message}")
+//                        callback(null)
+//                    }
+//                }
+//            }
+//        }
     }
 
 
@@ -962,88 +980,104 @@ object ManagerPost {
         val urlString = "${baseUrl}controllers/PesoPollosController.php?op=getNucleo"
         val db = AppDatabase(context)
 
-        // Condición para saber si tenemos internet o no:
-        if (NetworkUtils.isNetworkAvailable(context)) {
-            // Si hay conexión a internet, obtener datos de la nube
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    val url = URL(urlString)
-                    val conn = url.openConnection() as HttpURLConnection
-                    conn.requestMethod = "GET"
-                    conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-
-                    val responseCode = conn.responseCode
-                    val responseMessage = conn.responseMessage
-
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-
-                        try {
-                            val jsonResponse = JSONObject(inputStream)
-                            val status = jsonResponse.optString("status")
-                            val message = jsonResponse.optString("message")
-
-                            if (status == "success") {
-                                val dataNucleos = jsonResponse.optJSONArray("dataNucleos")
-                                val nucleosList = mutableListOf<NucleoEntity>()
-
-                                for (i in 0 until dataNucleos.length()) {
-                                    val nucleoObj = dataNucleos.optJSONObject(i)
-                                    val idEstablecimiento = nucleoObj.optString("idEstablecimiento")
-                                    val nombre = nucleoObj.optString("nombre")
-                                    val nucleo = NucleoEntity(idEstablecimiento, nombre, "")
-                                    nucleosList.add(nucleo)
-                                }
-
-                                withContext(Dispatchers.Main) {
-                                    callback(nucleosList)
-                                }
-                            } else {
-                                withContext(Dispatchers.Main) {
-                                    callback(null)
-                                }
-                            }
-                        } catch (e: JSONException) {
-                            withContext(Dispatchers.Main) {
-                                Log.e(
-                                    "ManagerPost",
-                                    "Error al convertir la respuesta a JSON: $inputStream",
-                                    e
-                                )
-                                callback(null)
-                            }
-                        }
-                    } else {
-                        withContext(Dispatchers.Main) {
-                            Log.e("ManagerPost", "Error al obtener datos: $responseCode")
-                            callback(null)
-                        }
-                    }
-                } catch (ex: Exception) {
-                    ex.printStackTrace()
-                    withContext(Dispatchers.Main) {
-                        Log.e("ManagerPost", "Error: ${ex.message}")
-                        callback(null)
-                    }
+        // Si no hay conexión a internet, obtener datos de la base de datos local
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val nucleosList = getNucleosFromLocalDatabase(db)
+                withContext(Dispatchers.Main) {
+                    callback(nucleosList)
                 }
-            }
-        } else {
-            // Si no hay conexión a internet, obtener datos de la base de datos local
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    val nucleosList = getNucleosFromLocalDatabase(db)
-                    withContext(Dispatchers.Main) {
-                        callback(nucleosList)
-                    }
-                } catch (ex: Exception) {
-                    ex.printStackTrace()
-                    withContext(Dispatchers.Main) {
-                        Log.e("ManagerPost", "Error al obtener datos locales: ${ex.message}")
-                        callback(null)
-                    }
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Log.e("ManagerPost", "Error al obtener datos locales: ${ex.message}")
+                    callback(null)
                 }
             }
         }
+
+        // Condición para saber si tenemos internet o no:
+//        if (NetworkUtils.isNetworkAvailable(context)) {
+//            // Si hay conexión a internet, obtener datos de la nube
+//            CoroutineScope(Dispatchers.IO).launch {
+//                try {
+//                    val url = URL(urlString)
+//                    val conn = url.openConnection() as HttpURLConnection
+//                    conn.requestMethod = "GET"
+//                    conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+//
+//                    val responseCode = conn.responseCode
+//                    val responseMessage = conn.responseMessage
+//
+//                    if (responseCode == HttpURLConnection.HTTP_OK) {
+//                        val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
+//
+//                        try {
+//                            val jsonResponse = JSONObject(inputStream)
+//                            val status = jsonResponse.optString("status")
+//                            val message = jsonResponse.optString("message")
+//
+//                            if (status == "success") {
+//                                val dataNucleos = jsonResponse.optJSONArray("dataNucleos")
+//                                val nucleosList = mutableListOf<NucleoEntity>()
+//
+//                                for (i in 0 until dataNucleos.length()) {
+//                                    val nucleoObj = dataNucleos.optJSONObject(i)
+//                                    val idEstablecimiento = nucleoObj.optString("idEstablecimiento")
+//                                    val nombre = nucleoObj.optString("nombre")
+//                                    val nucleo = NucleoEntity(idEstablecimiento, nombre, "")
+//                                    nucleosList.add(nucleo)
+//                                }
+//
+//                                withContext(Dispatchers.Main) {
+//                                    callback(nucleosList)
+//                                }
+//                            } else {
+//                                withContext(Dispatchers.Main) {
+//                                    callback(null)
+//                                }
+//                            }
+//                        } catch (e: JSONException) {
+//                            withContext(Dispatchers.Main) {
+//                                Log.e(
+//                                    "ManagerPost",
+//                                    "Error al convertir la respuesta a JSON: $inputStream",
+//                                    e
+//                                )
+//                                callback(null)
+//                            }
+//                        }
+//                    } else {
+//                        withContext(Dispatchers.Main) {
+//                            Log.e("ManagerPost", "Error al obtener datos: $responseCode")
+//                            callback(null)
+//                        }
+//                    }
+//                } catch (ex: Exception) {
+//                    ex.printStackTrace()
+//                    withContext(Dispatchers.Main) {
+//                        Log.e("ManagerPost", "Error: ${ex.message}")
+//                        callback(null)
+//                    }
+//                }
+//            }
+//        } else {
+//            // Si no hay conexión a internet, obtener datos de la base de datos local
+//            CoroutineScope(Dispatchers.IO).launch {
+//                try {
+//                    val nucleosList = getNucleosFromLocalDatabase(db)
+//                    withContext(Dispatchers.Main) {
+//                        callback(nucleosList)
+//                    }
+//                } catch (ex: Exception) {
+//                    ex.printStackTrace()
+//                    withContext(Dispatchers.Main) {
+//                        Log.e("ManagerPost", "Error al obtener datos locales: ${ex.message}")
+//                        callback(null)
+//                    }
+//                }
+//            }
+//        }
     }
 
     suspend fun getNucleosFromLocalDatabase(db: AppDatabase): List<NucleoEntity> {

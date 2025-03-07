@@ -170,7 +170,7 @@ class DataSyncManager(private val context: Context) {
             datosPesoPollos.put(jsonPesoPollos)
 
             // Obtener detalles de la venta actual
-            val detalles = db.obtenerDetaPesoPollosPorId(venta.id)
+            val detalles = db.obtenerDetaPesoPollosPorId(venta.id.toString())
 
             // Convertir cada detalle a JSON y añadirlo al array datosDetaPesoPollos
             detalles.forEach { detalle ->
@@ -195,6 +195,7 @@ class DataSyncManager(private val context: Context) {
                     }
 
                     try {
+                        Log.d("DataSyncManager", "Respuesta del servidor: $response")
                         val jsonResponse = JSONObject(response)
                         val success = jsonResponse.getString("status")
 

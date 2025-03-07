@@ -317,12 +317,12 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
                     totalNeto = venta.getString("neto"),
                     PKPollo = venta.getString("precio_kilo"),
                     TotalPagar = venta.getString("total_pagar"),
-                    tipo = venta.getString("fecha"),
+                    tipo = venta.getString("tipo"),
                     numeroDocCliente = venta.getString("docCliente"),
                     nombreCompleto = venta.getString("nomCliente"),
                     idGalpon = venta.getString("IdGalpon"),
-                    idNucleo = "",
-                    idUsuario = "",
+                    idNucleo = venta.getString("idNucleo"),
+                    idUsuario = venta.getString("idUsuario"),
                     idEstado = "1"
                 )
 

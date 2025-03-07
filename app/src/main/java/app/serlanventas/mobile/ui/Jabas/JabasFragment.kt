@@ -69,7 +69,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -130,26 +129,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
     private var _binding: FragmentPesosBinding? = null
 
     private val binding get() = _binding!!
-
-    // ENVIAR DATOS LOCALES AL SERVIDOR
-    private fun checkAndSendLocalData() {
-        CoroutineScope(Dispatchers.IO).launch {
-            val dataDetaPesoPollos = db.getAllDataDetaPesoPollos()
-            val dataPesoPollos = db.getAllDataPesoPollos()
-
-            if (dataDetaPesoPollos.isNotEmpty() && dataPesoPollos.isNotEmpty()) {
-                if (!NetworkUtils.isNetworkAvailable(requireContext())) {
-                    withContext(Dispatchers.Main) {
-                        showNoInternetDialog()
-                    }
-                } else {
-                    withContext(Dispatchers.Main) {
-                        showSendDataConfirmationDialog(dataDetaPesoPollos, dataPesoPollos)
-                    }
-                }
-            }
-        }
-    }
 
     @SuppressLint("SetTextI18n", "DefaultLocale", "ResourceType", "ClickableViewAccessibility")
     override fun onCreateView(

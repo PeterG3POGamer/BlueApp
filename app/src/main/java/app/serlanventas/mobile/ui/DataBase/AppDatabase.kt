@@ -690,11 +690,11 @@ class AppDatabase(context: Context) :
         return db.insert(TABLE_PESO_POLLOS, null, values)
     }
 
-    fun getAllDataPesoPollos(): List<DataPesoPollosEntity> {
+    fun getAllDataPesoPollosForDevice(serie: String): List<DataPesoPollosEntity> {
         val dataList = mutableListOf<DataPesoPollosEntity>()
         val db = this.readableDatabase
-        val selectQuery = "SELECT * FROM $TABLE_PESO_POLLOS"
-        val cursor = db.rawQuery(selectQuery, null)
+        val selectQuery = "SELECT * FROM $TABLE_PESO_POLLOS WHERE $KEY_SERIE = ?"
+        val cursor = db.rawQuery(selectQuery, arrayOf(serie))
 
         if (cursor.moveToFirst()) {
             do {
@@ -861,7 +861,7 @@ class AppDatabase(context: Context) :
         }
 
         return db.update(
-            TABLE_DETA_PESO_POLLOS,
+            TABLE_PESO_POLLOS,
             contentValues,
             "$KEY_ID = ?",
             arrayOf(id.toString())
@@ -870,9 +870,9 @@ class AppDatabase(context: Context) :
 
     // -------------------------------------------
     // Consulta para obtener el detalle de DetaPesoPollos por ID
-    fun obtenerDetaPesoPollosPorId(idPesoPollo: Int): List<DataDetaPesoPollosEntity> {
+    fun obtenerDetaPesoPollosPorId(idPesoPollo: String): List<DataDetaPesoPollosEntity> {
         val db = this.readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM $TABLE_DETA_PESO_POLLOS WHERE $KEY_ID_PESO_POLLO = ?", arrayOf(idPesoPollo.toString()))
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_DETA_PESO_POLLOS WHERE $KEY_ID_PESO_POLLO = ?", arrayOf(idPesoPollo))
 
         val listaDetaPesoPollos = mutableListOf<DataDetaPesoPollosEntity>()
 
@@ -931,9 +931,9 @@ class AppDatabase(context: Context) :
     }
 
     // Consulta para obtener un Nucleo por ID
-    fun obtenerNucleoPorId(id: Int): NucleoEntity? {
+    fun obtenerNucleoPorId(idNucleo: String): NucleoEntity? {
         val db = this.readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM $TABLE_NUCLEO WHERE $KEY_ID = ?", arrayOf(id.toString()))
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_NUCLEO WHERE $KEY_ID = ?", arrayOf(idNucleo))
 
         return if (cursor.moveToFirst()) {
             val nucleo = NucleoEntity(
@@ -950,9 +950,9 @@ class AppDatabase(context: Context) :
     }
 
     // Consulta para obtener un Galpon por ID
-    fun obtenerGalponPorId(id: Int): GalponEntity? {
+    fun obtenerGalponPorId(idGalpon: String): GalponEntity? {
         val db = this.readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM $TABLE_GALPON WHERE $KEY_ID = ?", arrayOf(id.toString()))
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_GALPON WHERE $KEY_ID = ?", arrayOf(idGalpon))
 
         return if (cursor.moveToFirst()) {
             val galpon = GalponEntity(
