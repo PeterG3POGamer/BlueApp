@@ -246,7 +246,6 @@ class DataSyncManager(private val context: Context) {
     ) {
         // Switch to the main thread before showing dialogs or updating UI
         CoroutineScope(Dispatchers.Main).launch {
-            delay(1000)
             when (result) {
                 is SyncResult.Success -> {
                     if (result.needsSync) {
