@@ -25,7 +25,7 @@ class AppDatabase(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "SerlanVentas.db"
-        private const val DATABASE_VERSION = 15
+        private const val DATABASE_VERSION = 17
 
         // Table names
         private const val TABLE_DETA_PESO_POLLOS = "DataDetaPesoPollos"
@@ -171,7 +171,7 @@ class AppDatabase(context: Context) :
         db.execSQL(CREATE_TABLE_IMPRESORA_CONFIG)
 
         val CREATE_TABLE_USED_PESOS = ("CREATE TABLE $TABLE_USED_PESOS("
-                + "$KEY_ID INTEGER PRIMARY KEY, "
+                + "$KEY_ID INTEGER, "
                 + "$KEY_DEVICE_NAME TEXT, "
                 + "$KEY_DATA_PESO_JSON TEXT, "
                 + "$KEY_DATA_DETAPESO_JSON TEXT, "
@@ -621,6 +621,7 @@ class AppDatabase(context: Context) :
         val currentDate = getCurrentDateTime()
 
         val values = ContentValues().apply {
+            put(KEY_ID, pesoUsed.idPesoUsed)
             put(KEY_DEVICE_NAME, pesoUsed.devicedName)
             put(KEY_DATA_PESO_JSON, pesoUsed.dataPesoPollosJson)
             put(KEY_DATA_DETAPESO_JSON, pesoUsed.dataDetaPesoPollosJson)

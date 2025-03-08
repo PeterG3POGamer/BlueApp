@@ -28,6 +28,7 @@ class DataSyncManager(private val context: Context) {
         progressCallback: ProgressCallback,
         callback: (Boolean) -> Unit
     ) {
+
         if (NetworkUtils.isNetworkAvailable(context)) {
             CoroutineScope(Dispatchers.IO).launch {
                 progressCallback.onProgressUpdate("Iniciando sincronización...")
@@ -41,6 +42,7 @@ class DataSyncManager(private val context: Context) {
 
                 // Aquí se envia el idDevice y el deviceModel para obtener los datos
                 progressCallback.onProgressUpdate("Obteniendo datos del servidor...")
+
                 obtenerDatosNube(baseUrl, idDevice, deviceModel) { syncResult ->
                     when (syncResult) {
                         is SyncResult.Success -> {
@@ -67,8 +69,14 @@ class DataSyncManager(private val context: Context) {
                                     }
                                 } else {
                                     progressCallback.onProgressUpdate("No hay ventas pendientes por sincronizar")
+                                    delay(1000)
+                                    progressCallback.onProgressUpdate("Verificando sesión...")
+                                    delay(1000)
+                                    progressCallback.onProgressUpdate("Redirigiendo...")
+                                    delay(1000)
                                     handleSyncResult(syncResult, isLoggedIn, callback)
                                 }
+
                             }
                         }
 
@@ -91,7 +99,6 @@ class DataSyncManager(private val context: Context) {
         callback: (SyncResult) -> Unit
     ) {
         val urlString = "${baseUrl}controllers/PesoPollosController.php?op=getAllDataSynchronized"
-
         // Crea un objeto JSON con el campo mac
         val jsonBody = JSONObject().apply {
             put("mac", macDevice)

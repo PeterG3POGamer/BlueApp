@@ -194,7 +194,7 @@ class LoginActivity : AppCompatActivity(), ProgressCallback {
 
     override fun onProgressUpdate(message: String) {
         runOnUiThread {
-            statusMessage.text = "Autenticando..."
+            statusMessage.text = "Sincronización en curso"
             progressDetails.text = message
         }
     }

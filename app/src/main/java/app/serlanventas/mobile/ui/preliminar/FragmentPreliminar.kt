@@ -427,6 +427,7 @@ class FragmentPreliminar : Fragment() {
                     dataDetaPesoPollosJson = dataDetaPesoPollosJsonTemp,
                     fechaRegistro = ""
                 )
+                db.deleteAllPesoUsed()
                 db.addPesoUsed(pesoUsed)
             }
         }

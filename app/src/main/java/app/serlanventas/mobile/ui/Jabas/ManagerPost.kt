@@ -1,6 +1,5 @@
 package app.serlanventas.mobile.ui.Jabas
 
-import NetworkUtils
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
@@ -79,55 +78,115 @@ object ManagerPost {
 
         val db = AppDatabase(context)
         CoroutineScope(Dispatchers.IO).launch {
-//            try {
-//                db.beginTransaction()
-                try {
-                    val serie = db.getSerieDevice()
-                    if (serie != null){
-                        var ultimoNumero = db.getUltimoNumeroSerie(serie.codigo)
-                        if (ultimoNumero == null){
-                            ultimoNumero = "0"
-                        }
-                        val nuevoNumero = ultimoNumero.toInt() + 1
+            try {
+                val serie = db.getSerieDevice()
+                if (serie != null) {
+                    var ultimoNumero = db.getUltimoNumeroSerie(serie.codigo)
+                    if (ultimoNumero == null) {
+                        ultimoNumero = "0"
+                    }
+                    val nuevoNumero = ultimoNumero.toInt() + 1
 
-                        val idPesoPollo = db.insertDataPesoPollos(
-                            dataPesoPollos.copy(
-                                numeroDocCliente = numeroDocumento,
-                                nombreCompleto = nombreCliente,
-                                serie = serie.codigo,
-                                numero = nuevoNumero.toString(),
-                                idEstado = "0",
-                                idNucleo = idNucleo
-                            )
+                    val idPesoPollo = db.insertDataPesoPollos(
+                        dataPesoPollos.copy(
+                            numeroDocCliente = numeroDocumento,
+                            nombreCompleto = nombreCliente,
+                            serie = serie.codigo,
+                            numero = nuevoNumero.toString(),
+                            idEstado = "0",
+                            idNucleo = idNucleo
                         )
+                    )
 
-                        if (idPesoPollo != -1L) {
-                            dataDetaPesoPollos.forEach {
-                                val detaPeso = it.copy(idPesoPollo = idPesoPollo.toString())
-                                val result = db.insertDataDetaPesoPollos(detaPeso)
-                                if (result == -1L) {
-                                    Log.e(
-                                        "ManagerPost",
-                                        "Error al insertar el registro en la tabla de peso pollos"
-                                    )
-                                }
+                    if (idPesoPollo != -1L) {
+                        dataDetaPesoPollos.forEach {
+                            val detaPeso = it.copy(idPesoPollo = idPesoPollo.toString())
+                            val result = db.insertDataDetaPesoPollos(detaPeso)
+                            if (result == -1L) {
+                                Log.e(
+                                    "ManagerPost",
+                                    "Error al insertar el registro en la tabla de peso pollos"
+                                )
                             }
-//                            db.setTransactionSuccessful()
-                        } else {
-                            Log.e(
-                                "ManagerPost",
-                                "Error al insertar el registro en la tabla de peso pollos"
-                            )
                         }
-                        withContext(Dispatchers.Main) {
-                            showSuccessNotification(context)
-                        }
-                    }else{
+                    } else {
                         Log.e(
                             "ManagerPost",
-                            "No se encontró una serie de dispositivo válida"
+                            "Error al insertar el registro en la tabla de peso pollos"
                         )
                     }
+                    withContext(Dispatchers.Main) {
+                        showSuccessNotification(context)
+                    }
+
+                    val pesoPollos = db.obtenerPesoPollosPorId(idPesoPollo.toInt())
+                    val detallesPesoPollos = db.obtenerDetaPesoPollosPorId(idPesoPollo.toString())
+
+                    pesoPollos?.let { it ->
+                        val dataNucleo = db.obtenerNucleoPorId(it.idNucleo)
+                        val dataGalpon = db.obtenerGalponPorId(it.idGalpon)
+
+                        val totalPollos = it.totalPollos.toIntOrNull() ?: 0
+                        val totalNeto = it.totalNeto.toDoubleOrNull() ?: 0.0
+                        val pesoPromedio = if (totalPollos > 0) String.format(
+                            "%.2f",
+                            totalNeto / totalPollos
+                        ) else "0.00"
+                        val correlativo = "${it.serie} - ${it.numero}"
+                        // Crear JSON
+                        val DATAPDF = JSONObject().apply {
+                            put("PESO_POLLO", JSONArray().put(JSONObject().apply {
+                                put("serie", correlativo)
+                                put("fecha", it.fecha)
+                                put("totalJabas", it.totalJabas)
+                                put("totalPollos", totalPollos.toString())
+                                put("totalPeso", it.totalPeso)
+                                put("tara", it.totalPesoJabas)
+                                put("neto", it.totalNeto)
+                                put("precio_kilo", it.PKPollo)
+                                put("pesoPromedio", pesoPromedio)
+                                put("total_pagar", it.TotalPagar)
+                            }))
+
+                            put("CLIENTE", JSONArray().put(JSONObject().apply {
+                                put("dni", it.numeroDocCliente ?: "N/A")
+                                put("rs", it.nombreCompleto ?: "N/A")
+                            }))
+
+                            put("GALPON", JSONArray().put(JSONObject().apply {
+                                put("nomgal", dataGalpon?.nombre ?: "N/A")
+                            }))
+
+                            put("ESTABLECIMIENTO", JSONArray().put(JSONObject().apply {
+                                put("nombre", dataNucleo?.nombre ?: "N/A")
+                            }))
+
+                            put("EMPRESA", JSONArray().put(JSONObject().apply {
+                                put("nroRuc", dataNucleo?.idEmpresa ?: "N/A")
+                                put("nombreComercial", "MULTIGRANJAS SERLAN S.A.C.")
+                            }))
+
+                            put("DETA_PESOPOLLO", JSONArray().apply {
+                                detallesPesoPollos.forEach { detalle ->
+                                    put(JSONObject().apply {
+                                        put("cantJabas", detalle.cantJabas)
+                                        put("cantPollos", detalle.cantPollos)
+                                        put("peso", detalle.peso)
+                                        put("tipo", detalle.tipo)
+                                    })
+                                }
+                            })
+                        }
+
+                        generateAndOpenPDF2(DATAPDF, context)
+
+                    }
+                } else {
+                    Log.e(
+                        "ManagerPost",
+                        "No se encontró una serie de dispositivo válida"
+                    )
+                }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     showNotification(
@@ -1128,82 +1187,84 @@ object ManagerPost {
         val urlString =
             "${baseUrl}controllers/TempPesoPollosController.php?op=getListPesosByIdGalpon&idGalpon=$idGalpon&idEstablecimiento=${idEstablecimiento}&diviceName=$diviceName"
         val db = AppDatabase(context)
+        val pesosList = db.getPesosByIdGalponAndEstablecimiento(idGalpon, idEstablecimiento)
+        callback(pesosList)
 
-        if (NetworkUtils.isNetworkAvailable(context)) {
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    val url = URL(urlString)
-                    val conn = url.openConnection() as HttpURLConnection
-                    conn.requestMethod = "GET"
-                    conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-
-                    val responseCode = conn.responseCode
-
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-
-                        try {
-                            val jsonResponse = JSONObject(inputStream)
-                            val status = jsonResponse.optString("status")
-
-                            if (status == "success") {
-                                val dataArray = jsonResponse.getJSONArray("data")
-                                val pesosList = mutableListOf<PesosEntity>()
-
-                                for (i in 0 until dataArray.length()) {
-                                    val item = dataArray.getJSONObject(i)
-                                    val pesosEntity = PesosEntity(
-                                        id = item.getInt("idPeso"),
-                                        idNucleo = item.getInt("idNucleo"),
-                                        idGalpon = item.getInt("idGalpon"),
-                                        numeroDocCliente = item.getString("numeroDocCliente"),
-                                        nombreCompleto = item.optString("nombreCompleto"),
-                                        dataPesoJson = item.getString("dataPesoJson"),
-                                        dataDetaPesoJson = item.getString("dataDetaPesoJson"),
-                                        idEstado = "0",
-                                        devicedName = "",
-                                        fechaRegistro = item.getString("fechaRegistro")
-                                    )
-                                    pesosList.add(pesosEntity)
-                                }
-
-                                withContext(Dispatchers.Main) {
-                                    callback(pesosList)
-                                }
-                            } else {
-                                withContext(Dispatchers.Main) {
-                                    callback(null)
-                                }
-                            }
-                        } catch (e: JSONException) {
-                            withContext(Dispatchers.Main) {
-                                Log.e(
-                                    "GetListPesosByIdNucleo",
-                                    "Error al convertir la respuesta a JSON: $inputStream",
-                                    e
-                                )
-                                callback(null)
-                            }
-                        }
-                    } else {
-                        withContext(Dispatchers.Main) {
-                            Log.e("GetListPesosByIdNucleo", "Error al obtener datos: $responseCode")
-                            callback(null)
-                        }
-                    }
-                } catch (ex: Exception) {
-                    ex.printStackTrace()
-                    withContext(Dispatchers.Main) {
-                        Log.e("GetListPesosByIdNucleo", "Error: ${ex.message}")
-                        callback(null)
-                    }
-                }
-            }
-        } else {
-            // Si no hay conexión a internet, obtener datos locales
-            val pesosList = db.getPesosByIdGalponAndEstablecimiento(idGalpon, idEstablecimiento)
-            callback(pesosList)
-        }
+//        if (NetworkUtils.isNetworkAvailable(context)) {
+//            CoroutineScope(Dispatchers.IO).launch {
+//                try {
+//                    val url = URL(urlString)
+//                    val conn = url.openConnection() as HttpURLConnection
+//                    conn.requestMethod = "GET"
+//                    conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+//
+//                    val responseCode = conn.responseCode
+//
+//                    if (responseCode == HttpURLConnection.HTTP_OK) {
+//                        val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
+//
+//                        try {
+//                            val jsonResponse = JSONObject(inputStream)
+//                            val status = jsonResponse.optString("status")
+//
+//                            if (status == "success") {
+//                                val dataArray = jsonResponse.getJSONArray("data")
+//                                val pesosList = mutableListOf<PesosEntity>()
+//
+//                                for (i in 0 until dataArray.length()) {
+//                                    val item = dataArray.getJSONObject(i)
+//                                    val pesosEntity = PesosEntity(
+//                                        id = item.getInt("idPeso"),
+//                                        idNucleo = item.getInt("idNucleo"),
+//                                        idGalpon = item.getInt("idGalpon"),
+//                                        numeroDocCliente = item.getString("numeroDocCliente"),
+//                                        nombreCompleto = item.optString("nombreCompleto"),
+//                                        dataPesoJson = item.getString("dataPesoJson"),
+//                                        dataDetaPesoJson = item.getString("dataDetaPesoJson"),
+//                                        idEstado = "0",
+//                                        devicedName = "",
+//                                        fechaRegistro = item.getString("fechaRegistro")
+//                                    )
+//                                    pesosList.add(pesosEntity)
+//                                }
+//
+//                                withContext(Dispatchers.Main) {
+//                                    callback(pesosList)
+//                                }
+//                            } else {
+//                                withContext(Dispatchers.Main) {
+//                                    callback(null)
+//                                }
+//                            }
+//                        } catch (e: JSONException) {
+//                            withContext(Dispatchers.Main) {
+//                                Log.e(
+//                                    "GetListPesosByIdNucleo",
+//                                    "Error al convertir la respuesta a JSON: $inputStream",
+//                                    e
+//                                )
+//                                callback(null)
+//                            }
+//                        }
+//                    } else {
+//                        withContext(Dispatchers.Main) {
+//                            Log.e("GetListPesosByIdNucleo", "Error al obtener datos: $responseCode")
+//                            callback(null)
+//                        }
+//                    }
+//                } catch (ex: Exception) {
+//                    ex.printStackTrace()
+//                    withContext(Dispatchers.Main) {
+//                        Log.e("GetListPesosByIdNucleo", "Error: ${ex.message}")
+//                        callback(null)
+//                    }
+//                }
+//            }
+//        } else {
+//            // Si no hay conexión a internet, obtener datos locales
+//            val pesosList = db.getPesosByIdGalponAndEstablecimiento(idGalpon, idEstablecimiento)
+//            callback(pesosList)
+//        }
     }
 
 
@@ -1230,7 +1291,7 @@ object ManagerPost {
 
         if (result != -1L) {
             withContext(Dispatchers.Main) {
-                showCustomToast(context, "Datos guardados localmente", "info")
+                showCustomToast(context, "Peso guardado", "success")
             }
         } else {
             withContext(Dispatchers.Main) {
@@ -1307,7 +1368,7 @@ object ManagerPost {
             val result = db.addPesoUsed(pesoUsedEntity)
             if (result == -1L) {
                 withContext(Dispatchers.Main) {
-                    showCustomToast(context, "Error al actualizar el peso local", "error")
+                    showCustomToast(context, "Error al usar el peso", "error")
                 }
                 return@withContext false
             }
@@ -1317,7 +1378,7 @@ object ManagerPost {
                 val result2 = db.updatePesoById(idPesoShared, pesosEntity)
                 if (result2 <= 0) {
                     withContext(Dispatchers.Main) {
-                        showCustomToast(context, "Error al actualizar datos localmente", "error")
+                        showCustomToast(context, "Error al usar el peso", "error")
                     }
                     return@withContext false
                 }
@@ -1334,7 +1395,7 @@ object ManagerPost {
         }
 
         withContext(Dispatchers.Main) {
-            showCustomToast(context, "Datos actualizados localmente", "info")
+            showCustomToast(context, "Estas usando el peso de ${pesosEntity.nombreCompleto} ", "info")
         }
 
         // Después de la actualización local exitosa, intentamos actualizar el servidor remoto
@@ -1506,36 +1567,36 @@ object ManagerPost {
             }
 
 
-//          Después de la actualización local exitosa, intentamos actualizar el servidor remoto
-            val baseUrl = Constants.getBaseUrl()
-            val urlString =
-                "${baseUrl}controllers/TempPesoPollosController.php?op=$status&idPeso=$idPeso&diviceName=$deviceName"
-
-            try {
-                val url = URL(urlString)
-                val conn = url.openConnection() as HttpURLConnection
-                conn.requestMethod = "GET"
-
-                val responseCode = conn.responseCode
-
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-                    val jsonResponse = JSONObject(inputStream)
-                    val responseStatus = jsonResponse.optString("status")
-
-                    CoroutineScope(Dispatchers.Main).launch {
-                        callback(responseStatus == "success")
-                    }
-                } else {
-                    CoroutineScope(Dispatchers.Main).launch {
-                        callback(false)
-                    }
-                }
-            } catch (ex: Exception) {
-                CoroutineScope(Dispatchers.Main).launch {
-                    callback(false)
-                }
-            }
+////          Después de la actualización local exitosa, intentamos actualizar el servidor remoto
+//            val baseUrl = Constants.getBaseUrl()
+//            val urlString =
+//                "${baseUrl}controllers/TempPesoPollosController.php?op=$status&idPeso=$idPeso&diviceName=$deviceName"
+//
+//            try {
+//                val url = URL(urlString)
+//                val conn = url.openConnection() as HttpURLConnection
+//                conn.requestMethod = "GET"
+//
+//                val responseCode = conn.responseCode
+//
+//                if (responseCode == HttpURLConnection.HTTP_OK) {
+//                    val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
+//                    val jsonResponse = JSONObject(inputStream)
+//                    val responseStatus = jsonResponse.optString("status")
+//
+//                    CoroutineScope(Dispatchers.Main).launch {
+//                        callback(responseStatus == "success")
+//                    }
+//                } else {
+//                    CoroutineScope(Dispatchers.Main).launch {
+//                        callback(false)
+//                    }
+//                }
+//            } catch (ex: Exception) {
+//                CoroutineScope(Dispatchers.Main).launch {
+//                    callback(false)
+//                }
+//            }
         }
     }
 
