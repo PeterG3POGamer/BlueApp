@@ -1,5 +1,9 @@
 package app.serlanventas.mobile.ui.Jabas
 
+import NetworkUtils
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
@@ -14,14 +18,16 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
+import android.view.animation.AlphaAnimation
+import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.PopupWindow
 import android.widget.TextView
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import app.serlanventas.mobile.R
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
@@ -31,17 +37,13 @@ import app.serlanventas.mobile.ui.DataBase.Entities.GalponEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.NucleoEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.PesosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.pesoUsedEntity
-import app.serlanventas.mobile.ui.Services.PreLoading
-import app.serlanventas.mobile.ui.Services.createNotificationChannel
 import app.serlanventas.mobile.ui.Services.generateAndOpenPDF2
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice.getDeviceId
 import app.serlanventas.mobile.ui.Services.showNotification
-import app.serlanventas.mobile.ui.Services.showProgressNotification
 import app.serlanventas.mobile.ui.Services.showSuccessNotification
 import app.serlanventas.mobile.ui.Utilidades.Constants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -210,7 +212,8 @@ object ManagerPost {
                 cantPollos = it.numeroPollos,
                 peso = it.pesoKg,
                 tipo = it.conPollos,
-                idPesoPollo = it.idPesoPollo
+                idPesoPollo = it.idPesoPollo,
+                fechaPeso = it.fechaPeso
             )
         }
     }
@@ -260,7 +263,7 @@ object ManagerPost {
     @SuppressLint("InflateParams", "SetTextI18n")
     var lastPopupWindow: PopupWindow? = null
 
-    @SuppressLint("ResourceType")
+    @SuppressLint("ResourceType", "ClickableViewAccessibility")
     fun showCustomToast(context: Context, message: String, type: String) {
         if (context == null || (context is Activity && (context.isFinishing || context.isDestroyed))) {
             return  // No mostrar toast si el contexto no es válido
@@ -275,43 +278,43 @@ object ManagerPost {
         // Configurar el estilo y el icono en función del tipo de Toast
         when (type) {
             "success" -> {
-                toastIcon.setImageResource(R.drawable.ic_success) // Icono de éxito
+                toastIcon.setImageResource(R.drawable.ic_success)
                 layout.background = ContextCompat.getDrawable(
                     context,
                     R.drawable.toast_background_success
-                ) // Fondo personalizado para éxito
+                )
             }
 
             "info" -> {
-                toastIcon.setImageResource(R.drawable.ic_info) // Icono de información
+                toastIcon.setImageResource(R.drawable.ic_info)
                 layout.background = ContextCompat.getDrawable(
                     context,
                     R.drawable.toast_background_info
-                ) // Fondo personalizado para info
+                )
             }
 
             "error" -> {
-                toastIcon.setImageResource(R.drawable.ic_error) // Icono de error
+                toastIcon.setImageResource(R.drawable.ic_error)
                 layout.background = ContextCompat.getDrawable(
                     context,
                     R.drawable.toast_background_error
-                ) // Fondo personalizado para error
+                )
             }
 
             "warning" -> {
-                toastIcon.setImageResource(R.drawable.ic_warning) // Icono de advertencia
+                toastIcon.setImageResource(R.drawable.ic_warning)
                 layout.background = ContextCompat.getDrawable(
                     context,
                     R.drawable.toast_background_warning
-                ) // Fondo personalizado para advertencia
+                )
             }
 
             else -> {
-                toastIcon.visibility = View.GONE // Ocultar icono si no es un tipo válido
+                toastIcon.visibility = View.GONE
                 layout.background = ContextCompat.getDrawable(
                     context,
                     R.drawable.toast_background_default
-                ) // Fondo predeterminado
+                )
             }
         }
 
@@ -334,10 +337,80 @@ object ManagerPost {
         // Aplicar la animación al layout
         layout.startAnimation(slideDown)
 
-        // Ocultar el PopupWindow después de un tiempo (similar a la duración del Toast)
+        // Variables para detectar el gesto de deslizamiento
+        var initialX = 0f
+        var initialY = 0f
+        val SWIPE_THRESHOLD = 100
+
+        // Configurar el detector de gestos para permitir SOLO deslizar de izquierda a derecha
+        layout.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    initialX = event.x
+                    initialY = event.y
+                    true
+                }
+
+                MotionEvent.ACTION_UP -> {
+                    val diffX = event.x - initialX
+
+                    // Solo reaccionar a deslizamientos de izquierda a derecha (diffX positivo)
+                    if (diffX > SWIPE_THRESHOLD) {
+                        // Animar el deslizamiento completo hacia la derecha
+                        val animator = ObjectAnimator.ofFloat(
+                            view,
+                            "translationX",
+                            diffX,
+                            view.width.toFloat()
+                        )
+                        animator.duration = 200
+                        animator.addListener(object : AnimatorListenerAdapter() {
+                            override fun onAnimationEnd(animation: Animator) {
+                                popupWindow.dismiss()
+                            }
+                        })
+                        animator.start()
+                        return@setOnTouchListener true
+                    } else {
+                        // Si no es un deslizamiento hacia la derecha válido, volver a la posición original
+                        val animator =
+                            ObjectAnimator.ofFloat(view, "translationX", view.translationX, 0f)
+                        animator.duration = 100
+                        animator.start()
+                    }
+                    false
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val diffX = event.x - initialX
+
+                    // Solo permitir movimiento horizontal hacia la derecha
+                    if (diffX > 0) {
+                        view.translationX = diffX
+                    }
+                    true
+                }
+
+                else -> false
+            }
+        }
+
+        // Auto-dismiss después de un tiempo si el usuario no lo desliza
         layout.postDelayed({
-            popupWindow.dismiss()
-        }, 2000) // El tiempo puede ajustarse a la duración que desees
+            if (popupWindow.isShowing) {
+                val fadeOut = AlphaAnimation(1f, 0f)
+                fadeOut.duration = 500
+                fadeOut.setAnimationListener(object : Animation.AnimationListener {
+                    override fun onAnimationStart(animation: Animation?) {}
+                    override fun onAnimationEnd(animation: Animation?) {
+                        popupWindow.dismiss()
+                    }
+
+                    override fun onAnimationRepeat(animation: Animation?) {}
+                })
+                layout.startAnimation(fadeOut)
+            }
+        }, 3000) // 3 segundos antes de auto-dismiss
 
         // Vibración al mostrar el Toast personalizado
         val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
@@ -347,437 +420,11 @@ object ManagerPost {
                     300,
                     VibrationEffect.DEFAULT_AMPLITUDE
                 )
-            ) // 300ms de vibración
+            )
         } else {
-            vibrator.vibrate(300) // Para versiones anteriores a Android O
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(300)
         }
-    }
-
-    // Funcion para verificar si hay coneccion a internet
-    fun sendDataToServer(
-        context: Context,
-        fragment: JabasFragment,
-        dataDetaPesoPollos: List<DataDetaPesoPollosEntity>,
-        dataPesoPollos: DataPesoPollosEntity
-    ) {
-//        saveLocally(context, fragment, dataDetaPesoPollos, dataPesoPollos)
-    }
-
-    // Función para enviar datos directamente al servidor si hay internet
-    fun sendToServer(
-        context: Context,
-        fragment: JabasFragment,
-        dataDetaPesoPollos: List<DataDetaPesoPollosEntity>,
-        dataPesoPollos: DataPesoPollosEntity
-    ) {
-        val preLoading = PreLoading(context)
-
-        val baseUrl = Constants.getBaseUrl()
-        val urlString = "${baseUrl}controllers/PesoPollosController.php?op=InsertarDataPesoPollos"
-        val url = URL(urlString)
-        val conn = url.openConnection() as HttpURLConnection
-
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                conn.requestMethod = "POST"
-                conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-                conn.doOutput = true
-                val db = AppDatabase(context)
-                // Mostrar carga antes de enviar los datos
-
-                withContext(Dispatchers.Main) {
-                    preLoading.showPreCarga()
-                }
-
-                // Calcular totales y manejar excepciones
-                val (totalJabas, totalPollos, totalPeso) = try {
-                    calcularTotales(dataDetaPesoPollos)
-                } catch (e: IllegalArgumentException) {
-                    withContext(Dispatchers.Main) {
-                        showCustomToast(context, "Error: ${e.message}", "error")
-                        Log.e("ManagerPost", "Error al calcular totales: ${e.message}")
-                    }
-                    return@launch
-                }
-
-                // Verificar si dataPesoPollos es null antes de usarlo
-                if (dataPesoPollos == null) {
-                    withContext(Dispatchers.Main) {
-                        showCustomToast(context, "Error: dataPesoPollos es null", "error")
-                        Log.e("ManagerPost", "dataPesoPollos es null")
-                    }
-                    return@launch
-                }
-
-                // Verificar si dataDetaPesoPollos es null o vacío antes de usarlo
-                if (dataDetaPesoPollos.isNullOrEmpty()) {
-                    withContext(Dispatchers.Main) {
-                        showCustomToast(
-                            context,
-                            "Error: dataDetaPesoPollos es null o vacío",
-                            "error"
-                        )
-                        Log.e("ManagerPost", "dataDetaPesoPollos es null o vacío")
-                    }
-                    return@launch
-                }
-
-                // Crear JSON para datosDetaPesoPollos
-                val jsonDetaPesoPollos = JSONArray()
-                dataDetaPesoPollos.forEach { detaPesoPollo ->
-                    jsonDetaPesoPollos.put(detaPesoPollo.toJson())
-                }
-
-                // Crear JSON para datosPesoPollos
-                val jsonPesoPollos = dataPesoPollos.toJson()
-
-                // Crear JSON principal
-                val jsonParam = JSONObject()
-                jsonParam.put("datosDetaPesoPollos", jsonDetaPesoPollos)
-                jsonParam.put("datosPesoPollos", JSONArray().put(jsonPesoPollos))
-
-                // Escribir JSON en el cuerpo de la solicitud
-                val wr = OutputStreamWriter(conn.outputStream)
-                wr.write(jsonParam.toString())
-                wr.flush()
-
-                // Leer la respuesta del servidor
-                val responseCode = conn.responseCode
-                val responseMessage = conn.responseMessage
-
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    // Leer la respuesta del servidor
-                    val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-                    try {
-                        // Intenta convertir la respuesta a JSON
-                        val jsonResponse = JSONObject(inputStream)
-                        val status = jsonResponse.optString("status")
-                        val message = jsonResponse.optString("message")
-                        val serie = jsonResponse.optString("serie")
-
-                        // Obtener el JSON completo de PESO_POLLO como un objeto JSON
-                        val jsonDataPdf = jsonResponse.optJSONObject("DATAPDF")
-
-                        withContext(Dispatchers.Main) {
-                            when (status) {
-                                "success" -> {
-                                    // Actualizar base de datos local
-                                    dataDetaPesoPollos.forEach { db.insertDataDetaPesoPollos(it) }
-                                    db.insertDataPesoPollos(dataPesoPollos)
-                                    // Mostrar mensaje de éxito al usuario
-                                    showCustomToast(context, message, "success")
-                                    delay(4000)
-
-                                    generateAndOpenPDF2(jsonDataPdf, context)
-                                }
-
-                                "error" -> {
-                                    // Mostrar mensaje de error al usuario
-                                    showCustomToast(context, message, "error")
-
-                                    // Registrar mensaje de error en el Log
-                                    Log.d("ManagerPost", "Error de la Web: $message")
-                                    showRetryDialogNetwork(
-                                        context,
-                                        fragment,
-                                        dataDetaPesoPollos,
-                                        dataPesoPollos
-                                    )
-                                }
-
-                                "info" -> {
-                                    // Mostrar mensaje de información al usuario
-                                    showCustomToast(context, message, "info")
-
-                                    // Registrar mensaje de información en el Log
-                                    Log.d("ManagerPost", "Información de la Web: $message")
-
-                                    // Ejecutar acción adicional según información recibida
-                                    CoroutineScope(Dispatchers.Main).launch {
-                                        val nombreCompleto = showInputDialog(context)
-                                        if (!nombreCompleto.isNullOrBlank()) {
-                                            dataPesoPollos.nombreCompleto = nombreCompleto
-                                            sendDataToServer(
-                                                context,
-                                                fragment,
-                                                dataDetaPesoPollos,
-                                                dataPesoPollos
-                                            )
-                                        } else {
-                                            showCustomToast(context, "Proceso cancelado", "info")
-                                        }
-                                    }
-                                }
-
-                                else -> {
-                                    // Mostrar mensaje de error genérico al usuario
-                                    showCustomToast(context, "Error: $message", "error")
-
-                                    // Registrar mensaje de error en el Log
-                                    Log.e("ManagerPost", "Error: $message")
-                                    showRetryDialogNetwork(
-                                        context,
-                                        fragment,
-                                        dataDetaPesoPollos,
-                                        dataPesoPollos
-                                    )
-
-                                }
-                            }
-                        }
-                    } catch (e: JSONException) {
-                        // Captura la excepción si no se puede convertir a JSON
-                        withContext(Dispatchers.Main) {
-                            showCustomToast(context, "Respuesta inválida del servidor", "error")
-                            Log.e(
-                                "ManagerPost",
-                                "Error al convertir la respuesta a JSON: $inputStream",
-                                e
-                            )
-                            showRetryDialogNetwork(
-                                context,
-                                fragment,
-                                dataDetaPesoPollos,
-                                dataPesoPollos
-                            )
-                        }
-                    }
-                } else {
-                    // Manejar errores HTTP
-                    withContext(Dispatchers.Main) {
-                        showCustomToast(
-                            context,
-                            "Error al enviar datos: $responseCode - $responseMessage",
-                            "error"
-                        )
-                        Log.e(
-                            "ManagerPost",
-                            "Error al enviar mensaje: $responseCode - $responseMessage"
-                        )
-                        showRetryDialogNetwork(
-                            context,
-                            fragment,
-                            dataDetaPesoPollos,
-                            dataPesoPollos
-                        )
-                    }
-                }
-                // Ocultar la carga después de obtener la respuesta del servidor
-                withContext(Dispatchers.Main) {
-                    delay(1000)
-                    preLoading.hidePreCarga()
-                }
-
-            } catch (e: Exception) {
-                // Manejar cualquier otra excepción
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    showCustomToast(context, "Error: ${e.message}", "error")
-                    Log.e("ManagerPost", "Error: ${e.message}")
-                    showRetryDialogNetwork(context, fragment, dataDetaPesoPollos, dataPesoPollos)
-                }
-            } finally {
-                conn.disconnect()
-            }
-        }
-    }
-
-
-    fun calcularTotales(dataDetaPesoPollos: List<DataDetaPesoPollosEntity>): Triple<Int, Int, Double> {
-        var totalJabas = 0
-        var totalPollos = 0
-        var totalPeso = 0.0
-
-        dataDetaPesoPollos.forEach { detaPesoPollo ->
-            val cantJabas = detaPesoPollo.cantJabas ?: 0
-            val cantPolllos = detaPesoPollo.cantPollos ?: 0
-            val peso = detaPesoPollo.peso ?: 0.0
-
-            try {
-                totalJabas += cantJabas
-                totalPollos += cantPolllos
-                totalPeso += peso
-            } catch (e: NumberFormatException) {
-                throw IllegalArgumentException("Datos incompletos o incorrectos: ${e.message}")
-            }
-        }
-
-        return Triple(totalJabas, totalPollos, totalPeso)
-    }
-
-    // Funcion para enviar datos guardados localmente al servidor si ya hay internet
-    fun sendLocalDataToServer(
-        context: Context,
-        fragment: JabasFragment,
-        dataDetaPesoPollos: List<DataDetaPesoPollosEntity>,
-        dataPesoPollos: List<DataPesoPollosEntity>,
-    ) {
-        val baseUrl = Constants.getBaseUrl()
-
-        val urlString = "${baseUrl}enviar.php"
-
-        // Crear el canal de notificación
-        createNotificationChannel(context)
-
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                // Crear JSON para datosDetaPesoPollos
-                val jsonDetaPesoPollos = JSONArray()
-                dataDetaPesoPollos.forEach { detaPesoPollo ->
-                    jsonDetaPesoPollos.put(detaPesoPollo.toJson())
-                }
-
-                // Crear JSON para datosPesoPollos
-                val jsonPesoPollos = JSONArray()
-                for (item in dataPesoPollos) {
-                    jsonPesoPollos.put(item.toJson())
-                }
-
-                // Crear JSON principal
-                val jsonParam = JSONObject()
-                jsonParam.put("datosDetaPesoPollos", jsonDetaPesoPollos)
-                jsonParam.put("datosPesoPollos", jsonPesoPollos)
-
-                val jsonData = jsonParam.toString()
-                val totalDataSize = jsonData.toByteArray().size.toDouble()
-
-                // Configurar la conexión HTTP
-                val url = URL(urlString)
-                val conn = url.openConnection() as HttpURLConnection
-                conn.requestMethod = "POST"
-                conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-                conn.doOutput = true
-
-                // Escribir JSON en el cuerpo de la solicitud
-                val wr = OutputStreamWriter(conn.outputStream)
-                wr.write(jsonData)
-                wr.flush()
-
-                // Leer la respuesta del servidor
-                val responseCode = conn.responseCode
-                val responseMessage = conn.responseMessage
-
-                withContext(Dispatchers.Main) {
-                    // Cancelar la notificación de progreso
-                    val notificationManager = NotificationManagerCompat.from(context)
-                    notificationManager.cancel(1)
-
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        // Leer la respuesta del servidor
-                        val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-
-                        try {
-                            // Intenta convertir la respuesta a JSON
-                            val jsonResponse = JSONObject(inputStream)
-                            val status = jsonResponse.optString("status")
-                            val message = jsonResponse.optString("message")
-
-                            when (status) {
-                                "success" -> {
-//                                    fragment.limpiarCampos()
-                                    showCustomToast(context, message, "success")
-                                    Log.d("ManagerPost", "Respuesta de la Web: $message")
-                                }
-
-                                "error" -> {
-                                    showCustomToast(context, message, "error")
-                                    Log.d("ManagerPost", "Error de la Web: $message")
-                                    // Mostrar opción para reintentar en caso de error
-                                    showRetryDialog(
-                                        context,
-                                        fragment,
-                                        dataDetaPesoPollos,
-                                        dataPesoPollos
-                                    )
-                                }
-
-                                "info" -> {
-                                    showCustomToast(context, message, "info")
-                                    Log.d("ManagerPost", "Información de la Web: $message")
-                                    // Aquí puedes implementar lógica adicional según la respuesta "info"
-                                }
-
-                                else -> {
-                                    showCustomToast(context, "Error: $message", "error")
-                                    Log.e("ManagerPost", "Error: $message")
-                                }
-                            }
-                        } catch (e: JSONException) {
-                            // Captura la excepción si no se puede convertir a JSON
-                            showCustomToast(context, "Respuesta inválida del servidor", "error")
-                            Log.e(
-                                "ManagerPost",
-                                "Error al convertir la respuesta a JSON: $inputStream",
-                                e
-                            )
-                        }
-                    } else {
-                        // Manejar errores HTTP
-                        showCustomToast(context, "Error al enviar datos: $responseCode", "error")
-                        Log.e("ManagerPost", "Error al enviar mensaje: $responseCode")
-                        // Mostrar opción para reintentar en caso de error
-                        showRetryDialog(context, fragment, dataDetaPesoPollos, dataPesoPollos)
-                    }
-                }
-
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    // Manejar excepciones y actualizar la UI
-                    showCustomToast(context, "Error: ${ex.message}", "error")
-                    Log.e("ManagerPost", "Error: ${ex.message}")
-                    // Mostrar opción para reintentar en caso de error
-                    showRetryDialog(context, fragment, dataDetaPesoPollos, dataPesoPollos)
-                }
-            }
-        }
-
-        // Mostrar notificación de progreso mientras se envían los datos
-        showProgressNotification(context, 0, "Calculando tiempo...")
-    }
-
-    private fun showRetryDialog(
-        context: Context,
-        fragment: JabasFragment,
-        dataDetaPesoPollos: List<DataDetaPesoPollosEntity>,
-        dataPesoPollos: List<DataPesoPollosEntity>,
-    ) {
-        AlertDialog.Builder(context)
-            .setTitle("Error al Enviar Datos")
-            .setMessage("Hubo un error al enviar los datos. ¿Deseas intentarlo de nuevo?")
-            .setPositiveButton("Reintentar") { dialog, _ ->
-                // El usuario aceptó reintentar el envío
-                sendLocalDataToServer(context, fragment, dataDetaPesoPollos, dataPesoPollos)
-                dialog.dismiss()
-            }
-            .setNegativeButton("Cancelar") { dialog, _ ->
-                // El usuario canceló el reenvío
-                dialog.dismiss()
-            }
-            .setCancelable(false)
-            .show()
-    }
-
-    private fun showRetryDialogNetwork(
-        context: Context,
-        fragment: JabasFragment,
-        dataDetaPesoPollos: List<DataDetaPesoPollosEntity>,
-        dataPesoPollos: DataPesoPollosEntity,
-    ) {
-        AlertDialog.Builder(context)
-            .setTitle("Error al Enviar Datos")
-            .setMessage("Hubo un error al enviar los datos. ¿Deseas intentarlo de nuevo?")
-            .setPositiveButton("Reintentar") { dialog, _ ->
-                // El usuario aceptó reintentar el envío
-                sendDataToServer(context, fragment, dataDetaPesoPollos, dataPesoPollos)
-                dialog.dismiss()
-            }
-            .setNegativeButton("Cancelar") { dialog, _ ->
-                // El usuario canceló el reenvío
-                dialog.dismiss()
-            }
-            .setCancelable(false)
-            .show()
     }
 
     // Función para buscar cliente en el servidor ManagerPost.kt
@@ -1283,7 +930,7 @@ object ManagerPost {
             dataPesoJson = pesosEntity.dataPesoJson,
             dataDetaPesoJson = pesosEntity.dataDetaPesoJson,
             idEstado = "0",
-            devicedName = "",
+            devicedName = pesosEntity.devicedName,
             fechaRegistro = ""
         )
         val db = AppDatabase(context)
@@ -1300,49 +947,53 @@ object ManagerPost {
             return@withContext false
         }
 
-        // Intentar enviar al servidor remoto
-//        val baseUrl = Constants.getBaseUrl()
-//        val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=insertar"
-//
-//        try {
-//            val url = URL(urlString)
-//            val conn = url.openConnection() as HttpURLConnection
-//            conn.requestMethod = "POST"
-//            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-//            conn.doOutput = true
-//
-//            // Convertir PesosEntity a JSON
-//            val jsonInputString = pesosEntity.toJson().toString()
-//
-//            // Escribir JSON en el cuerpo de la solicitud
-//            conn.outputStream.use { os ->
-//                val input = jsonInputString.toByteArray(Charsets.UTF_8)
-//                os.write(input, 0, input.size)
-//            }
-//
-//            val responseCode = conn.responseCode
-//            if (responseCode == HttpURLConnection.HTTP_OK) {
-//                val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-//                Log.d("AddListPesos", "Response: $inputStream")
-//
-//                val jsonResponse = JSONObject(inputStream)
-//                val status = jsonResponse.optString("status")
-//
-//                if (status == "success") {
-//                    withContext(Dispatchers.Main) {
-//                        showCustomToast(context, "Datos enviados correctamente", "success")
-//                    }
-//                    return@withContext true
-//                } else {
-//                    val message = jsonResponse.optString("message")
-//                    Log.e("AddListPesos", "Error: $message")
-//                }
-//            } else {
-//                Log.e("addListPesos", "Server response: $responseCode ${conn.responseMessage}")
-//            }
-//        } catch (ex: Exception) {
-//            Log.e("addListPesos", "Network exception: ${ex.message}")
-//        }
+//         Intentar enviar al servidor remoto
+        if (NetworkUtils.isNetworkAvailable(context)) {
+
+
+            val baseUrl = Constants.getBaseUrl()
+            val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=insertar"
+
+            try {
+                val url = URL(urlString)
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+                conn.doOutput = true
+
+                // Convertir PesosEntity a JSON
+                val jsonInputString = pesosEntity.toJson().toString()
+
+                // Escribir JSON en el cuerpo de la solicitud
+                conn.outputStream.use { os ->
+                    val input = jsonInputString.toByteArray(Charsets.UTF_8)
+                    os.write(input, 0, input.size)
+                }
+
+                val responseCode = conn.responseCode
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
+                    Log.d("AddListPesos", "Response: $inputStream")
+
+                    val jsonResponse = JSONObject(inputStream)
+                    val status = jsonResponse.optString("status")
+
+                    if (status == "success") {
+                        withContext(Dispatchers.Main) {
+                            showCustomToast(context, "Datos enviados correctamente", "success")
+                        }
+                        return@withContext true
+                    } else {
+                        val message = jsonResponse.optString("message")
+                        Log.e("AddListPesos", "Error: $message")
+                    }
+                } else {
+                    Log.e("addListPesos", "Server response: $responseCode ${conn.responseMessage}")
+                }
+            } catch (ex: Exception) {
+                Log.e("addListPesos", "Network exception: ${ex.message}")
+            }
+        }
 
         // Si falla el envío al servidor, los datos ya están guardados localmente
         return@withContext true
@@ -1395,7 +1046,11 @@ object ManagerPost {
         }
 
         withContext(Dispatchers.Main) {
-            showCustomToast(context, "Estas usando el peso de ${pesosEntity.nombreCompleto} ", "info")
+            showCustomToast(
+                context,
+                "Estas usando el peso de ${pesosEntity.nombreCompleto} ",
+                "info"
+            )
         }
 
         // Después de la actualización local exitosa, intentamos actualizar el servidor remoto

@@ -171,17 +171,33 @@ class MainActivity : AppCompatActivity() {
 
             uncheckAll(navView.menu)
 
+            val currentDestination = navController.currentDestination
             when (item.itemId) {
-                R.id.nav_initBluetooth -> navController.navigate(R.id.nav_initBluetooth)
-                R.id.nav_initReportePeso -> navController.navigate(R.id.nav_initReportePeso)
-                R.id.nav_initReporteGuias -> navController.navigate(R.id.nav_initReporteGuias)
-                R.id.nav_initNucleoGalpon -> navController.navigate(R.id.nav_initNucleoGalpon)
-                R.id.nav_initReporteVentasApp -> navController.navigate(R.id.nav_initReporteVentasApp)
-                R.id.nav_initLocalData -> navController.navigate(R.id.nav_initLocalData)
-                R.id.nav_impresoraConfig -> navController.navigate(R.id.nav_impresoraConfig)
+                R.id.nav_initBluetooth -> if (currentDestination?.id != R.id.nav_initBluetooth) {
+                    navController.navigate(R.id.nav_initBluetooth)
+                }
+                R.id.nav_initReportePeso -> if (currentDestination?.id != R.id.nav_initReportePeso) {
+                    navController.navigate(R.id.nav_initReportePeso)
+                }
+                R.id.nav_initReporteGuias -> if (currentDestination?.id != R.id.nav_initReporteGuias) {
+                    navController.navigate(R.id.nav_initReporteGuias)
+                }
+                R.id.nav_initNucleoGalpon -> if (currentDestination?.id != R.id.nav_initNucleoGalpon) {
+                    navController.navigate(R.id.nav_initNucleoGalpon)
+                }
+                R.id.nav_initReporteVentasApp -> if (currentDestination?.id != R.id.nav_initReporteVentasApp) {
+                    navController.navigate(R.id.nav_initReporteVentasApp)
+                }
+                R.id.nav_initLocalData -> if (currentDestination?.id != R.id.nav_initLocalData) {
+                    navController.navigate(R.id.nav_initLocalData)
+                }
+                R.id.nav_impresoraConfig -> if (currentDestination?.id != R.id.nav_impresoraConfig) {
+                    navController.navigate(R.id.nav_impresoraConfig)
+                }
                 else -> return@setNavigationItemSelectedListener false
             }
 
+            item.isChecked = true
             drawerLayout.closeDrawers()
             true
         }

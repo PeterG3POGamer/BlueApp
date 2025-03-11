@@ -18,42 +18,44 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- SECCIÓN 1: DATOS DEL NÚCLEO Y CLIENTE (Acordeón en la parte superior) -->
             <!-- Botón para expandir/contraer el acordeón completo -->
             <LinearLayout
                 android:id="@+id/accordion_header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="10dp"
                 android:background="@color/color_gray_low"
-                android:clickable="true">
+                android:clickable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="10dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="DATOS DEL NÚCLEO Y CLIENTE"
-                    android:textStyle="bold"
                     android:textColor="@color/orange2"
                     android:textSize="18sp"
-                    android:layout_weight="1"/>
+                    android:textStyle="bold" />
 
                 <ImageView
                     android:id="@+id/arrow"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_arrow_down"/>
+                    android:src="@drawable/ic_arrow_down" />
             </LinearLayout>
-
             <!-- Contenido del acordeón -->
             <LinearLayout
                 android:id="@+id/accordion_content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:background="@color/color_gray_low"
                 android:orientation="vertical"
                 android:padding="10dp"
-                android:background="@color/color_gray_low"
-                android:visibility="visible">
+                android:visibility="visible"
+                app:cardCornerRadius="8dp">
 
                 <!-- Sección de Datos del Núcleo -->
                 <androidx.cardview.widget.CardView
@@ -73,99 +75,89 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
+                            android:layout_marginBottom="8dp"
                             android:gravity="center"
-                            android:layout_marginBottom="8dp">
+                            android:orientation="horizontal">
 
                             <!-- Título de la sección -->
                             <TextView
                                 android:id="@+id/seccion_nucleo"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textColor="@color/purple_700"
+                                android:layout_weight="1"
                                 android:text="DATOS DEL NÚCLEO"
-                                android:textStyle="bold"
+                                android:textColor="@color/purple_700"
                                 android:textSize="18sp"
-                                android:layout_weight="1"/>
+                                android:textStyle="bold" />
                         </LinearLayout>
 
                         <!-- Spinners en una línea horizontal -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:layout_marginBottom="12dp">
+                            android:layout_marginBottom="12dp"
+                            android:orientation="horizontal">
 
                             <Spinner
                                 android:id="@+id/select_establecimiento"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:entries="@array/galpones_array"
-                                android:prompt="@string/select_nucleo_prompt"
-                                android:padding="7dp"
-                                android:background="@drawable/row_background"
                                 android:layout_marginEnd="8dp"
-                                android:spinnerMode="dropdown"
+                                android:layout_weight="1"
+                                android:background="@drawable/row_background"
                                 android:dropDownWidth="match_parent"
-                                android:popupBackground="@color/color_orange_low"
-                                android:dropDownVerticalOffset="8dp"
                                 android:dropDownHorizontalOffset="8dp"
-                                android:dropDownSelector="@android:color/transparent"/>
+                                android:dropDownVerticalOffset="8dp"
+                                android:dropDownSelector="@android:color/transparent"
+                                android:entries="@array/galpones_array"
+                                android:padding="7dp"
+                                android:popupBackground="@color/color_orange_low"
+                                android:prompt="@string/select_nucleo_prompt"
+                                android:spinnerMode="dropdown" />
 
                             <Spinner
                                 android:id="@+id/select_galpon"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:entries="@array/galpones_array"
-                                android:prompt="@string/select_galpon_prompt"
-                                android:padding="7dp"
                                 android:background="@drawable/row_background"
-                                android:spinnerMode="dropdown"
                                 android:dropDownWidth="match_parent"
-                                android:popupBackground="@color/color_orange_low"
-                                android:dropDownVerticalOffset="8dp"
                                 android:dropDownHorizontalOffset="8dp"
-                                android:dropDownSelector="@android:color/transparent"/>
+                                android:dropDownVerticalOffset="8dp"
+                                android:dropDownSelector="@android:color/transparent"
+                                android:entries="@array/galpones_array"
+                                android:padding="7dp"
+                                android:popupBackground="@color/color_orange_low"
+                                android:prompt="@string/select_galpon_prompt"
+                                android:spinnerMode="dropdown" />
                         </LinearLayout>
 
                         <!-- Spinner para seleccionar pesos y botón -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
                             <Spinner
                                 android:id="@+id/select_listpesos"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:entries="@array/galpones_array"
-                                android:prompt="@string/select_pesos_prompt"
-                                android:padding="7dp"
                                 android:background="@drawable/row_background"
                                 android:backgroundTint="@color/yellow"
-                                android:spinnerMode="dropdown"
                                 android:dropDownWidth="match_parent"
-                                android:popupBackground="@color/yellow"
-                                android:dropDownVerticalOffset="8dp"
                                 android:dropDownHorizontalOffset="8dp"
-                                android:dropDownSelector="@android:color/transparent"/>
-
-<!--                            <com.google.android.material.button.MaterialButton-->
-<!--                                android:id="@+id/btn_withNet"-->
-<!--                                android:layout_width="65dp"-->
-<!--                                android:layout_height="wrap_content"-->
-<!--                                app:icon="@drawable/baseline_cloud_24"-->
-<!--                                app:cornerRadius="8dp"-->
-<!--                                android:layout_marginStart="8dp"-->
-<!--                                android:backgroundTint="@color/cardview_dark_background"/>-->
+                                android:dropDownVerticalOffset="8dp"
+                                android:dropDownSelector="@android:color/transparent"
+                                android:entries="@array/galpones_array"
+                                android:padding="7dp"
+                                android:popupBackground="@color/yellow"
+                                android:prompt="@string/select_pesos_prompt"
+                                android:spinnerMode="dropdown" />
                         </LinearLayout>
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
-
 
                 <!-- Sección de Datos del Cliente -->
                 <androidx.cardview.widget.CardView
@@ -176,32 +168,32 @@
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:orientation="vertical"
-                        android:padding="16dp">
+                        android:padding="15dp">
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
                             android:text="DATOS DEL CLIENTE"
                             android:textColor="@color/purple_500"
-                            android:textStyle="bold"
                             android:textSize="18sp"
-                            android:layout_marginBottom="8dp"/>
+                            android:textStyle="bold" />
 
                         <!-- Primera fila: N° Documento + Botón -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:layout_marginBottom="2dp">
+                            android:layout_marginBottom="2dp"
+                            android:orientation="horizontal">
 
                             <!-- N° Documento -->
                             <com.google.android.material.textfield.TextInputLayout
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
                                 android:layout_marginEnd="8dp"
+                                android:layout_weight="1"
                                 android:hint="N° Documento">
 
                                 <com.google.android.material.textfield.TextInputEditText
@@ -214,19 +206,20 @@
                             <!-- Botón de imagen -->
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/boton_Cliente"
+                                style="@style/Widget.MaterialComponents.Button.Icon"
                                 android:layout_width="55dp"
                                 android:layout_height="wrap_content"
-                                android:padding="17dp"
                                 android:layout_marginEnd="5dp"
-                                app:icon="@drawable/baseline_youtube_searched_for_24"
-                                style="@style/Widget.MaterialComponents.Button.Icon"/>
+                                android:padding="17dp"
+                                app:icon="@drawable/baseline_youtube_searched_for_24" />
+
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/botonLimpiarCliente"
+                                style="@style/Widget.MaterialComponents.Button.Icon"
                                 android:layout_width="55dp"
                                 android:layout_height="wrap_content"
                                 android:padding="17dp"
-                                app:icon="@drawable/baseline_cleaning_services_24"
-                                style="@style/Widget.MaterialComponents.Button.Icon"/>
+                                app:icon="@drawable/baseline_cleaning_services_24" />
                         </LinearLayout>
 
                         <!-- Segunda fila: Razón Social -->
@@ -238,267 +231,333 @@
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/textNomCli"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"/>
+                                android:layout_height="wrap_content" />
                         </com.google.android.material.textfield.TextInputLayout>
 
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
             </LinearLayout>
 
-            <!-- Sección de Datos del Pesaje -->
-            <com.google.android.material.card.MaterialCardView
+            <!-- SECCIÓN 3: DATOS DEL PESAJE (Parte inferior, simulando una balanza) -->
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:layout_marginTop="8dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="4dp">
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@color/color_gray_low"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="10dp">
 
+                    <!-- Cabecera con título y estado de conexión -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center"
-                        android:layout_marginBottom="8dp">
+                        android:layout_marginBottom="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                        <!-- Título de la sección -->
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:text="DATOS DEL PESAJE"
-                            android:textStyle="bold"
                             android:textColor="@color/purple_500"
                             android:textSize="18sp"
-                            android:layout_weight="1"/>
+                            android:textStyle="bold" />
 
                         <ImageView
                             android:layout_width="50dp"
                             android:layout_height="50dp"
-                            android:contentDescription="Icono de balanza"
-                            android:src="@drawable/balanza"
-                            android:layout_gravity="center_vertical"/>
-                        <!-- Device Connected TextView -->
-                        <TextView
-                            android:id="@+id/device_connected"
+                            android:layout_marginEnd="4dp"
+                            android:src="@drawable/balanza" />
+
+                        <LinearLayout
+                            android:id="@+id/device_connected_layout"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="CONECTADO A: "
+                            android:layout_marginEnd="10dp"
                             android:background="@drawable/button_background_inactive"
-                            android:padding="10dp"
-                            android:textColor="@android:color/black"
-                            android:layout_gravity="center_vertical"
-                            android:maxLines="1"
-                            android:ellipsize="end"
-                            android:layout_weight="1"/>
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:padding="15dp">
+
+                            <TextView
+                                android:id="@+id/device_connected"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:text="CONECTADO A: "
+                                android:textColor="@android:color/black"
+                                android:textSize="15sp" />
+                        </LinearLayout>
                     </LinearLayout>
 
-                    <!-- Sección con la imagen, contador y Switch en una sola línea -->
+                    <!-- Pantalla de la balanza (Peso Kg y Contador de Jabas) -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="12dp"
-                        android:gravity="center">
+                        android:layout_marginBottom="5dp"
+                        android:orientation="horizontal">
 
-                        <!-- Imagen del paquete -->
-                        <ImageView
-                            android:id="@+id/imagen_paquete"
-                            android:layout_width="45dp"
-                            android:layout_height="45dp"
-                            android:src="@drawable/jabadepollo"
-                            android:layout_marginEnd="8dp" />
-
-                        <!-- Contador de jabas -->
-                        <TextView
-                            android:id="@+id/contador_jabas"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="= 0"
-                            android:textSize="20sp"
-                            android:textColor="@color/design_default_color_primary_dark"
-                            android:layout_marginEnd="8dp"
-                            android:layout_gravity="center_vertical"/>
-
-                        <!-- Switch para Jabas con Pollos -->
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/checkboxConPollos"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="JABAS CON POLLOS"
-                            android:layout_gravity="center_vertical"
-                            android:layout_marginStart="8dp"/>
-                    </LinearLayout>
-
-                    <!-- Grid para organizar las secciones en columnas -->
-                    <GridLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:columnCount="2"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="12dp"
-                        android:layout_gravity="center_horizontal">
-
-                        <!-- Input N° Jabas usando Material Design -->
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:hint="N° Jabas">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/input_numero_jabas"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="number"
-                                android:maxLength="4" />
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                        <!-- Input Precio x Kilo usando Material Design -->
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:hint="Precio x Kilo">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/PrecioKilo"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="numberDecimal" />
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                        <!-- Input N° Pollos usando Material Design (desactivado por defecto) -->
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/input_layout_pollos"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:hint="N° Pollos">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/input_cant_pollos"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="number"
-                                android:maxLength="4" />
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                        <!-- Input Peso Kg usando Material Design -->
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:hint="Peso Kg">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/input_peso_kg"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="numberDecimal"
-                                android:textColor="@color/red1"
-                                android:textSize="20sp"
-                                android:textStyle="bold"
-                                android:background="@drawable/rounded_edittext_pesos_bg"/>
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                    </GridLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-
-                        <com.google.android.material.textfield.TextInputLayout
+                        <!-- Sección del input con fondo -->
+                        <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:hint="Total a Pagar S/.">
+                            android:background="@drawable/rounded_edittext_pesos_bg"
+                            android:orientation="horizontal"
+                            android:layout_marginEnd="10dp"> <!-- Margen a la derecha para separar -->
 
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/totalPagarPreview"
+                            <com.google.android.material.textfield.TextInputLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:inputType="text"
-                                android:background="@drawable/row_background"
-                                android:textColor="@color/black"
-                                android:enabled="false"
-                                android:text="0.00" />
-                        </com.google.android.material.textfield.TextInputLayout>
+                                android:hint="Peso Kg.">
 
-                        <!-- Botón Guardar -->
-                        <Button
-                            android:id="@+id/boton_guardar"
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/input_peso_kg"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:background="@android:color/transparent"
+                                    android:inputType="numberDecimal"
+                                    android:textAlignment="center"
+                                    android:textColor="@color/red1"
+                                    android:textSize="25sp"
+                                    android:textStyle="bold" />
+                            </com.google.android.material.textfield.TextInputLayout>
+                        </LinearLayout>
+
+                        <!-- Sección del contador -->
+                        <com.google.android.material.card.MaterialCardView
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:backgroundTint="@color/purple_500"
-                            android:layout_marginStart="30dp"
-                            android:paddingStart="25dp"
-                            android:paddingTop="15dp"
-                            android:paddingEnd="25dp"
-                            android:paddingBottom="15dp"
-                            android:text="Añadir"
-                            android:textColor="@android:color/white"
-                            android:textSize="15sp" />
+                            android:layout_height="match_parent"
+                            android:backgroundTint="@color/black"
+                            app:cardCornerRadius="10dp"
+                            app:strokeWidth="1dp">
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="5dp"
+                                android:gravity="center_vertical"
+                                android:orientation="vertical">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="end"
+                                    android:orientation="horizontal">
+
+                                    <ImageView
+                                        android:id="@+id/imagen_paquete"
+                                        android:layout_width="32dp"
+                                        android:layout_height="32dp"
+                                        android:layout_marginEnd="8dp"
+                                        android:src="@drawable/jabadepollo" />
+
+                                    <TextView
+                                        android:id="@+id/contador_jabas"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginEnd="8dp"
+                                        android:text="= 0"
+                                        android:textColor="@color/yellow"
+                                        android:textSize="23sp"
+                                        android:textStyle="bold" />
+
+                                </LinearLayout>
+
+                                <!-- Switch para Jabas con Pollos -->
+                                <com.google.android.material.switchmaterial.SwitchMaterial
+                                    android:id="@+id/checkboxConPollos"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="JABAS CON POLLOS"
+                                    android:textColor="@color/white" />
+
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
                     </LinearLayout>
 
+
+                    <!-- Controles de pesaje -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:orientation="horizontal">
+
+                        <!-- Columna izquierda -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:hint="N° Jabas">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/input_numero_jabas"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="number"
+                                    android:maxLength="4" />
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/input_layout_pollos"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:hint="N° Pollos">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/input_cant_pollos"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="number"
+                                    android:maxLength="4" />
+                            </com.google.android.material.textfield.TextInputLayout>
+                        </LinearLayout>
+
+                        <!-- Columna derecha -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                app:cardCornerRadius="8dp"
+                                app:cardElevation="2dp"
+                                app:strokeColor="@color/purple_500"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="12dp">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Precio x Kilo"
+                                        android:textColor="@color/black"
+                                        android:textSize="12sp" />
+
+                                    <EditText
+                                        android:id="@+id/PrecioKilo"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:background="@null"
+                                        android:inputType="numberDecimal"
+                                        android:textColor="@color/black"
+                                        android:textSize="18sp"
+                                        android:textStyle="bold" />
+
+                                    <View
+                                        android:layout_width="match_parent"
+                                        android:layout_height="1dp"
+                                        android:layout_marginTop="8dp"
+                                        android:layout_marginBottom="8dp"
+                                        android:background="@color/gray" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Total a Pagar S/."
+                                        android:textColor="@color/black"
+                                        android:textSize="12sp" />
+
+                                    <TextView
+                                        android:id="@+id/totalPagarPreview"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="0.00"
+                                        android:textColor="@color/green"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Botón Añadir -->
+                    <Button
+                        android:id="@+id/boton_guardar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:backgroundTint="@color/purple_500"
+                        android:paddingStart="25dp"
+                        android:paddingTop="15dp"
+                        android:paddingEnd="25dp"
+                        android:paddingBottom="15dp"
+                        android:text="Añadir"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+            </androidx.cardview.widget.CardView>
 
-
+            <!-- SECCIÓN 4: BOTONES DE ACCIÓN -->
             <!-- Sección de Acciones -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:layout_marginBottom="10dp"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="16dp">
+                android:orientation="horizontal">
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="4"
                     android:orientation="horizontal">
 
                     <ImageButton
                         android:id="@+id/boton_Limpiar"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
                         android:padding="20dp"
-                        app:srcCompat="@drawable/baseline_cleaning_services_24"
                         app:backgroundTint="@color/your_color"
-                        android:layout_marginEnd="8dp"/>
+                        app:srcCompat="@drawable/baseline_cleaning_services_24" />
 
                     <ImageButton
                         android:id="@+id/boton_guardar_peso"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
                         android:padding="20dp"
-                        app:srcCompat="@drawable/baseline_add_24"
                         app:backgroundTint="@color/yellow"
-                        android:layout_marginEnd="8dp"/>
+                        app:srcCompat="@drawable/baseline_add_24" />
 
                     <ImageButton
                         android:id="@+id/boton_delete_peso"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:padding="20dp"
-                        app:srcCompat="@drawable/null_24"
+                        android:visibility="visible"
                         app:backgroundTint="@color/purple_200"
-                        android:visibility="visible"/>
+                        app:srcCompat="@drawable/null_24" />
 
                     <TextView
                         android:id="@+id/idListPeso"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:inputType="number"
-                        android:visibility="gone"/>
+                        android:visibility="gone" />
                 </LinearLayout>
 
                 <ImageButton
@@ -506,8 +565,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:padding="20dp"
-                    app:srcCompat="@drawable/baseline_content_paste_go_24"
-                    app:backgroundTint="@color/your_greed"/>
+                    app:backgroundTint="@color/your_greed"
+                    app:srcCompat="@drawable/baseline_content_paste_go_24" />
             </LinearLayout>
 
             <!-- Sección de Tabla de Datos -->
@@ -527,9 +586,9 @@
                         android:id="@+id/header_layout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:background="@color/purple_500"
                         android:orientation="horizontal"
-                        android:padding="8dp"
-                        android:background="@color/purple_500">
+                        android:padding="8dp">
 
                         <TextView
                             android:id="@+id/id_jabas"
@@ -539,8 +598,8 @@
                             android:gravity="center"
                             android:text="#"
                             android:textColor="@android:color/white"
-                            android:textStyle="bold"
-                            android:textSize="14sp"/>
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/numero_jabas"
@@ -550,8 +609,8 @@
                             android:gravity="center"
                             android:text="N° Jabas"
                             android:textColor="@android:color/white"
-                            android:textStyle="bold"
-                            android:textSize="14sp"/>
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/numero_pollos"
@@ -561,8 +620,8 @@
                             android:gravity="center"
                             android:text="N° Pollos"
                             android:textColor="@android:color/white"
-                            android:textStyle="bold"
-                            android:textSize="14sp"/>
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/peso_kg"
@@ -572,8 +631,8 @@
                             android:gravity="center"
                             android:text="Peso Kg."
                             android:textColor="@android:color/white"
-                            android:textStyle="bold"
-                            android:textSize="14sp"/>
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/con_pollos"
@@ -583,30 +642,33 @@
                             android:gravity="center"
                             android:text="Estado"
                             android:textColor="@android:color/white"
-                            android:textStyle="bold"
-                            android:textSize="14sp"/>
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
 
                     <!-- RecyclerView -->
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/recyclerViewJabas"
                         android:layout_width="match_parent"
-                        android:layout_height="500dp"
-                        android:padding="8dp"/>
+                        android:layout_height="wrap_content"
+                        android:padding="8dp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+
         </LinearLayout>
+
     </ScrollView>
 
+    <!-- Fondo semitransparente y ProgressBar (sin cambios) -->
     <!-- Fondo semitransparente -->
     <View
         android:id="@+id/overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#80000000"
-        android:visibility="gone"
         android:clickable="true"
-        android:focusable="true"/>
+        android:focusable="true"
+        android:visibility="gone" />
 
     <!-- ProgressBar centrado -->
     <ProgressBar
@@ -614,6 +676,5 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:visibility="gone"/>
-
+        android:visibility="gone" />
 </FrameLayout>

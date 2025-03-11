@@ -127,6 +127,8 @@ class DataSyncManager(private val context: Context) {
                         val establecimientosNube = data.getJSONArray("establecimientos")
                         val galponesNube = data.getJSONArray("galpones")
                         val serieNube = data.getJSONArray("series")
+                        val tempPesos = data.getJSONArray("tempPesos")
+
 
                         // Procesar los datos y guardar en la base de datos local
                         val needsSync = dataProcessor.processServerData(
@@ -136,7 +138,8 @@ class DataSyncManager(private val context: Context) {
                             clientesNube,
                             establecimientosNube,
                             galponesNube,
-                            serieNube
+                            serieNube,
+                            tempPesos
                         )
 
                         callback(SyncResult.Success(needsSync))

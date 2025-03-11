@@ -11,7 +11,7 @@ import app.serlanventas.mobile.ui.Interfaces.OnItemClickListener
 import app.serlanventas.mobile.ui.ViewModel.SharedViewModel
 
 
-data class JabasItem(val id: Int, val numeroJabas: Int, val numeroPollos: Int, val pesoKg: Double, val conPollos: String, val idPesoPollo: String,)
+data class JabasItem(val id: Int, val numeroJabas: Int, val numeroPollos: Int, val pesoKg: Double, val conPollos: String, val idPesoPollo: String, val fechaPeso: String)
 
 class JabasAdapter(private val itemList: MutableList<JabasItem>, private val listener: OnItemClickListener, private val sharedViewModel: SharedViewModel) : RecyclerView.Adapter<JabasAdapter.JabasViewHolder>() {
 
@@ -25,6 +25,7 @@ class JabasAdapter(private val itemList: MutableList<JabasItem>, private val lis
         val pesoKg: TextView = itemView.findViewById(R.id.peso_kg)
         val conPollos: TextView = itemView.findViewById(R.id.con_pollos)
         val estadoIcon: ImageView = itemView.findViewById(R.id.estado_icon)
+        val fechaPeso: TextView = itemView.findViewById(R.id.fecha_peso)
 
 
         // Método para enlazar los datos del item con las vistas
@@ -34,13 +35,8 @@ class JabasAdapter(private val itemList: MutableList<JabasItem>, private val lis
             numeroPollos.text = item.numeroPollos.toString()
             pesoKg.text = item.pesoKg.toString()
             conPollos.text = item.conPollos
+            fechaPeso.text = item.fechaPeso
 
-//            val context = itemView.context
-//            when (item.conPollos) {
-//                "JABAS SIN POLLOS" -> conPollos.setBackgroundColor(ContextCompat.getColor(context, R.color.orange))
-//                "JABAS CON POLLOS" -> conPollos.setBackgroundColor(ContextCompat.getColor(context, R.color.your_greed))
-//                else -> conPollos.setBackgroundColor(ContextCompat.getColor(context, android.R.color.darker_gray))
-//            }
             val iconRes = if (item.conPollos == "JABAS CON POLLOS") {
                 R.drawable.cabezapollo
             } else {

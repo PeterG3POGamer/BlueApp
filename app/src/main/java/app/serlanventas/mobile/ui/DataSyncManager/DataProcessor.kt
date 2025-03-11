@@ -8,6 +8,7 @@ import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.GalponEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.NucleoEntity
+import app.serlanventas.mobile.ui.DataBase.Entities.PesosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.SerieDeviceEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.UsuarioEntity
 import org.json.JSONArray
@@ -24,7 +25,8 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
         clientesNube: JSONArray,
         establecimientosNube: JSONArray,
         galponesNube: JSONArray,
-        serieNube: JSONArray
+        serieNube: JSONArray,
+        tempPesos: JSONArray
     ): Boolean {
         try {
             needsSync = false
@@ -42,6 +44,9 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
 
             // Procesar series
             processSeries(serieNube)
+
+            // Procesar TempPesos
+            processTempPesos(tempPesos)
 
             // Procesar ventas y sus detalles
             needsSync = processVentas(ventasNube, detallesVentasNube)
@@ -233,6 +238,47 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
         }
     }
 
+    private fun processTempPesos(tempPesos: JSONArray): Boolean {
+        try {
+            db.beginTransaction()
+            try {
+                for (i in 0 until tempPesos.length()) {
+                    val pesotemp = tempPesos.getJSONObject(i)
+
+                    val devicedName = pesotemp.getString("addresMac")
+
+                    val serieDeviceEntity = PesosEntity(
+                        id = 0,
+                        idNucleo = pesotemp.getInt("temp_idEstablecimiento"),
+                        idGalpon = pesotemp.getInt("temp_idGalpones"),
+                        numeroDocCliente = pesotemp.getString("temp_numeroDocCliente"),
+                        nombreCompleto = pesotemp.getString("temp_nombreCompleto"),
+                        dataPesoJson = pesotemp.getString("temp_dataJsonPeso"),
+                        dataDetaPesoJson = pesotemp.getString("temp_dataJsonDetaPeso"),
+                        idEstado = pesotemp.getString("status"),
+                        devicedName = pesotemp.getString("addresMac"),
+                        fechaRegistro = pesotemp.getString("temp_fechaRegistro")
+                    )
+
+                    val existePeso = db.getPesoByDeviceName(devicedName)
+
+                    if (existePeso == null) {
+                        db.insertListPesos(serieDeviceEntity)
+                    }
+                }
+                db.setTransactionSuccessful()
+
+                return true
+            } finally {
+                db.endTransaction()
+            }
+        } catch (e: Exception) {
+            Log.e("DataProcessor", "Error procesando series: ${e.message}")
+            e.printStackTrace()
+            return false
+        }
+    }
+
     private fun processVentas(ventaNube: JSONArray, detallesVentaNube: JSONArray): Boolean {
         var needsSync = false
         try {
@@ -336,6 +382,7 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
                     val pesoValue = detalleJson.getDouble("peso")
                     val tipo = detalleJson.getString("tipo")
                     val idPesoPollo = detalleJson.getString("idPesoPollo")
+                    val fechaPeso = "" // detalleJson.getString("fechaPeso")
 
                     val detalleEntity = DataDetaPesoPollosEntity(
                         idDetaPP = idDetaPP,
@@ -343,7 +390,8 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
                         cantPollos = cantPollos,
                         peso = pesoValue,
                         tipo = tipo,
-                        idPesoPollo = idPesoPollo
+                        idPesoPollo = idPesoPollo,
+                        fechaPeso = fechaPeso
                     )
 
                     db.insertDataDetaPesoPollos(detalleEntity)

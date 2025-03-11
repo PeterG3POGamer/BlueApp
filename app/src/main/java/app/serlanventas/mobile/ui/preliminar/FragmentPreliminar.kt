@@ -288,7 +288,7 @@ class FragmentPreliminar : Fragment() {
             TotalPagar = jsonObject.optString("_PP_TotalPagar"),
             idUsuario = jsonObject.optString("_PP_idUsuario"),
             idEstado = jsonObject.optString("_PP_idEstado"),
-            )
+        )
     }
 
     // Convierte JSONArray a List<DataDetaPesoPollosEntity>
@@ -302,7 +302,8 @@ class FragmentPreliminar : Fragment() {
                 cantPollos = jsonObject.getInt("_DPP_cantPolllos"),
                 peso = jsonObject.getDouble("_DPP_peso"),
                 tipo = jsonObject.getString("_DPP_tipo"),
-                idPesoPollo = jsonObject.optString("_DPP_idPesoPollo", "")
+                idPesoPollo = jsonObject.optString("_DPP_idPesoPollo", ""),
+                fechaPeso = jsonObject.optString("_DPP_fechPeso", "")
 
             )
             detalles.add(detalle)
@@ -397,7 +398,8 @@ class FragmentPreliminar : Fragment() {
                 cantPollos = jsonObject.getInt("_DPP_cantPolllos"),
                 peso = jsonObject.getDouble("_DPP_peso"),
                 tipo = jsonObject.getString("_DPP_tipo"),
-                idPesoPollo = jsonObject.optString("_DPP_idPesoPollo", "")
+                idPesoPollo = jsonObject.optString("_DPP_idPesoPollo", ""),
+                fechaPeso = jsonObject.optString("_DPP_fechPeso", "")
 
             )
             detalles.add(detalle)

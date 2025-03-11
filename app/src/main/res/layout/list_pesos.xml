@@ -65,4 +65,15 @@
         android:layout_weight="0.3"
         android:gravity="center"
         android:elevation="8dp"/>
+
+    <TextView
+        android:id="@+id/fecha_peso"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.4"
+        android:text="Estado"
+        android:textSize="14sp"
+        android:textColor="@android:color/black"
+        android:gravity="center"
+        android:visibility="gone"/>
 </LinearLayout>

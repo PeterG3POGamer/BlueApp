@@ -44,7 +44,6 @@ import app.serlanventas.mobile.ui.BluetoothView.BluetoothFragment
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.ClienteEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
-import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.GalponEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.PesosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.pesoUsedEntity
@@ -61,6 +60,7 @@ import app.serlanventas.mobile.ui.Services.Logger
 import app.serlanventas.mobile.ui.Services.PreLoading
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice.getDeviceId
 import app.serlanventas.mobile.ui.Utilidades.Constants
+import app.serlanventas.mobile.ui.Utilidades.Constants.getCurrentDateTime
 import app.serlanventas.mobile.ui.Utilidades.NetworkChangeReceiver
 import app.serlanventas.mobile.ui.ViewModel.SharedViewModel
 import app.serlanventas.mobile.ui.ViewModel.TabViewModel
@@ -160,8 +160,8 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
 //                logger.log2("PesoValue: Peso Formateado recibido en JabaFragment -> $pesoFormatted")
             }
         }
-        showLoading()
 
+        showLoading()
 
         connectedDeviceAddress = sharedViewModel.getConnectedDeviceAddress()
 
@@ -169,13 +169,13 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             sharedViewModel.connectedDeviceName.observe(viewLifecycleOwner) { deviceName ->
                 if (!deviceName.isNullOrEmpty()) {
                     binding.deviceConnected.text = "CONECTADO A: $deviceName"
-                    binding.deviceConnected.background = ContextCompat.getDrawable(
+                    binding.deviceConnectedLayout.background = ContextCompat.getDrawable(
                         requireContext(),
                         R.drawable.button_background_active
                     )
                 } else {
                     binding.deviceConnected.text = "NO CONECTADO"
-                    binding.deviceConnected.background = ContextCompat.getDrawable(
+                    binding.deviceConnectedLayout.background = ContextCompat.getDrawable(
                         requireContext(),
                         R.drawable.button_background_inactive
                     )
@@ -183,7 +183,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             }
         } else {
             binding.deviceConnected.text = "NO CONECTADO"
-            binding.deviceConnected.background =
+            binding.deviceConnectedLayout.background =
                 ContextCompat.getDrawable(requireContext(), R.drawable.button_background_inactive)
 
         }
@@ -199,8 +199,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             layoutManager = LinearLayoutManager(context)
             adapter = jabasAdapter
         }
-
-
 
         binding.selectGalpon.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
@@ -366,7 +364,8 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                                                             numeroPollos = detalle.cantPollos,
                                                             pesoKg = detalle.peso,
                                                             conPollos = detalle.tipo,
-                                                            idPesoPollo = detalle.idPesoPollo
+                                                            idPesoPollo = detalle.idPesoPollo,
+                                                            fechaPeso = detalle.fechaPeso
                                                         )
 
                                                         jabasAdapter.addItem(newItem)
@@ -433,7 +432,8 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                                                             numeroPollos = detalle.cantPollos,
                                                             pesoKg = detalle.peso,
                                                             conPollos = detalle.tipo,
-                                                            idPesoPollo = detalle.idPesoPollo
+                                                            idPesoPollo = detalle.idPesoPollo,
+                                                            fechaPeso = detalle.fechaPeso
                                                         )
 
                                                         jabasAdapter.addItem(newItem)
@@ -514,7 +514,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             }
         }
 
-        binding.deviceConnected.setOnClickListener {
+        binding.deviceConnectedLayout.setOnClickListener {
             if (connectedDeviceAddress.isNullOrBlank() || connectedDeviceAddress == "null") {
                 // Muestra un fragmento modal si connectedDeviceAddress es null
                 showModalBluetoothFragment()
@@ -526,7 +526,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
 
         binding.botonGuardarPeso.setOnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
-                showLoading()
                 val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
                 val idNucleo = binding.selectEstablecimiento.selectedItemPosition
                 val idGalpon =
@@ -543,11 +542,13 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     )
                     fetchData(2000)
                 } else if (numDoc.isNullOrBlank() && nombres.isNullOrBlank()) {
-                    showCustomToast(requireContext(), "¡Ingrese un Cliente", "info")
+                    showCustomToast(requireContext(), "¡Ingrese el Cliente", "info")
+                    binding.textDocCli.requestFocus()
                     fetchData(2000)
                 } else if (binding.PrecioKilo.text.isNullOrBlank()) {
                     showCustomToast(requireContext(), "¡Ingrese un precio", "info")
                     binding.PrecioKilo.error = "Ingrese un precio"
+                    binding.PrecioKilo.requestFocus()
                     fetchData(2000)
                 } else if (idNucleo == 0) {
                     showCustomToast(requireContext(), "¡Seleccione un nucleo!", "info")
@@ -556,6 +557,8 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     showCustomToast(requireContext(), "¡Seleccione un galpón!", "info")
                     fetchData(2000)
                 } else {
+                    showLoading()
+
                     val dataDetaPesoPollos = ManagerPost.captureData(jabasList)
                     val dataPesoPollos = ManagerPost.captureDataPesoPollos(
                         id = 1,
@@ -721,7 +724,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             val numeroJabas = binding.inputNumeroJabas.text.toString()
             val numeroPollos = binding.inputCantPollos.text.toString()
             val pesoKg = binding.inputPesoKg.text.toString()
-            val precioKilo = binding.PrecioKilo.text.toString()
             val conPollos =
                 if (binding.checkboxConPollos.isChecked) "JABAS CON POLLOS" else "JABAS SIN POLLOS"
 
@@ -755,13 +757,15 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
 
             // Si todos los campos son válidos, agregar el nuevo item
             if (isValid) {
+                val currentTime = getCurrentDateTime()
                 val newItem = JabasItem(
                     id = jabasList.size + 1,
                     numeroJabas = numeroJabas.toInt(),
                     numeroPollos = if (binding.checkboxConPollos.isChecked) numeroPollos.toInt() else 0,
                     pesoKg = pesoKg.toDouble(),
                     conPollos = conPollos,
-                    idPesoPollo = ""
+                    idPesoPollo = "",
+                    fechaPeso = currentTime
                 )
                 jabasAdapter.addItem(newItem)
 
@@ -785,6 +789,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             // Validar número de cliente
             if (numeroCliente.length < 8 || numeroCliente.length > 11 || !numeroCliente.matches("[0-9]+".toRegex())) {
                 binding.textDocCli.error = "Ingrese un número válido (8-11 dígitos)"
+                binding.textDocCli.requestFocus()
                 preLoading.hidePreCarga()
                 return@setOnClickListener
             }
@@ -907,7 +912,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
 
         binding.botonEnviar.setOnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
-                showLoading()
                 val sharedPreferences =
                     requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
                 val dni = sharedPreferences.getString("dni", "") ?: ""
@@ -965,13 +969,17 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                 } else if (dataPesoPollos.PKPollo.isBlank()) {
                     binding.PrecioKilo.error =
                         "¡Para calcular el Total a Pagar necesitamos saber el precio por kilo!"
+                    binding.PrecioKilo.requestFocus()
                     fetchData(500)
 
                 } else if (precio == null || dataPesoPollos.PKPollo.isBlank()) {
                     binding.PrecioKilo.error =
                         "¡Para calcular el Total a Pagar necesitamos saber el precio por kilo!"
                     fetchData(500)
+                    binding.PrecioKilo.requestFocus()
                 } else {
+                    showLoading()
+
                     toggleAcordionnotGone()
                     Log.d("JabasFragment", "$dataDetaPesoPollos")
                     Log.d("JabasFragment", "$dataPesoPollos")
@@ -1004,7 +1012,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
     private fun cargarDatosUsadosPeso() {
         val pesoUsedExisted = db.getPesosUsedAll()
         if (!pesoUsedExisted.isNullOrEmpty()) {
-            val peso = pesoUsedExisted.first() // Asumiendo que quieres el primer registro
+            val peso = pesoUsedExisted.first()
             idPesoShared = peso.idPesoUsed
             sharedViewModel.setIdListPesos(idPesoShared)
 
@@ -1424,9 +1432,10 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         } else {
             Toast.makeText(
                 requireContext(),
-                "No se encontró el registro con ID $idPeso",
+                "No se encontró el peso, por favor intente de nuevo",
                 Toast.LENGTH_SHORT
             ).show()
+            Log.d("SpinnerData", "No se encontró el registro con ID $idPeso")
         }
     }
 
@@ -1442,33 +1451,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             .show()
     }
 
-    private fun showSendDataConfirmationDialog(
-        dataDetaPesoPollos: List<DataDetaPesoPollosEntity>,
-        dataPesoPollos: List<DataPesoPollosEntity>
-    ) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Enviar Datos")
-            .setMessage("Se ha detectado una conexión a Internet. ¿Deseas enviar los datos almacenados?")
-            .setPositiveButton("Enviar") { dialog, _ ->
-                // El usuario aceptó enviar los datos
-                CoroutineScope(Dispatchers.IO).launch {
-                    ManagerPost.sendLocalDataToServer(
-                        requireContext(),
-                        this@JabasFragment,
-                        dataDetaPesoPollos,
-                        dataPesoPollos
-                    )
-                    checkSendData = true
-                }
-                dialog.dismiss()
-            }
-            .setNegativeButton("Cancelar") { dialog, _ ->
-                // El usuario canceló el envío
-                dialog.dismiss()
-            }
-            .setCancelable(false)
-            .show()
-    }
 
     fun showDialogLimpiarCliente() {
         val builder = AlertDialog.Builder(requireContext())
@@ -1620,7 +1602,8 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                 cantPollos = jsonObject.getInt("_DPP_cantPolllos"),
                 peso = jsonObject.getDouble("_DPP_peso"),
                 tipo = jsonObject.getString("_DPP_tipo"),
-                idPesoPollo = jsonObject.optString("_DPP_idPesoPollo", "")
+                idPesoPollo = jsonObject.optString("_DPP_idPesoPollo", ""),
+                fechaPeso = jsonObject.optString("_DPP_fechaPeso", "")
             )
             detalles.add(detalle)
         }

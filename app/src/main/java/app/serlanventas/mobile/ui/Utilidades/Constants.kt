@@ -2,20 +2,16 @@ package app.serlanventas.mobile.ui.Utilidades
 
 import android.content.Context
 import android.content.SharedPreferences
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 object Constants {
     private const val LOGIN_PATH = "controllers/LoginControllerApp.php?op=verificar"
 
-//    const val BASE_URL_DEV = "http://192.168.161.104/VentaPollos/"
-//    const val WEB_URL_GUIA_DEV = "http://192.168.161.104/VentaPollos/view/index.php?action=NucleoGalpon"
-//    const val WEB_URL_VENTAS_DEV = "http://192.168.161.104/VentaPollos/view/index.php?action=VentasApp"
-
-
     const val BASE_URL_PRODUCCION = "https://emprender.guru/sp_20393514630/"
     const val WEB_URL_GUIA_PRODUCCION = "https://emprender.guru/sp_20393514630/view/index.php?action=NucleoGalpon"
     const val WEB_URL_VENTAS_PRODUCCION = "https://emprender.guru/sp_20393514630/view/index.php?action=VentasApp"
-
-
 
     fun getBaseUrl(): String {
         return BASE_URL_PRODUCCION
@@ -38,7 +34,6 @@ object Constants {
         return "$baseUrl$LOGIN_PATH&dni=$dni&pass=$pass"
     }
 
-
     private const val TAG = "Constants" // Etiqueta para los mensajes de Log
 
     fun guardarEstadoModo(context: Context, isProduction: Boolean) {
@@ -51,5 +46,14 @@ object Constants {
     fun obtenerEstadoModo(context: Context): Boolean {
         val sharedPreferences: SharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         return sharedPreferences.getBoolean("isProduction", true) // Por defecto, es false (modo de prueba)
+    }
+
+    fun getCurrentDateTime(): String {
+        // Define el formato de fecha y hora que deseas usar
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        // Obtiene la fecha y hora actual del sistema
+        val currentDate = Date()
+        // Formatea la fecha y hora como una cadena
+        return dateFormat.format(currentDate)
     }
 }
