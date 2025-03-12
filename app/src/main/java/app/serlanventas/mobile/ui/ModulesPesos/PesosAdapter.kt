@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import app.serlanventas.mobile.R
+import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.PesosEntity
 import com.google.android.material.button.MaterialButton
 
@@ -19,6 +20,8 @@ class PesosAdapter(
         val estadoPeso: TextView = itemView.findViewById(R.id.estadoCliente)
         val nombreCliente: TextView = itemView.findViewById(R.id.nombreCliente)
         val documentoCliente: TextView = itemView.findViewById(R.id.documentoCliente)
+        val nucleoName: TextView = itemView.findViewById(R.id.nucleo_name)
+        val galponName: TextView = itemView.findViewById(R.id.galpon_name)
         val btnMostrar: MaterialButton = itemView.findViewById(R.id.btnMostrar)
         val btnEliminar: MaterialButton = itemView.findViewById(R.id.btnEliminar)
     }
@@ -30,10 +33,16 @@ class PesosAdapter(
 
     override fun onBindViewHolder(holder: PesoViewHolder, position: Int) {
         val peso = pesos[position]
+        val db = AppDatabase(holder.itemView.context)
+
+        val nucleoData = db.getNucleoById(peso.idNucleo.toString())
+        val galponData = db.getGalponById(peso.idGalpon.toString())
 
         // Asigna los datos a las vistas
         holder.nombreCliente.text = peso.nombreCompleto ?: "Sin nombre"
         holder.documentoCliente.text = peso.numeroDocCliente
+        holder.nucleoName.text = nucleoData!!.nombre
+        holder.galponName.text = galponData!!.nombre
 
         // Cambiar el fondo según el estado
         when (peso.idEstado) {

@@ -1,6 +1,6 @@
 {
   "version_code": 3,
-  "version_name": "1.16.16",
+  "version_name": "1.17",
   "download_url2": "https://github.com/PeterG3POGamer/BlueApp/tree/master/app/build/outputs/apk/debug/app-debug.apk",
   "download_url": "https://github.com/PeterG3POGamer/BlueApp/releases/download/v.0.1-beta/app-debug.apk",
   "changes": [
@@ -8,7 +8,8 @@
     {"type": "Arreglado", "description": "Cierres inesperados"},
     {"type": "Arreglado", "description": "Guardar y mostrar pesos localmente."},
     {"type": "Actualizado", "description": "Mostrar ventas y detalle de ventas."},
-    {"type": "Actualizado", "description": "Imprimir al realizar la venta y en reporte de ventas."}
+    {"type": "Actualizado", "description": "Sincronización de pesos."},
+    {"type": "Actualizado", "description": "Imprimir y compartir la venta realizada."}
   ],
   "inherit": true
 }

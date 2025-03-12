@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Log
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
+import app.serlanventas.mobile.ui.DataBase.Entities.PesosEntity
 import app.serlanventas.mobile.ui.Interfaces.ProgressCallback
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +15,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 
 class DataSyncManager(private val context: Context) {
     private val db = AppDatabase(context)
@@ -49,8 +52,47 @@ class DataSyncManager(private val context: Context) {
                             CoroutineScope(Dispatchers.IO).launch {
                                 progressCallback.onProgressUpdate("Comparando datos locales y remotos...")
                                 // Verificar si hay cambios pendientes para subir
+                                val pesosLocales = db.getAllPesosNotSync()
                                 val ventasLocales = db.getAllDataPesoPollosNotSync()
 
+                                progressCallback.onProgressUpdate("Verificando Pesos Temporales por sincronizar...")
+                                delay(2000)
+
+                                if (pesosLocales.isEmpty()) {
+                                    progressCallback.onProgressUpdate("No hay pesos temporalses pendientes por sincronizar")
+                                    delay(1000)
+                                }
+
+                                progressCallback.onProgressUpdate("Verificando Ventas por sincronizar...")
+                                delay(2000)
+                                if (ventasLocales.isEmpty()) {
+                                    progressCallback.onProgressUpdate("No hay ventas pendientes por sincronizar")
+                                    delay(1000)
+                                    progressCallback.onProgressUpdate("Verificando sesión...")
+                                    delay(2000)
+                                    progressCallback.onProgressUpdate("Redirigiendo...")
+                                    delay(1000)
+                                    handleSyncResult(syncResult, isLoggedIn, callback)
+                                }
+
+                                // Verificar Pesos temporales
+                                if (pesosLocales.isNotEmpty()) {
+                                    progressCallback.onProgressUpdate("Subiendo pesos temporales al servidor...")
+                                    subirPesosLocales(
+                                        baseUrl,
+                                        pesosLocales
+                                    ) { pesosUploadResult ->
+                                        if (pesosUploadResult) {
+                                            progressCallback.onProgressUpdate("Pesos temporales sincronizados correctamente")
+                                            handleSyncResult(syncResult, isLoggedIn, callback)
+                                        } else {
+                                            progressCallback.onProgressUpdate("Error al sincronizar pesos temporales")
+                                            callback(false)
+                                        }
+                                    }
+                                }
+
+                                // Verificar Ventas
                                 if (ventasLocales.isNotEmpty()) {
                                     progressCallback.onProgressUpdate("Subiendo ventas locales al servidor...")
                                     subirVentasLocales(
@@ -67,16 +109,7 @@ class DataSyncManager(private val context: Context) {
                                             callback(false)
                                         }
                                     }
-                                } else {
-                                    progressCallback.onProgressUpdate("No hay ventas pendientes por sincronizar")
-                                    delay(1000)
-                                    progressCallback.onProgressUpdate("Verificando sesión...")
-                                    delay(1000)
-                                    progressCallback.onProgressUpdate("Redirigiendo...")
-                                    delay(1000)
-                                    handleSyncResult(syncResult, isLoggedIn, callback)
                                 }
-
                             }
                         }
 
@@ -241,6 +274,76 @@ class DataSyncManager(private val context: Context) {
             }
         }
     }
+
+    fun subirPesosLocales(
+        baseUrl: String,
+        pesosLocales: List<PesosEntity>,
+        callback: (Boolean) -> Unit
+    ) {
+        val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=insertar"
+
+        // Convertir la lista de PesosEntity a JSON
+        val jsonArray = JSONArray()
+        pesosLocales.forEach { peso ->
+            val jsonObject = peso.toJson()
+            jsonArray.put(jsonObject)
+            Log.d("DataSyncManager", "Peso a sincronizar: $jsonObject")
+        }
+        val jsonParam = jsonArray.toString()
+        Log.d("DataSyncManager", "JSON a enviar: $jsonParam")
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val url = URL(urlString)
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+                conn.doOutput = true
+
+                // Escribir JSON en el cuerpo de la solicitud
+                conn.outputStream.use { os ->
+                    val input = jsonParam.toByteArray(Charsets.UTF_8)
+                    os.write(input, 0, input.size)
+                }
+
+                val responseCode = conn.responseCode
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
+                    Log.d("DataSyncManager", "Respuesta del servidor: $inputStream")
+
+                    val jsonResponse = JSONObject(inputStream)
+                    val status = jsonResponse.optString("status")
+
+                    if (status == "success") {
+                        withContext(Dispatchers.Main) {
+                            callback(true)
+                        }
+                    } else {
+                        val mensaje = jsonResponse.optString("mensaje")
+                        Log.e("DataSyncManager", "Error de sincronización: $mensaje")
+                        withContext(Dispatchers.Main) {
+                            callback(false)
+                        }
+                    }
+                } else {
+                    Log.e(
+                        "DataSyncManager",
+                        "Server response: $responseCode ${conn.responseMessage}"
+                    )
+                    withContext(Dispatchers.Main) {
+                        callback(false)
+                    }
+                }
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Log.e("DataSyncManager", "Error: ${ex.message}")
+                    callback(false)
+                }
+            }
+        }
+    }
+
 
     private fun handleSyncResult(
         result: SyncResult,

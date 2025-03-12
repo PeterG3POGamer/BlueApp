@@ -541,7 +541,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                         "info"
                     )
                     fetchData(2000)
-                } else if (numDoc.isNullOrBlank() && nombres.isNullOrBlank()) {
+                } else if (numDoc.isBlank() && nombres.isBlank()) {
                     showCustomToast(requireContext(), "¡Ingrese el Cliente", "info")
                     binding.textDocCli.requestFocus()
                     fetchData(2000)
@@ -584,7 +584,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     dataPesoPollosJson = dataPesoPollos.toJson().toString()
                     dataDetaPesoPollosJson =
                         JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
-                    val idDevice = getDeviceId(requireContext())
+                    val serieDevice = db.getSerieDevice()
 
                     val pesosEntity = PesosEntity(
                         id = 0,
@@ -595,7 +595,9 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                         dataPesoJson = dataPesoPollosJson!!,
                         dataDetaPesoJson = dataDetaPesoPollosJson!!,
                         idEstado = "0",
-                        devicedName = idDevice,
+                        isSync = "0",
+                        devicedName = "",
+                        serieDevice = serieDevice!!.codigo,
                         fechaRegistro = ""
                     )
                     if (idPesoShared == 0) {
@@ -749,6 +751,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             if (binding.checkboxConPollos.isChecked) {
                 if (numeroPollos.isBlank() || numeroPollos.toInt() == 0) {
                     binding.inputCantPollos.error = "Ingrese la cantidad de pollos"
+                    binding.inputCantPollos.requestFocus()
                     isValid = false
                 } else {
                     binding.inputCantPollos.error = null // Limpiar error si está presente
@@ -1900,6 +1903,8 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                             dataPesoJson = dataPesoPollosJson!!,
                             dataDetaPesoJson = dataDetaPesoPollosJson!!,
                             idEstado = "1",
+                            isSync = "",
+                            serieDevice = "",
                             devicedName = device,
                             fechaRegistro = ""
                         )
@@ -1964,6 +1969,8 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     dataPesoJson = dataPesoPollosJson!!,
                     dataDetaPesoJson = dataDetaPesoPollosJson!!,
                     idEstado = "1",
+                    isSync = "",
+                    serieDevice = "",
                     devicedName = device,
                     fechaRegistro = ""
                 )

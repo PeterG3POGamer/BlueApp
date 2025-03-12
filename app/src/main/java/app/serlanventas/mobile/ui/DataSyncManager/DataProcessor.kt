@@ -239,13 +239,14 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
     }
 
     private fun processTempPesos(tempPesos: JSONArray): Boolean {
+        var needsSync = false
         try {
             db.beginTransaction()
             try {
                 for (i in 0 until tempPesos.length()) {
                     val pesotemp = tempPesos.getJSONObject(i)
 
-                    val devicedName = pesotemp.getString("addresMac")
+                    val serieDevice = pesotemp.getString("serieDevice")
 
                     val serieDeviceEntity = PesosEntity(
                         id = 0,
@@ -256,19 +257,25 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
                         dataPesoJson = pesotemp.getString("temp_dataJsonPeso"),
                         dataDetaPesoJson = pesotemp.getString("temp_dataJsonDetaPeso"),
                         idEstado = pesotemp.getString("status"),
+                        isSync = "1",
+                        serieDevice = pesotemp.getString("serieDevice"),
                         devicedName = pesotemp.getString("addresMac"),
                         fechaRegistro = pesotemp.getString("temp_fechaRegistro")
                     )
 
-                    val existePeso = db.getPesoByDeviceName(devicedName)
+                    val existePeso = db.getPesoBySerieDevice(serieDevice)
 
                     if (existePeso == null) {
                         db.insertListPesos(serieDeviceEntity)
                     }
                 }
-                db.setTransactionSuccessful()
 
-                return true
+                val pesosLocales = db.getAllPesosNotSync()
+                if (pesosLocales.isNotEmpty()) {
+                    needsSync = true
+                }
+                db.setTransactionSuccessful()
+                return needsSync
             } finally {
                 db.endTransaction()
             }

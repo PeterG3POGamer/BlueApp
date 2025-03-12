@@ -11,7 +11,9 @@ data class PesosEntity(
     val dataPesoJson: String,
     val dataDetaPesoJson: String,
     val idEstado: String,
+    val isSync: String,
     val devicedName: String,
+    val serieDevice: String,
     val fechaRegistro: String
 ) {
     fun toJson(): JSONObject {
@@ -24,7 +26,9 @@ data class PesosEntity(
         json.put("dataPesoJson", dataPesoJson)
         json.put("dataDetaPesoJson", dataDetaPesoJson)
         json.put("idEstado", idEstado)
+        json.put("isSync", isSync)
         json.put("deviceName", devicedName)
+        json.put("serieDevice", serieDevice)
         json.put("fechaRegistro", fechaRegistro)
         return json
     }

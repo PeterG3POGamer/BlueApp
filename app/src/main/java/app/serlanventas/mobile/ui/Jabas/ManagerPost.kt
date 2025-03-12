@@ -921,6 +921,20 @@ object ManagerPost {
         pesosEntity: PesosEntity
     ): Boolean = withContext(Dispatchers.IO) {
         // Insertar en la base de datos local
+        val db = AppDatabase(context)
+        val serie = pesosEntity.serieDevice
+
+        var numSeriePeso = db.getUltimoNumeroSeriePeso(serie)
+
+        if (numSeriePeso == null) {
+            numSeriePeso = "0"
+        }
+        val partes = numSeriePeso.split('-')
+        val numeroActual = if (partes.size > 1) partes[1].toIntOrNull() ?: 0 else 0
+
+        val nuevoNumero = numeroActual + 1
+        val newSerie = "$serie-$nuevoNumero"
+
         val pesoUsedEntity = PesosEntity(
             id = 0,
             idNucleo = pesosEntity.idNucleo,
@@ -930,10 +944,11 @@ object ManagerPost {
             dataPesoJson = pesosEntity.dataPesoJson,
             dataDetaPesoJson = pesosEntity.dataDetaPesoJson,
             idEstado = "0",
+            isSync = pesosEntity.isSync,
             devicedName = pesosEntity.devicedName,
+            serieDevice = newSerie,
             fechaRegistro = ""
         )
-        val db = AppDatabase(context)
         val result = db.insertListPesos(pesoUsedEntity)
 
         if (result != -1L) {
@@ -947,13 +962,10 @@ object ManagerPost {
             return@withContext false
         }
 
+        val baseUrl = Constants.getBaseUrl()
+        val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=insertar"
 //         Intentar enviar al servidor remoto
         if (NetworkUtils.isNetworkAvailable(context)) {
-
-
-            val baseUrl = Constants.getBaseUrl()
-            val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=insertar"
-
             try {
                 val url = URL(urlString)
                 val conn = url.openConnection() as HttpURLConnection
@@ -961,8 +973,23 @@ object ManagerPost {
                 conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
                 conn.doOutput = true
 
+                val loadPesoEntity = PesosEntity(
+                    id = 0,
+                    idNucleo = pesosEntity.idNucleo,
+                    idGalpon = pesosEntity.idGalpon,
+                    numeroDocCliente = pesosEntity.numeroDocCliente,
+                    nombreCompleto = pesosEntity.nombreCompleto,
+                    dataPesoJson = pesosEntity.dataPesoJson,
+                    dataDetaPesoJson = pesosEntity.dataDetaPesoJson,
+                    idEstado = "0",
+                    isSync = "1",
+                    devicedName = pesosEntity.devicedName,
+                    serieDevice = newSerie,
+                    fechaRegistro = ""
+                )
+
                 // Convertir PesosEntity a JSON
-                val jsonInputString = pesosEntity.toJson().toString()
+                val jsonInputString = loadPesoEntity.toJson().toString()
 
                 // Escribir JSON en el cuerpo de la solicitud
                 conn.outputStream.use { os ->
@@ -1054,67 +1081,87 @@ object ManagerPost {
         }
 
         // Después de la actualización local exitosa, intentamos actualizar el servidor remoto
-//        val baseUrl = Constants.getBaseUrl()
-//        val urlString =
-//            "${baseUrl}controllers/TempPesoPollosController.php?op=insertar&idPesoShared=${idPesoShared}"
-//
-//        try {
-//            val url = URL(urlString)
-//            val conn = url.openConnection() as HttpURLConnection
-//            conn.requestMethod = "POST"
-//            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-//            conn.doOutput = true
-//
-//            // Convertir PesosEntity a JSON
-//            val jsonInputString = pesosEntity.toJson().toString()
-//
-//            // Escribir JSON en el cuerpo de la solicitud
-//            conn.outputStream.use { os ->
-//                val input = jsonInputString.toByteArray(Charsets.UTF_8)
-//                os.write(input, 0, input.size)
-//            }
-//
-//            val responseCode = conn.responseCode
-//            if (responseCode == HttpURLConnection.HTTP_OK) {
-//                val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-//                Log.e("UpdateListPesos", "Response: $inputStream")
-//
-//                try {
-//                    val jsonResponse = JSONObject(inputStream)
-//                    val status = jsonResponse.optString("status")
-//                    val message = jsonResponse.optString("message")
-//
-//                    if (status == "success") {
-//                        withContext(Dispatchers.Main) {
-//                            showCustomToast(context, "Peso actualizado correctamente ", "success")
-//                        }
-//                        return@withContext true
-//                    } else {
-//                        withContext(Dispatchers.Main) {
-//                            showCustomToast(
-//                                context,
-//                                "Ocurrió un error al actualizar en el servidor",
-//                                "error"
-//                            )
-//                        }
-//                        Log.e("UpdateListPesos", "Error: $message")
-//                    }
-//                } catch (e: JSONException) {
-//                    withContext(Dispatchers.Main) {
-//                        showCustomToast(
-//                            context,
-//                            "Error al procesar la respuesta del servidor",
-//                            "error"
-//                        )
-//                    }
-//                    Log.e("updateListPesos", "JSON Exception: ${e.message}")
-//                }
-//            } else {
-//                Log.e("updateListPesos", "Server response: $responseCode ${conn.responseMessage}")
-//            }
-//        } catch (ex: Exception) {
-//            Log.e("updateListPesos", "Exception: ${ex.message}")
-//        }
+        val baseUrl = Constants.getBaseUrl()
+        val urlString =
+            "${baseUrl}controllers/TempPesoPollosController.php?op=insertar&idPesoShared=${idPesoShared}"
+
+        if (NetworkUtils.isNetworkAvailable(context)) {
+            try {
+                val url = URL(urlString)
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+                conn.doOutput = true
+
+                val existeLocalmente = db.getPesoPorId(idPesoShared)
+                // Convertir PesosEntity a JSON
+                val loadPesoEntity = PesosEntity(
+                    id = 0,
+                    idNucleo = pesosEntity.idNucleo,
+                    idGalpon = pesosEntity.idGalpon,
+                    numeroDocCliente = pesosEntity.numeroDocCliente,
+                    nombreCompleto = pesosEntity.nombreCompleto,
+                    dataPesoJson = pesosEntity.dataPesoJson,
+                    dataDetaPesoJson = pesosEntity.dataDetaPesoJson,
+                    idEstado = "0",
+                    isSync = "1",
+                    devicedName = pesosEntity.devicedName,
+                    serieDevice = existeLocalmente!!.serieDevice,
+                    fechaRegistro = ""
+                )
+
+                // Convertir PesosEntity a JSON
+                val jsonInputString = loadPesoEntity.toJson().toString()
+
+                // Escribir JSON en el cuerpo de la solicitud
+                conn.outputStream.use { os ->
+                    val input = jsonInputString.toByteArray(Charsets.UTF_8)
+                    os.write(input, 0, input.size)
+                }
+
+                val responseCode = conn.responseCode
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
+                    Log.e("UpdateListPesos", "Response: $inputStream")
+
+                    try {
+                        val jsonResponse = JSONObject(inputStream)
+                        val status = jsonResponse.optString("status")
+                        val message = jsonResponse.optString("message")
+
+                        if (status == "success") {
+                            withContext(Dispatchers.Main) {
+                                showCustomToast(context, "Peso actualizado correctamente ", "success")
+                            }
+                            return@withContext true
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                showCustomToast(
+                                    context,
+                                    "Ocurrió un error al actualizar en el servidor",
+                                    "error"
+                                )
+                            }
+                            Log.e("UpdateListPesos", "Error: $message")
+                            return@withContext false
+                        }
+                    } catch (e: JSONException) {
+                        withContext(Dispatchers.Main) {
+                            showCustomToast(
+                                context,
+                                "Error al procesar la respuesta del servidor",
+                                "error"
+                            )
+                        }
+                        Log.e("updateListPesos", "JSON Exception: ${e.message}")
+                    }
+                } else {
+                    Log.e("updateListPesos", "Server response: $responseCode ${conn.responseMessage}")
+                }
+            } catch (ex: Exception) {
+                Log.e("updateListPesos", "Exception: ${ex.message}")
+            }
+        }
 
         // Si llegamos aquí, significa que la actualización remota falló, pero la local fue exitosa
         return@withContext true
@@ -1200,14 +1247,16 @@ object ManagerPost {
             if (idPeso != 0) {
                 val pesoEntity = PesosEntity(
                     id = idPeso,
+                    isSync = "",
                     idEstado = if (status == "Used") "1" else "0",
-                    devicedName = deviceName,
+                    devicedName = if (status == "Used") deviceName else "",
                     fechaRegistro = "",
                     idGalpon = 0,
                     idNucleo = 0,
                     numeroDocCliente = "",
                     nombreCompleto = "",
                     dataPesoJson = "",
+                    serieDevice = "",
                     dataDetaPesoJson = ""
                 )
                 val result = db.setStatusUsed(pesoEntity)
