@@ -913,7 +913,13 @@ object ManagerPost {
                     return@withContext false
                 }
             }
-
+        }
+        withContext(Dispatchers.Main) {
+            showCustomToast(
+                context,
+                "Estas usando el peso de ${pesosEntity.nombreCompleto} ",
+                "info"
+            )
         }
 
         // Después de la actualización local exitosa, intentamos actualizar el servidor remoto
@@ -973,7 +979,6 @@ object ManagerPost {
                                     "success"
                                 )
                             }
-                            return@withContext true
                         } else {
                             withContext(Dispatchers.Main) {
                                 showCustomToast(
@@ -1006,20 +1011,17 @@ object ManagerPost {
             }
         }
 
-
-        withContext(Dispatchers.Main) {
-            showCustomToast(
-                context,
-                "Estas usando el peso de ${pesosEntity.nombreCompleto} ",
-                "info"
-            )
-        }
-
         // Si llegamos aquí, significa que la actualización remota falló, pero la local fue exitosa
         return@withContext true
     }
 
+    /*
+        - Para eliminar un peso y finalizarlo, se cambiara su estado a 2 para que el servidor lo identifique
+        como peso eliminado o finalizado
 
+        - Para eliminar con internet, se eliminará directamente de la base de datos y localmente si es exitoso
+         si no el estado estara cambiado para que posteriormente lo elimine el servidor.
+     */
     fun removeListPesosId(
         context: Context,
         idPeso: Int,
@@ -1029,22 +1031,10 @@ object ManagerPost {
         val serieDevice = db.getPesoPorId(idPeso)
         var serie = serieDevice!!.serieDevice
 
-        // Ejecutar la operación de eliminación en un hilo de trabajo
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                if (idPeso != 0) {
-                    val result = db.deletePesosBySerieDevice(serie)
-                    // Llamar al callback en el hilo principal
-                    withContext(Dispatchers.Main) {
-                        callback(result > 0)
-                    }
-                }
-            } catch (e: Exception) {
-                // Manejar cualquier excepción y llamar al callback con false
-                withContext(Dispatchers.Main) {
-                    callback(false)
-                }
-            }
+        val result = db.setStatusDeletedPeso(serie)
+
+        if (result > 0){
+            Log.d("removeListPesosId", "Peso eliminado correctamente")
         }
 
         val baseUrl = Constants.getBaseUrl()
@@ -1066,6 +1056,22 @@ object ManagerPost {
 
                         CoroutineScope(Dispatchers.Main).launch {
                             if (status == "success") {
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    try {
+                                        if (idPeso != 0) {
+                                            val result = db.deletePesosBySerieDevice(serie)
+                                            // Llamar al callback en el hilo principal
+                                            withContext(Dispatchers.Main) {
+                                                callback(result > 0)
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        // Manejar cualquier excepción y llamar al callback con false
+                                        withContext(Dispatchers.Main) {
+                                            callback(false)
+                                        }
+                                    }
+                                }
                                 callback(true)
                             } else {
                                 showCustomToast(context, "Error al eliminar el peso", "error")
@@ -1074,7 +1080,11 @@ object ManagerPost {
                         }
                     } else {
                         CoroutineScope(Dispatchers.Main).launch {
-                            showCustomToast(context, "Error de red: ${conn.responseMessage}", "error")
+                            showCustomToast(
+                                context,
+                                "Error de red: ${conn.responseMessage}",
+                                "error"
+                            )
                             callback(false)
                         }
                     }
@@ -1086,9 +1096,8 @@ object ManagerPost {
                 }
             }
         }
-//        else{
-//            db.setStatusDeletedPeso(serie)
-//        }
+
+        callback(result > 0)
     }
 
     fun setStatusUsed(
@@ -1329,8 +1338,14 @@ object ManagerPost {
 
                     if (existePeso == null) {
                         db.insertListPesos(serieDeviceEntity)
-                    }else{
+                    } else {
                         db.updatePesoBySerieDevice(serieDevice, serieDeviceEntity)
+                    }
+
+                    val pesosEliminar = db.getAllPesosEliminar()
+
+                    if (pesosEliminar.isNotEmpty()){
+                        db.deletePesosBySerieDevice(serieDevice)
                     }
                 }
 

@@ -47,4 +47,48 @@ class ApiService {
             }
         }
     }
+
+    suspend fun makeGetRequest(
+        urlString: String,
+        jsonBody: JSONObject,
+        callback: (String?, Exception?) -> Unit
+    ) {
+        withContext(Dispatchers.IO) {
+            try {
+                // Append the JSON parameters to the URL as query parameters
+                val queryParams = jsonBody.keys().asSequence().map { key ->
+                    "${key}=${jsonBody.getString(key)}"
+                }.joinToString("&")
+
+                val fullUrl = if (urlString.contains("?")) {
+                    "$urlString&$queryParams"
+                } else {
+                    "$urlString?$queryParams"
+                }
+
+                val url = URL(fullUrl)
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "GET"
+
+                val responseCode = conn.responseCode
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
+                    withContext(Dispatchers.Main) {
+                        callback(inputStream, null)
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        Log.e("ApiService", "Error al obtener datos: $responseCode")
+                        callback(null, Exception("Error al obtener datos"))
+                    }
+                }
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    callback(null, ex)
+                }
+            }
+        }
+    }
+
 }

@@ -475,10 +475,39 @@ class AppDatabase(context: Context) :
         return listaPesos
     }
 
+    fun getAllPesosEliminar(): List<PesosEntity> {
+        val listaPesos = mutableListOf<PesosEntity>()
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_PESOS WHERE $KEY_ID_ESTADO = '2'"
+        val cursor = db.rawQuery(selectQuery, null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                val peso = PesosEntity(
+                    id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)) ?: "",
+                    idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
+                    idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
+                    numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)) ?: "",
+                    nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)) ?: "",
+                    dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)) ?: "",
+                    dataDetaPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)) ?: "",
+                    idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)) ?: "0",
+                    isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC)),
+                    serieDevice = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE_DEVICE)),
+                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO)) ?: ""
+                )
+                listaPesos.add(peso)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return listaPesos
+    }
+
     fun getTodosLosPesos(): List<PesosEntity> {
         val listaPesos = mutableListOf<PesosEntity>()
         val db = this.readableDatabase
-        val selectQuery = "SELECT * FROM $TABLE_PESOS"
+        val selectQuery = "SELECT * FROM $TABLE_PESOS WHERE $KEY_ID_ESTADO != '2'"
         val cursor = db.rawQuery(selectQuery, null)
 
         if (cursor.moveToFirst()) {
@@ -590,8 +619,6 @@ class AppDatabase(context: Context) :
             put(KEY_DATA_DETAPESO_JSON, pesos.dataDetaPesoJson)
             put(KEY_ID_NUCLEO, pesos.idNucleo)
             put(KEY_ID_GALPON, pesos.idGalpon)
-            put(KEY_ID_ESTADO, "0")
-            put(KEY_DEVICE_NAME, "")
         }
 
         val whereClause = "$KEY_SERIE_DEVICE = ?"
@@ -603,7 +630,7 @@ class AppDatabase(context: Context) :
     fun setStatusDeletedPeso(serie: String): Int {
         val db = this.writableDatabase
         val contentValues = ContentValues().apply {
-            put(KEY_ID_ESTADO, "3")
+            put(KEY_ID_ESTADO, "2")
         }
 
         return db.update(
@@ -1249,7 +1276,7 @@ class AppDatabase(context: Context) :
         val db = this.readableDatabase
         val selectQuery = """
         SELECT * FROM $TABLE_PESOS
-        WHERE $KEY_ID_GALPON = ? AND $KEY_ID_NUCLEO = ?
+        WHERE $KEY_ID_GALPON = ? AND $KEY_ID_NUCLEO = ? AND $KEY_ID_ESTADO != '2'
     """
         val cursor = db.rawQuery(selectQuery, arrayOf(idGalpon.toString(), idEstablecimiento.toString()))
 

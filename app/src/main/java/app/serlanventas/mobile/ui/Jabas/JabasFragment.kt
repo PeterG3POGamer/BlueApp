@@ -54,6 +54,7 @@ import app.serlanventas.mobile.ui.Jabas.ManagerPost.addListPesos
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.getNucleos
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.getSelectGalpon
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.obtenerPesosServer
+import app.serlanventas.mobile.ui.Jabas.ManagerPost.removeListPesosId
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.setStatusUsed
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.showCustomToast
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.updateListPesos
@@ -618,7 +619,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                 if (success) {
                     showCustomToast(requireContext(), "Pesos sincronizados con éxito", "success")
                     updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
-//                    binding.selectListpesos.setSelection(idPesoUtilizado) // crash
                 } else {
                     showCustomToast(requireContext(), "Error al sincronizar pesos", "error")
                 }
@@ -1034,17 +1034,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
 
             val dataPesoPollos = JSONObject(dataPesoPollosJson.toString())
             distribuirDatosEnInputs(dataPesoPollos)
-//            detallesList.forEach { detalle ->
-//                val newItem = JabasItem(
-//                    id = detalle.idDetaPP,
-//                    numeroJabas = detalle.cantJabas,
-//                    numeroPollos = detalle.cantPollos,
-//                    pesoKg = detalle.peso,
-//                    conPollos = detalle.tipo,
-//                    idPesoPollo = detalle.idPesoPollo
-//                )
-//                jabasAdapter.addItem(newItem)
-//            }
         }
         // Segunda condición: Procesamiento si dataPesoPollosJson no está vacío
         if (!dataPesoPollosJson.isNullOrEmpty()) {
@@ -1413,7 +1402,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         val pesoToDelete = pesosList.find { it.id == idPeso }
 
         if (pesoToDelete != null) {
-            ManagerPost.removeListPesosId(requireContext(), idPeso) { success ->
+            removeListPesosId(requireContext(), idPeso) { success ->
                 if (success) {
                     // Eliminar el peso de la lista local
                     pesosList = emptyList()

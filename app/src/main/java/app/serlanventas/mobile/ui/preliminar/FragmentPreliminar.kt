@@ -22,7 +22,6 @@ import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.pesoUsedEntity
-import app.serlanventas.mobile.ui.Jabas.ManagerPost
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.removeListPesosId
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.saveLocally
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice
@@ -130,7 +129,6 @@ class FragmentPreliminar : Fragment() {
             } else {
                 procesarDatos()
             }
-            db.deleteAllPesoUsed()
         }
 
 
@@ -171,7 +169,7 @@ class FragmentPreliminar : Fragment() {
         val dataDetaPesoPollosList = convertirObejtoPesoPollos(dataDetaPesoPollos)
 
         // Enviar datos al servidor
-        val idPeso = sharedViewModel.getIdListPesos()
+        val idPeso = sharedViewModel.getIdListPesos()?: 0
 
 //      sendDataToServer(requireContext(), JabasFragment(), dataDetaPesoPollosList, dataPesoPollosEntity)
 
@@ -180,24 +178,12 @@ class FragmentPreliminar : Fragment() {
             dataDetaPesoPollosList, dataPesoPollosEntity, numeroDocCliente, nombreCompleto, idNucleo
         )
 
-
         // CAMBIA EL ESTADO UNA VES DE HAYA COBRADO
         val idDevice = getAddressMacDivice.getDeviceId(requireContext())
         if (idPeso != 0) {
-            ManagerPost.setStatusUsed(
-                requireContext(),
-                idPeso!!,
-                "NotUsed",
-                idDevice
-            ) { success ->
-                if (!success) {
-                    Log.d("StatusLog", "Error al cambiar el estado del peso")
-                }
-            }
-
             removeListPesosId(requireContext(), idPeso) { success ->
                 if (success) {
-
+                    sharedViewModel.setIdListPesos(0)
                 } else {
                     Toast.makeText(
                         requireContext(),
@@ -206,9 +192,10 @@ class FragmentPreliminar : Fragment() {
                     ).show()
                 }
             }
-        } else {
+        }else{
             sharedViewModel.setIdListPesos(0)
         }
+        db.deleteAllPesoUsed()
 
         Toast.makeText(requireContext(), "Procesando...", Toast.LENGTH_SHORT).show()
         limpiarCampos()
@@ -221,7 +208,6 @@ class FragmentPreliminar : Fragment() {
             JSONObject()
         }
 
-
         // Creas un nuevo objeto JSONObject combinando los datos antiguos y nuevos
         val nuevoJson = JSONObject()
         nuevoJson.put("_PP_id", jsonAntiguo.optInt("_PP_id", 0))
@@ -233,7 +219,6 @@ class FragmentPreliminar : Fragment() {
         sharedViewModel.setDataPesoPollosJson(nuevoJson.toString())
         sharedViewModel.setDataDetaPesoPollosJson("")
 
-        db.deleteAllPesoUsed()
 
         findNavController().navigate(R.id.action_nav_initPreliminar_to_nav_initReportePeso)
     }

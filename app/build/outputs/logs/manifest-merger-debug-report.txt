@@ -11,10 +11,10 @@ INJECTED from C:\BlueApp\app\src\main\AndroidManifest.xml:77:9-85:20
 	android:name
 		ADDED from C:\BlueApp\app\src\main\AndroidManifest.xml:78:13-62
 manifest
-ADDED from C:\BlueApp\app\src\main\AndroidManifest.xml:2:1-90:12
-INJECTED from C:\BlueApp\app\src\main\AndroidManifest.xml:2:1-90:12
-INJECTED from C:\BlueApp\app\src\main\AndroidManifest.xml:2:1-90:12
-INJECTED from C:\BlueApp\app\src\main\AndroidManifest.xml:2:1-90:12
+ADDED from C:\BlueApp\app\src\main\AndroidManifest.xml:2:1-92:12
+INJECTED from C:\BlueApp\app\src\main\AndroidManifest.xml:2:1-92:12
+INJECTED from C:\BlueApp\app\src\main\AndroidManifest.xml:2:1-92:12
+INJECTED from C:\BlueApp\app\src\main\AndroidManifest.xml:2:1-92:12
 MERGED from [androidx.databinding:databinding-adapters:8.6.0] C:\Users\user1\.gradle\caches\transforms-4\be95ed9fa8f32cfdcfb13f375c0db707\transformed\databinding-adapters-8.6.0\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.databinding:databinding-ktx:8.6.0] C:\Users\user1\.gradle\caches\transforms-4\abde93af9ab6b3a7207fbf148eb7fa98\transformed\databinding-ktx-8.6.0\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.databinding:databinding-runtime:8.6.0] C:\Users\user1\.gradle\caches\transforms-4\b7b42b9be18100fc06c6fa882102ce27\transformed\databinding-runtime-8.6.0\AndroidManifest.xml:2:1-7:12
@@ -248,8 +248,8 @@ ADDED from C:\BlueApp\app\src\main\AndroidManifest.xml:28:5-74
 	android:name
 		ADDED from C:\BlueApp\app\src\main\AndroidManifest.xml:28:22-71
 application
-ADDED from C:\BlueApp\app\src\main\AndroidManifest.xml:31:5-88:19
-INJECTED from C:\BlueApp\app\src\main\AndroidManifest.xml:31:5-88:19
+ADDED from C:\BlueApp\app\src\main\AndroidManifest.xml:31:5-90:19
+INJECTED from C:\BlueApp\app\src\main\AndroidManifest.xml:31:5-90:19
 MERGED from [com.google.android.material:material:1.10.0] C:\Users\user1\.gradle\caches\transforms-4\8fa0b64bcd6111ffea2d8fa4b3408494\transformed\material-1.10.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.10.0] C:\Users\user1\.gradle\caches\transforms-4\8fa0b64bcd6111ffea2d8fa4b3408494\transformed\material-1.10.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\user1\.gradle\caches\transforms-4\ff37274c1361554ab062e8890d05ff89\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
@@ -375,9 +375,9 @@ ADDED from C:\BlueApp\app\src\main\AndroidManifest.xml:67:9-75:20
 	android:name
 		ADDED from C:\BlueApp\app\src\main\AndroidManifest.xml:68:13-41
 receiver#app.serlanventas.mobile.ui.login.LogoutReceiver
-ADDED from C:\BlueApp\app\src\main\AndroidManifest.xml:87:9-61
+ADDED from C:\BlueApp\app\src\main\AndroidManifest.xml:87:9-89:20
 	android:name
-		ADDED from C:\BlueApp\app\src\main\AndroidManifest.xml:87:19-58
+		ADDED from C:\BlueApp\app\src\main\AndroidManifest.xml:88:13-52
 meta-data#android.support.FILE_PROVIDER_PATHS
 ADDED from C:\BlueApp\app\src\main\AndroidManifest.xml:82:13-84:54
 	android:resource

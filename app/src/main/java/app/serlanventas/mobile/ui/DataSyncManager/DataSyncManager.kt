@@ -50,6 +50,7 @@ class DataSyncManager(private val context: Context) {
                                 progressCallback.onProgressUpdate("Comparando datos locales y remotos...")
                                 // Verificar si hay cambios pendientes para subir
                                 val pesosLocales = db.getAllPesosNotSync()
+                                val pesosLocalesEliminar = db.getAllPesosEliminar()
                                 val ventasLocales = db.getAllDataPesoPollosNotSync()
 
                                 progressCallback.onProgressUpdate("Verificando Pesos Temporales por sincronizar...")
@@ -85,6 +86,22 @@ class DataSyncManager(private val context: Context) {
                                     }
                                 }
 
+                                if (pesosLocalesEliminar.isNotEmpty()){
+                                    progressCallback.onProgressUpdate("Eliminando Pesos Vendidos...")
+                                    elimiarPesosLocales(
+                                        baseUrl,
+                                        pesosLocalesEliminar
+                                    ) { pesosUploadResult ->
+                                        if (pesosUploadResult) {
+                                            progressCallback.onProgressUpdate("Pesos temporales sincronizados correctamente")
+                                            handleSyncResult(syncResult, isLoggedIn, callback)
+                                        } else {
+                                            progressCallback.onProgressUpdate("Error al sincronizar pesos temporales")
+                                            callback(false)
+                                        }
+                                    }
+                                }
+
                                 // Verificar Ventas
                                 if (ventasLocales.isNotEmpty()) {
                                     progressCallback.onProgressUpdate("Subiendo ventas locales al servidor...")
@@ -108,7 +125,6 @@ class DataSyncManager(private val context: Context) {
                                 progressCallback.onProgressUpdate("Verificando sesión...")
                                 delay(2000)
                                 progressCallback.onProgressUpdate("Redirigiendo...")
-                                delay(1000)
                             }
                         }
 
@@ -340,6 +356,62 @@ class DataSyncManager(private val context: Context) {
         }
     }
 
+    fun elimiarPesosLocales(
+        baseUrl: String,
+        pesosLocales: List<PesosEntity>,
+        callback: (Boolean) -> Unit
+    ) {
+        val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=removeBySerieDevice"
+
+        CoroutineScope(Dispatchers.IO).launch {
+            var allSuccess = true
+
+            pesosLocales.forEach { peso ->
+                val jsonPeso = peso.toJson()
+                val jsonParam = JSONObject()
+                jsonParam.put("serieDevice", jsonPeso.optString("serieDevice"))
+
+                try {
+                    apiService.makeGetRequest(urlString, jsonParam) { response, error ->
+                        if (error != null) {
+                            Log.e("DataSyncManager", "Error al subir peso: ${error.message}")
+                            allSuccess = false
+                            return@makeGetRequest
+                        }
+
+                        try {
+                            Log.d("DataSyncManager", "Respuesta del servidor: $response")
+                            val jsonResponse = JSONObject(response)
+                            val success = jsonResponse.getString("status")
+
+                            if (success == "success") {
+                                // Update the local database to mark the weight as synchronized
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    db.deletePesosBySerieDevice(peso.serieDevice)
+                                }
+                            } else {
+                                val mensaje = jsonResponse.getString("message")
+                                Log.e("DataSyncManager", "Error de sincronización: $mensaje")
+                                allSuccess = false
+                            }
+                        } catch (e: Exception) {
+                            Log.e("DataSyncManager", "Error al procesar respuesta: ${e.message}")
+                            allSuccess = false
+                        }
+                    }
+                } catch (ex: Exception) {
+                    ex.printStackTrace()
+                    Log.e("DataSyncManager", "Error: ${ex.message}")
+                    allSuccess = false
+                }
+            }
+
+            // Call the callback on the main thread
+            withContext(Dispatchers.Main) {
+                callback(allSuccess)
+            }
+        }
+    }
 
     private fun handleSyncResult(
         result: SyncResult,
