@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
@@ -20,6 +21,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -47,7 +49,7 @@ class GuiasWebFragment : Fragment() {
     private var webViewStateRestored = false
     private var downloadID: Long = 0
 
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -69,7 +71,6 @@ class GuiasWebFragment : Fragment() {
             webViewStateRestored = true
         } else if (!webViewStateRestored) {
             val loginUrl = Constants.buildLoginUrl(requireContext())
-
             webView.loadUrl(loginUrl)
             webViewStateRestored = true
         }
@@ -80,7 +81,8 @@ class GuiasWebFragment : Fragment() {
 
         requireActivity().registerReceiver(
             onDownloadComplete,
-            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+            Context.RECEIVER_NOT_EXPORTED
         )
 
         return binding.root
@@ -130,12 +132,12 @@ class GuiasWebFragment : Fragment() {
                         if (sidebar) {
                             sidebar.style.display = 'none';
                         }
-                        
+
                         var boton = document.getElementById('sidebarToggleTop');
                         if (boton) {
                             boton.style.display = 'none';
                         }
-                        
+
                         var navbar = document.querySelector('.iq-navbar');
                         if (navbar) {
                             navbar.style.display = 'none';
@@ -175,6 +177,8 @@ class GuiasWebFragment : Fragment() {
                 // Mostrar WebView y ocultar ProgressBar en caso de error
                 webView.visibility = View.VISIBLE
                 binding.progressBar.visibility = View.GONE
+                // Detener la animación de recarga
+                swipeRefreshLayout.isRefreshing = false
             }
         }
     }

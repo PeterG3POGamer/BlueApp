@@ -84,7 +84,9 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <receiver android:name=".ui.login.LogoutReceiver" />
+        <receiver
+            android:name=".ui.login.LogoutReceiver">
+        </receiver>
     </application>
 
 </manifest>

@@ -10,7 +10,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 3
-        versionName = "1.17.5"
+        versionName = "1.17.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         namespace = "app.serlanventas.mobile"
         vectorDrawables {
@@ -77,6 +77,7 @@ dependencies {
     implementation("me.aflak.libraries:bluetooth:1.3.9") {
         exclude(group = "com.android.support", module = "support-compat")
     }
+    implementation("androidx.core:core:1.9.0")
     implementation("com.google.android.flexbox:flexbox:3.0.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

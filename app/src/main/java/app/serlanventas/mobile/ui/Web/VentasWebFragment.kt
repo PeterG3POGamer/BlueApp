@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.print.PrintAttributes
@@ -23,6 +24,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -51,7 +53,7 @@ class VentasWebFragment : Fragment() {
 
     private var downloadID: Long = 0
 
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -83,10 +85,20 @@ class VentasWebFragment : Fragment() {
             reloadWithoutCache()
         }
 
-        requireActivity().registerReceiver(
-            onDownloadComplete,
-            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-        )
+        // Verificar la versión de Android antes de registrar el BroadcastReceiver
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            requireActivity().registerReceiver(
+                onDownloadComplete,
+                IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+                Context.RECEIVER_NOT_EXPORTED // Asegura que no esté exportado
+            )
+        } else {
+            requireActivity().registerReceiver(
+                onDownloadComplete,
+                IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        }
 
         return binding.root
     }
@@ -103,7 +115,7 @@ class VentasWebFragment : Fragment() {
             domStorageEnabled = true
             allowFileAccess = true
             allowContentAccess = true
-    }
+        }
 
         webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
             val request = DownloadManager.Request(Uri.parse(url))
@@ -147,12 +159,12 @@ class VentasWebFragment : Fragment() {
                         if (sidebar) {
                             sidebar.style.display = 'none';
                         }
-                        
+
                         var boton = document.getElementById('sidebarToggleTop');
                         if (boton) {
                             boton.style.display = 'none';
                         }
-                        
+
                         var navbar = document.querySelector('.iq-navbar');
                         if (navbar) {
                             navbar.style.display = 'none';
@@ -164,7 +176,7 @@ class VentasWebFragment : Fragment() {
 
                 // Comparación de URLs
                 val ventasUrl = Constants.getVentasUrl()
-                val loginUrl = Constants.buildLoginUrl(requireContext(),)
+                val loginUrl = Constants.buildLoginUrl(requireContext())
 
                 if (url == loginUrl) {
                     // Mantener WebView oculto y ProgressBar visible
@@ -256,7 +268,6 @@ class VentasWebFragment : Fragment() {
                         // Mostrar WebView y ocultar ProgressBar en caso de error
                         webView.visibility = View.VISIBLE
                         binding.progressBar.visibility = View.GONE
-
                     }
                 }
                 conn.disconnect()
@@ -292,7 +303,6 @@ class VentasWebFragment : Fragment() {
                         webView.visibility = View.VISIBLE
                         binding.progressBar.visibility = View.GONE
                         redirectToLoginActivity()
-
                     }
                 }
             } catch (e: Exception) {
