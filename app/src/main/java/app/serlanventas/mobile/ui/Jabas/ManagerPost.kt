@@ -37,7 +37,9 @@ import app.serlanventas.mobile.ui.DataBase.Entities.GalponEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.NucleoEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.PesosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.pesoUsedEntity
+import app.serlanventas.mobile.ui.DataSyncManager.ApiService
 import app.serlanventas.mobile.ui.Services.generateAndOpenPDF2
+import app.serlanventas.mobile.ui.Services.getAddressMacDivice
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice.getDeviceId
 import app.serlanventas.mobile.ui.Services.showNotification
 import app.serlanventas.mobile.ui.Services.showSuccessNotification
@@ -340,7 +342,7 @@ object ManagerPost {
         // Variables para detectar el gesto de deslizamiento
         var initialX = 0f
         var initialY = 0f
-        val SWIPE_THRESHOLD = 100
+        val SWIPE_THRESHOLD = 10
 
         // Configurar el detector de gestos para permitir SOLO deslizar de izquierda a derecha
         layout.setOnTouchListener { view, event ->
@@ -701,89 +703,6 @@ object ManagerPost {
                 }
             }
         }
-
-        // Condición para saber si tenemos internet o no:
-//        if (NetworkUtils.isNetworkAvailable(context)) {
-//            // Si hay conexión a internet, obtener datos de la nube
-//            CoroutineScope(Dispatchers.IO).launch {
-//                try {
-//                    val url = URL(urlString)
-//                    val conn = url.openConnection() as HttpURLConnection
-//                    conn.requestMethod = "GET"
-//                    conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-//
-//                    val responseCode = conn.responseCode
-//                    val responseMessage = conn.responseMessage
-//
-//                    if (responseCode == HttpURLConnection.HTTP_OK) {
-//                        val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-//
-//                        try {
-//                            val jsonResponse = JSONObject(inputStream)
-//                            val status = jsonResponse.optString("status")
-//                            val message = jsonResponse.optString("message")
-//
-//                            if (status == "success") {
-//                                val dataNucleos = jsonResponse.optJSONArray("dataNucleos")
-//                                val nucleosList = mutableListOf<NucleoEntity>()
-//
-//                                for (i in 0 until dataNucleos.length()) {
-//                                    val nucleoObj = dataNucleos.optJSONObject(i)
-//                                    val idEstablecimiento = nucleoObj.optString("idEstablecimiento")
-//                                    val nombre = nucleoObj.optString("nombre")
-//                                    val nucleo = NucleoEntity(idEstablecimiento, nombre, "")
-//                                    nucleosList.add(nucleo)
-//                                }
-//
-//                                withContext(Dispatchers.Main) {
-//                                    callback(nucleosList)
-//                                }
-//                            } else {
-//                                withContext(Dispatchers.Main) {
-//                                    callback(null)
-//                                }
-//                            }
-//                        } catch (e: JSONException) {
-//                            withContext(Dispatchers.Main) {
-//                                Log.e(
-//                                    "ManagerPost",
-//                                    "Error al convertir la respuesta a JSON: $inputStream",
-//                                    e
-//                                )
-//                                callback(null)
-//                            }
-//                        }
-//                    } else {
-//                        withContext(Dispatchers.Main) {
-//                            Log.e("ManagerPost", "Error al obtener datos: $responseCode")
-//                            callback(null)
-//                        }
-//                    }
-//                } catch (ex: Exception) {
-//                    ex.printStackTrace()
-//                    withContext(Dispatchers.Main) {
-//                        Log.e("ManagerPost", "Error: ${ex.message}")
-//                        callback(null)
-//                    }
-//                }
-//            }
-//        } else {
-//            // Si no hay conexión a internet, obtener datos de la base de datos local
-//            CoroutineScope(Dispatchers.IO).launch {
-//                try {
-//                    val nucleosList = getNucleosFromLocalDatabase(db)
-//                    withContext(Dispatchers.Main) {
-//                        callback(nucleosList)
-//                    }
-//                } catch (ex: Exception) {
-//                    ex.printStackTrace()
-//                    withContext(Dispatchers.Main) {
-//                        Log.e("ManagerPost", "Error al obtener datos locales: ${ex.message}")
-//                        callback(null)
-//                    }
-//                }
-//            }
-//        }
     }
 
     suspend fun getNucleosFromLocalDatabase(db: AppDatabase): List<NucleoEntity> {
@@ -836,82 +755,6 @@ object ManagerPost {
         val db = AppDatabase(context)
         val pesosList = db.getPesosByIdGalponAndEstablecimiento(idGalpon, idEstablecimiento)
         callback(pesosList)
-
-//        if (NetworkUtils.isNetworkAvailable(context)) {
-//            CoroutineScope(Dispatchers.IO).launch {
-//                try {
-//                    val url = URL(urlString)
-//                    val conn = url.openConnection() as HttpURLConnection
-//                    conn.requestMethod = "GET"
-//                    conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-//
-//                    val responseCode = conn.responseCode
-//
-//                    if (responseCode == HttpURLConnection.HTTP_OK) {
-//                        val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-//
-//                        try {
-//                            val jsonResponse = JSONObject(inputStream)
-//                            val status = jsonResponse.optString("status")
-//
-//                            if (status == "success") {
-//                                val dataArray = jsonResponse.getJSONArray("data")
-//                                val pesosList = mutableListOf<PesosEntity>()
-//
-//                                for (i in 0 until dataArray.length()) {
-//                                    val item = dataArray.getJSONObject(i)
-//                                    val pesosEntity = PesosEntity(
-//                                        id = item.getInt("idPeso"),
-//                                        idNucleo = item.getInt("idNucleo"),
-//                                        idGalpon = item.getInt("idGalpon"),
-//                                        numeroDocCliente = item.getString("numeroDocCliente"),
-//                                        nombreCompleto = item.optString("nombreCompleto"),
-//                                        dataPesoJson = item.getString("dataPesoJson"),
-//                                        dataDetaPesoJson = item.getString("dataDetaPesoJson"),
-//                                        idEstado = "0",
-//                                        devicedName = "",
-//                                        fechaRegistro = item.getString("fechaRegistro")
-//                                    )
-//                                    pesosList.add(pesosEntity)
-//                                }
-//
-//                                withContext(Dispatchers.Main) {
-//                                    callback(pesosList)
-//                                }
-//                            } else {
-//                                withContext(Dispatchers.Main) {
-//                                    callback(null)
-//                                }
-//                            }
-//                        } catch (e: JSONException) {
-//                            withContext(Dispatchers.Main) {
-//                                Log.e(
-//                                    "GetListPesosByIdNucleo",
-//                                    "Error al convertir la respuesta a JSON: $inputStream",
-//                                    e
-//                                )
-//                                callback(null)
-//                            }
-//                        }
-//                    } else {
-//                        withContext(Dispatchers.Main) {
-//                            Log.e("GetListPesosByIdNucleo", "Error al obtener datos: $responseCode")
-//                            callback(null)
-//                        }
-//                    }
-//                } catch (ex: Exception) {
-//                    ex.printStackTrace()
-//                    withContext(Dispatchers.Main) {
-//                        Log.e("GetListPesosByIdNucleo", "Error: ${ex.message}")
-//                        callback(null)
-//                    }
-//                }
-//            }
-//        } else {
-//            // Si no hay conexión a internet, obtener datos locales
-//            val pesosList = db.getPesosByIdGalponAndEstablecimiento(idGalpon, idEstablecimiento)
-//            callback(pesosList)
-//        }
     }
 
 
@@ -1009,6 +852,7 @@ object ManagerPost {
                         withContext(Dispatchers.Main) {
                             showCustomToast(context, "Datos enviados correctamente", "success")
                         }
+                        db.updateStatusPesoSync(newSerie)
                         return@withContext true
                     } else {
                         val message = jsonResponse.optString("message")
@@ -1072,14 +916,6 @@ object ManagerPost {
 
         }
 
-        withContext(Dispatchers.Main) {
-            showCustomToast(
-                context,
-                "Estas usando el peso de ${pesosEntity.nombreCompleto} ",
-                "info"
-            )
-        }
-
         // Después de la actualización local exitosa, intentamos actualizar el servidor remoto
         val baseUrl = Constants.getBaseUrl()
         val urlString =
@@ -1131,7 +967,11 @@ object ManagerPost {
 
                         if (status == "success") {
                             withContext(Dispatchers.Main) {
-                                showCustomToast(context, "Peso actualizado correctamente ", "success")
+                                showCustomToast(
+                                    context,
+                                    "Peso actualizado correctamente ",
+                                    "success"
+                                )
                             }
                             return@withContext true
                         } else {
@@ -1156,11 +996,23 @@ object ManagerPost {
                         Log.e("updateListPesos", "JSON Exception: ${e.message}")
                     }
                 } else {
-                    Log.e("updateListPesos", "Server response: $responseCode ${conn.responseMessage}")
+                    Log.e(
+                        "updateListPesos",
+                        "Server response: $responseCode ${conn.responseMessage}"
+                    )
                 }
             } catch (ex: Exception) {
                 Log.e("updateListPesos", "Exception: ${ex.message}")
             }
+        }
+
+
+        withContext(Dispatchers.Main) {
+            showCustomToast(
+                context,
+                "Estas usando el peso de ${pesosEntity.nombreCompleto} ",
+                "info"
+            )
         }
 
         // Si llegamos aquí, significa que la actualización remota falló, pero la local fue exitosa
@@ -1174,12 +1026,14 @@ object ManagerPost {
         callback: (Boolean) -> Unit
     ) {
         val db = AppDatabase(context)
+        val serieDevice = db.getPesoPorId(idPeso)
+        var serie = serieDevice!!.serieDevice
 
         // Ejecutar la operación de eliminación en un hilo de trabajo
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 if (idPeso != 0) {
-                    val result = db.deletePesosById(idPeso)
+                    val result = db.deletePesosBySerieDevice(serie)
                     // Llamar al callback en el hilo principal
                     withContext(Dispatchers.Main) {
                         callback(result > 0)
@@ -1195,43 +1049,46 @@ object ManagerPost {
 
         val baseUrl = Constants.getBaseUrl()
         val urlString =
-            "${baseUrl}controllers/TempPesoPollosController.php?op=removeByIdPeso&idPeso=$idPeso"
+            "${baseUrl}controllers/TempPesoPollosController.php?op=removeBySerieDevice&serieDevice=$serie"
+        if (NetworkUtils.isNetworkAvailable(context)) {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val url = URL(urlString)
+                    val conn = url.openConnection() as HttpURLConnection
+                    conn.requestMethod = "GET"
 
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val url = URL(urlString)
-                val conn = url.openConnection() as HttpURLConnection
-                conn.requestMethod = "GET"
+                    val responseCode = conn.responseCode
 
-                val responseCode = conn.responseCode
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
+                        val jsonResponse = JSONObject(inputStream)
+                        val status = jsonResponse.optString("status")
 
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-                    val jsonResponse = JSONObject(inputStream)
-                    val status = jsonResponse.optString("status")
-
-                    CoroutineScope(Dispatchers.Main).launch {
-                        if (status == "success") {
-                            showCustomToast(context, "Peso eliminado correctamente", "success")
-                            callback(true)
-                        } else {
-                            showCustomToast(context, "Error al eliminar el peso", "error")
+                        CoroutineScope(Dispatchers.Main).launch {
+                            if (status == "success") {
+                                callback(true)
+                            } else {
+                                showCustomToast(context, "Error al eliminar el peso", "error")
+                                callback(false)
+                            }
+                        }
+                    } else {
+                        CoroutineScope(Dispatchers.Main).launch {
+                            showCustomToast(context, "Error de red: ${conn.responseMessage}", "error")
                             callback(false)
                         }
                     }
-                } else {
+                } catch (ex: Exception) {
                     CoroutineScope(Dispatchers.Main).launch {
-                        showCustomToast(context, "Error de red: ${conn.responseMessage}", "error")
+                        showCustomToast(context, "Error de red: ${ex.message}", "error")
                         callback(false)
                     }
                 }
-            } catch (ex: Exception) {
-                CoroutineScope(Dispatchers.Main).launch {
-                    showCustomToast(context, "Error de red: ${ex.message}", "error")
-                    callback(false)
-                }
             }
         }
+//        else{
+//            db.setStatusDeletedPeso(serie)
+//        }
     }
 
     fun setStatusUsed(
@@ -1382,6 +1239,114 @@ object ManagerPost {
                     callback(null)
                 }
             }
+        }
+    }
+
+
+    fun obtenerPesosServer(
+        context: Context,
+        callback: (Boolean) -> Unit
+    ) {
+        val db = AppDatabase(context)
+        val baseUrl = Constants.getBaseUrl()
+        val apiService = ApiService()
+        var idDevice = db.getSerieIdDeviceLocal()
+        if (idDevice.isEmpty()) {
+            idDevice = getDeviceId(context)
+        }
+        val deviceModel = getAddressMacDivice.getDeviceManufacturer()
+
+        val urlString = "${baseUrl}controllers/PesoPollosController.php?op=getAllDataSynchronized"
+        // Crea un objeto JSON con el campo mac
+        val jsonBody = JSONObject().apply {
+            put("mac", idDevice)
+            put("deviceModel", deviceModel)
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                apiService.makePostRequest(urlString, jsonBody) { response, error ->
+                    if (error != null) {
+                        Log.e("DataSyncManager", "Error: ${error.message}")
+                        callback(false)
+                        return@makePostRequest
+                    }
+
+                    try {
+                        val jsonResponse = JSONObject(response)
+                        val dataString = jsonResponse.getString("data")
+                        val data = JSONObject(dataString)
+
+                        // Procesar los datos recibidos
+                        val tempPesos = data.getJSONArray("tempPesos")
+
+                        processTempPesos(context, tempPesos)
+                        callback(true)
+                    } catch (e: Exception) {
+                        Log.e("DataSyncManager", "Error al procesar JSON: ${e.message}")
+                        callback(false)
+                    }
+                }
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Log.e("DataSyncManager", "Error: ${ex.message}")
+                    callback(false)
+                }
+            }
+
+        }
+
+    }
+
+    private fun processTempPesos(context: Context, tempPesos: JSONArray): Boolean {
+        var needsSync = false
+        val db = AppDatabase(context)
+        try {
+            db.beginTransaction()
+            try {
+                for (i in 0 until tempPesos.length()) {
+                    val pesotemp = tempPesos.getJSONObject(i)
+
+                    val serieDevice = pesotemp.getString("serieDevice")
+
+                    val serieDeviceEntity = PesosEntity(
+                        id = 0,
+                        idNucleo = pesotemp.getInt("temp_idEstablecimiento"),
+                        idGalpon = pesotemp.getInt("temp_idGalpones"),
+                        numeroDocCliente = pesotemp.getString("temp_numeroDocCliente"),
+                        nombreCompleto = pesotemp.getString("temp_nombreCompleto"),
+                        dataPesoJson = pesotemp.getString("temp_dataJsonPeso"),
+                        dataDetaPesoJson = pesotemp.getString("temp_dataJsonDetaPeso"),
+                        idEstado = pesotemp.getString("status"),
+                        isSync = "1",
+                        serieDevice = pesotemp.getString("serieDevice"),
+                        devicedName = pesotemp.getString("addresMac"),
+                        fechaRegistro = pesotemp.getString("temp_fechaRegistro")
+                    )
+
+                    val existePeso = db.getPesoBySerieDevice(serieDevice)
+
+                    if (existePeso == null) {
+                        db.insertListPesos(serieDeviceEntity)
+                    }else{
+                        db.updatePesoBySerieDevice(serieDevice, serieDeviceEntity)
+                    }
+                }
+
+                val pesosLocales = db.getAllPesosNotSync()
+                if (pesosLocales.isNotEmpty()) {
+                    needsSync = true
+                }
+                db.setTransactionSuccessful()
+                return needsSync
+            } finally {
+                db.endTransaction()
+            }
+        } catch (e: Exception) {
+            Log.e("DataProcessor", "Error procesando series: ${e.message}")
+            e.printStackTrace()
+            return false
         }
     }
 }

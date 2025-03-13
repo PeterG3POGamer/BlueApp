@@ -53,6 +53,7 @@ import app.serlanventas.mobile.ui.Interfaces.ProgressCallback
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.addListPesos
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.getNucleos
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.getSelectGalpon
+import app.serlanventas.mobile.ui.Jabas.ManagerPost.obtenerPesosServer
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.setStatusUsed
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.showCustomToast
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.updateListPesos
@@ -88,7 +89,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
 
     private lateinit var dataSyncManager: DataSyncManager
     private val handler = Handler(Looper.getMainLooper())
-    private val checkInterval = 3000L
+    private val checkInterval = 2000L
     private var checkSendData: Boolean = false
     private var navegationTrue: Boolean = false
     private var idGalpoListaPesos = ""
@@ -109,16 +110,14 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
     private val checkInternetRunnable = object : Runnable {
         override fun run() {
             if (NetworkUtils.isNetworkAvailable(requireContext())) {
-                // Sincronizar data
-//                checkAndSendLocalData()
+                binding.btnSincronizarPesos.visibility = View.VISIBLE
             } else {
-                if (!NetworkUtils.isNetworkAvailable(requireContext())) {
-                    // Vuelve a ejecutar después del intervalo definido
-                    handler.postDelayed(this, checkInterval)
-                }
+                binding.btnSincronizarPesos.visibility = View.GONE
+                handler.postDelayed(this, checkInterval)
             }
         }
     }
+
 
     private lateinit var jabasAdapter: JabasAdapter
     private val jabasList = mutableListOf<JabasItem>()
@@ -218,17 +217,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                             galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull()
                                 ?: 0
                         val idNucleo = binding.selectEstablecimiento.selectedItemPosition
-//                        if (jabasList.isEmpty()) {
-//                            if (idPesoShared != 0) {
-//                                limpiarCampos()
-//                            } else if (dataPesoPollosJson.isNullOrBlank()) {
-//                                limpiarCampos()
-//                            }
-//                        } else if (idPesoShared != 0) {
-//                            if (dataPesoPollosJson.isNullOrBlank()) {
-//                                limpiarCampos()
-//                            }
-//                        }
                         updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
                     }
                 }
@@ -275,20 +263,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                         0 -> {
                             // "Lista de Pesos" seleccionado
                             Log.d("JabasFragment", "Opción 'Lista de Pesos' seleccionada")
-                            // Limpiar los campos o realizar alguna acción por defecto
-//                            if (jabasList.isEmpty()) {
-//                                if (idPesoShared != 0) {
-//                                    limpiarCampos()
-//                                } else if (dataPesoPollosJson.isNullOrBlank()) {
-//                                    limpiarCampos()
-//                                }
-//                            } else if (idPesoShared != 0) {
-//                                if (dataPesoPollosJson.isNullOrBlank()) {
-//                                    limpiarCampos()
-//                                }
-//                            }
-//                            limpiarCampos()
-
                             sharedViewModel.setIdListPesos(0)
                         }
 
@@ -627,6 +601,34 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                 }
             }
         }
+
+        binding.btnSincronizarPesos.setOnClickListener {
+            binding.btnSincronizarPesos.isEnabled = false
+            showLoading()
+            val idPesoUtilizado = sharedViewModel.getIdListPesos() ?: 0
+            limpiarCampos()
+            limpiarClientes()
+            val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
+            val idGalpon =
+                galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+            val idNucleo = binding.selectEstablecimiento.selectedItemPosition
+            idPesoShared = idPesoUtilizado
+
+            obtenerPesosServer(requireContext()) { success ->
+                if (success) {
+                    showCustomToast(requireContext(), "Pesos sincronizados con éxito", "success")
+                    updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
+//                    binding.selectListpesos.setSelection(idPesoUtilizado) // crash
+                } else {
+                    showCustomToast(requireContext(), "Error al sincronizar pesos", "error")
+                }
+                Handler(Looper.getMainLooper()).postDelayed({
+                    binding.btnSincronizarPesos.isEnabled = true
+                    hideLoading()
+                }, 500)
+            }
+        }
+
 
         binding.inputNumeroJabas.setText("10")
         binding.inputCantPollos.setText("0")

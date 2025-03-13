@@ -54,7 +54,7 @@ class PesosAdapter(
                 holder.estadoPeso.text = "Usado"
                 holder.estadoPeso.setBackgroundResource(R.drawable.rounded_background_red)
             }
-            "3" -> {
+            "2" -> {
                 holder.estadoPeso.text = "Finalizado"
                 holder.estadoPeso.setBackgroundResource(R.drawable.rounded_background_blue)
             }

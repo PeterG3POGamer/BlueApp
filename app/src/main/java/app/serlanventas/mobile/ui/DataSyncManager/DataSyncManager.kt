@@ -15,8 +15,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
 
 class DataSyncManager(private val context: Context) {
     private val db = AppDatabase(context)
@@ -31,7 +29,6 @@ class DataSyncManager(private val context: Context) {
         progressCallback: ProgressCallback,
         callback: (Boolean) -> Unit
     ) {
-
         if (NetworkUtils.isNetworkAvailable(context)) {
             CoroutineScope(Dispatchers.IO).launch {
                 progressCallback.onProgressUpdate("Iniciando sincronización...")
@@ -67,10 +64,6 @@ class DataSyncManager(private val context: Context) {
                                 delay(2000)
                                 if (ventasLocales.isEmpty()) {
                                     progressCallback.onProgressUpdate("No hay ventas pendientes por sincronizar")
-                                    delay(1000)
-                                    progressCallback.onProgressUpdate("Verificando sesión...")
-                                    delay(2000)
-                                    progressCallback.onProgressUpdate("Redirigiendo...")
                                     delay(1000)
                                     handleSyncResult(syncResult, isLoggedIn, callback)
                                 }
@@ -110,6 +103,12 @@ class DataSyncManager(private val context: Context) {
                                         }
                                     }
                                 }
+
+                                delay(1000)
+                                progressCallback.onProgressUpdate("Verificando sesión...")
+                                delay(2000)
+                                progressCallback.onProgressUpdate("Redirigiendo...")
+                                delay(1000)
                             }
                         }
 
@@ -282,64 +281,61 @@ class DataSyncManager(private val context: Context) {
     ) {
         val urlString = "${baseUrl}controllers/TempPesoPollosController.php?op=insertar"
 
-        // Convertir la lista de PesosEntity a JSON
-        val jsonArray = JSONArray()
-        pesosLocales.forEach { peso ->
-            val jsonObject = peso.toJson()
-            jsonArray.put(jsonObject)
-            Log.d("DataSyncManager", "Peso a sincronizar: $jsonObject")
-        }
-        val jsonParam = jsonArray.toString()
-        Log.d("DataSyncManager", "JSON a enviar: $jsonParam")
-
         CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val url = URL(urlString)
-                val conn = url.openConnection() as HttpURLConnection
-                conn.requestMethod = "POST"
-                conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-                conn.doOutput = true
+            var allSuccess = true
 
-                // Escribir JSON en el cuerpo de la solicitud
-                conn.outputStream.use { os ->
-                    val input = jsonParam.toByteArray(Charsets.UTF_8)
-                    os.write(input, 0, input.size)
-                }
+            pesosLocales.forEach { peso ->
+                val jsonPeso = peso.toJson()
+                val jsonParam = JSONObject()
 
-                val responseCode = conn.responseCode
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    val inputStream = conn.inputStream.bufferedReader().use { it.readText() }
-                    Log.d("DataSyncManager", "Respuesta del servidor: $inputStream")
+                // Asegúrate de que los campos en jsonPeso coincidan con los esperados por el servidor
+                jsonParam.put("idPeso", jsonPeso.optString("idPeso"))
+                jsonParam.put("idNucleo", jsonPeso.optString("idNucleo"))
+                jsonParam.put("idGalpon", jsonPeso.optString("idGalpon"))
+                jsonParam.put("numeroDocCliente", jsonPeso.optString("numeroDocCliente"))
+                jsonParam.put("nombreCompleto", jsonPeso.optString("nombreCompleto"))
+                jsonParam.put("dataPesoJson", jsonPeso.optString("dataPesoJson"))
+                jsonParam.put("dataDetaPesoJson", jsonPeso.optString("dataDetaPesoJson"))
+                jsonParam.put("serieDevice", jsonPeso.optString("serieDevice"))
+                jsonParam.put("fechaRegistro", jsonPeso.optString("fechaRegistro"))
 
-                    val jsonResponse = JSONObject(inputStream)
-                    val status = jsonResponse.optString("status")
-
-                    if (status == "success") {
-                        withContext(Dispatchers.Main) {
-                            callback(true)
+                try {
+                    apiService.makePostRequest(urlString, jsonParam) { response, error ->
+                        if (error != null) {
+                            Log.e("DataSyncManager", "Error al subir peso: ${error.message}")
+                            allSuccess = false
+                            return@makePostRequest
                         }
-                    } else {
-                        val mensaje = jsonResponse.optString("mensaje")
-                        Log.e("DataSyncManager", "Error de sincronización: $mensaje")
-                        withContext(Dispatchers.Main) {
-                            callback(false)
+
+                        try {
+                            Log.d("DataSyncManager", "Respuesta del servidor: $response")
+                            val jsonResponse = JSONObject(response)
+                            val success = jsonResponse.getString("status")
+
+                            if (success == "success") {
+                                // Marcar peso como sincronizado en la base de datos local
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    db.updateStatusPesoSync(peso.serieDevice)
+                                }
+                            } else {
+                                val mensaje = jsonResponse.getString("message")
+                                Log.e("DataSyncManager", "Error de sincronización: $mensaje")
+                                allSuccess = false
+                            }
+                        } catch (e: Exception) {
+                            Log.e("DataSyncManager", "Error al procesar respuesta: ${e.message}")
+                            allSuccess = false
                         }
                     }
-                } else {
-                    Log.e(
-                        "DataSyncManager",
-                        "Server response: $responseCode ${conn.responseMessage}"
-                    )
-                    withContext(Dispatchers.Main) {
-                        callback(false)
-                    }
-                }
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-                withContext(Dispatchers.Main) {
+                } catch (ex: Exception) {
+                    ex.printStackTrace()
                     Log.e("DataSyncManager", "Error: ${ex.message}")
-                    callback(false)
+                    allSuccess = false
                 }
+            }
+
+            withContext(Dispatchers.Main) {
+                callback(allSuccess)
             }
         }
     }

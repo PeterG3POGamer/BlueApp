@@ -449,7 +449,7 @@ class AppDatabase(context: Context) :
     fun getAllPesosNotSync(): List<PesosEntity> {
         val listaPesos = mutableListOf<PesosEntity>()
         val db = this.readableDatabase
-        val selectQuery = "SELECT * FROM $TABLE_PESOS WHERE $KEY_ISSYNC = 0"
+        val selectQuery = "SELECT * FROM $TABLE_PESOS WHERE $KEY_ISSYNC = '0'"
         val cursor = db.rawQuery(selectQuery, null)
 
         if (cursor.moveToFirst()) {
@@ -581,6 +581,52 @@ class AppDatabase(context: Context) :
         return db.update(TABLE_PESOS, values, whereClause, whereArgs)
     }
 
+    fun updatePesoBySerieDevice(devideName: String ,pesos: PesosEntity): Int {
+        val db = this.writableDatabase
+        val values = ContentValues().apply {
+            put(KEY_NUMERO_DOC_CLIENTE, pesos.numeroDocCliente)
+            put(KEY_NOMBRE_COMPLETO, pesos.nombreCompleto)
+            put(KEY_DATA_PESO_JSON, pesos.dataPesoJson)
+            put(KEY_DATA_DETAPESO_JSON, pesos.dataDetaPesoJson)
+            put(KEY_ID_NUCLEO, pesos.idNucleo)
+            put(KEY_ID_GALPON, pesos.idGalpon)
+            put(KEY_ID_ESTADO, "0")
+            put(KEY_DEVICE_NAME, "")
+        }
+
+        val whereClause = "$KEY_SERIE_DEVICE = ?"
+        val whereArgs = arrayOf(devideName)
+
+        return db.update(TABLE_PESOS, values, whereClause, whereArgs)
+    }
+
+    fun setStatusDeletedPeso(serie: String): Int {
+        val db = this.writableDatabase
+        val contentValues = ContentValues().apply {
+            put(KEY_ID_ESTADO, "3")
+        }
+
+        return db.update(
+            TABLE_PESOS,
+            contentValues,
+            "$KEY_SERIE_DEVICE = ?",
+            arrayOf(serie)
+        )
+    }
+    fun updateStatusPesoSync(serie: String): Int {
+        val db = this.writableDatabase
+        val contentValues = ContentValues().apply {
+            put(KEY_ISSYNC, "1")
+        }
+
+        return db.update(
+            TABLE_PESOS,
+            contentValues,
+            "$KEY_SERIE_DEVICE = ?",
+            arrayOf(serie)
+        )
+    }
+
     fun getPesosUsedAll(): List<pesoUsedEntity> {
         val pesosUsedList = mutableListOf<pesoUsedEntity>()
         val db = this.readableDatabase
@@ -640,10 +686,10 @@ class AppDatabase(context: Context) :
         return pesoList
     }
 
-    fun deletePesosById(id: Int): Int {
+    fun deletePesosBySerieDevice(serie: String): Int {
         val db = this.writableDatabase
-        val whereClause = "$KEY_ID = ?"
-        val whereArgs = arrayOf(id.toString())
+        val whereClause = "$KEY_SERIE_DEVICE = ?"
+        val whereArgs = arrayOf(serie)
         return db.delete(TABLE_PESOS, whereClause, whereArgs)
     }
 

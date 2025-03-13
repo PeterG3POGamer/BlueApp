@@ -1,6 +1,8 @@
 package app.serlanventas.mobile.ui.ModulesPesos
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +13,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import app.serlanventas.mobile.databinding.FragmentModulePesosBinding
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.PesosEntity
+import app.serlanventas.mobile.ui.Jabas.ManagerPost.obtenerPesosServer
+import app.serlanventas.mobile.ui.Jabas.ManagerPost.showCustomToast
 
 class PesosFragment : Fragment() {
 
@@ -37,6 +41,23 @@ class PesosFragment : Fragment() {
         pesosAdapter = PesosAdapter(emptyList(), ::onMostrarClick, ::onEliminarClick)
         binding.recyclerViewPesos.layoutManager = LinearLayoutManager(context)
         binding.recyclerViewPesos.adapter = pesosAdapter
+
+
+        binding.btnSincronizarPesos.setOnClickListener {
+            binding.btnSincronizarPesos.isEnabled = false
+            obtenerPesosServer(requireContext()) { success ->
+                if (success) {
+                    showCustomToast(requireContext(), "Pesos sincronizados con éxito", "success")
+                } else {
+                    showCustomToast(requireContext(), "Error al sincronizar pesos", "error")
+                }
+                Handler(Looper.getMainLooper()).postDelayed({
+                    binding.btnSincronizarPesos.isEnabled = true
+                    cargarPesos()
+                }, 500)
+            }
+        }
+
 
         // Cargar los pesos desde la base de datos
         cargarPesos()

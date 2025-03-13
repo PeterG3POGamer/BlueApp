@@ -10,7 +10,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 3
-        versionName = "1.17"
+        versionName = "1.17.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         namespace = "app.serlanventas.mobile"
         vectorDrawables {
@@ -96,7 +96,7 @@ dependencies {
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation ("com.tom-roush:pdfbox-android:2.0.25.0")
     implementation ("org.mindrot:jbcrypt:0.4")
-//    implementation ("org.springframework.security:spring-security-crypto:5.8.0")
+    implementation ("com.squareup.okhttp3:okhttp:4.9.3")
     implementation ("com.github.bumptech.glide:glide:4.15.1")
     implementation(libs.androidx.compose)
     annotationProcessor ("com.github.bumptech.glide:compiler:4.15.1")

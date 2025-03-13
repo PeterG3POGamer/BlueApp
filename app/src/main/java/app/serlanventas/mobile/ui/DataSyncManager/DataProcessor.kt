@@ -178,7 +178,7 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
 
                     // Extraer datos del usuario según tu estructura JSON
                     val clienteEntity = ClienteEntity(
-                        numeroDocCliente= idCliente,
+                        numeroDocCliente = idCliente,
                         nombreCompleto = cliente.getString("rs"),
                         fechaRegistro = ""
                     )
@@ -187,7 +187,7 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
                     if (existeCliente == null) {
                         db.insertCliente(clienteEntity)
                     } else {
-                    db.updateCliente(clienteEntity)
+                        db.updateCliente(clienteEntity)
                     }
                 }
                 db.setTransactionSuccessful()
@@ -267,6 +267,8 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
 
                     if (existePeso == null) {
                         db.insertListPesos(serieDeviceEntity)
+                    }else{
+                        db.updatePesoBySerieDevice(serieDevice, serieDeviceEntity)
                     }
                 }
 

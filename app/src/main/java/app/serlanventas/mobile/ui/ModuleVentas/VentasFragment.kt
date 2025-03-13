@@ -1,8 +1,8 @@
 package app.serlanventas.mobile.ui.ModuleVentas
 
-import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,7 +18,9 @@ import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.Services.generateAndOpenPDF2
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -34,9 +36,11 @@ class VentasFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentModuleVentasBinding.inflate(inflater, container, false)
-        return binding.root
+        val root: View = binding.root
+
+        return root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -44,42 +48,81 @@ class VentasFragment : Fragment() {
         db = AppDatabase(requireContext())
 
         ventasAdapter = VentasAdapter(emptyList()) { venta ->
-            val pesoPollos = db.obtenerPesoPollosPorId(venta.id)
+            lifecycleScope.launch {
 
-            pesoPollos?.let {
-                val dataNucleo = db.obtenerNucleoPorId(it.idNucleo)
-                val dataGalpon = db.obtenerGalponPorId(it.idGalpon)
+                val pesoPollos = withContext(Dispatchers.IO) {
+                    val pesoData = db.obtenerPesoPollosPorId(venta.id)
+                    val dataNucleo = pesoData?.let { db.obtenerNucleoPorId(it.idNucleo) }
+                    val dataGalpon = pesoData?.let { db.obtenerGalponPorId(it.idGalpon) }
+                    val detallesPesoPollos =
+                        pesoData?.let { db.obtenerDetaPesoPollosPorId(it.id.toString()) }
+                            ?: emptyList()
 
-                // Preparar los datos
-                val nombreComprobante = "Nota de Venta"
-                val idEmpresa = "RUC: ${dataNucleo?.idEmpresa}"
-                val rsEmpresa = "MULTIGRANJAS SERLAN S.A.C."
-                val correlativo = "${it.serie}-${it.numero}"
-                val fecha = "FECHA: ${it.fecha.split(" ")[0]}"
-                val hora = "HORA: ${it.fecha.split(" ")[1]}"
-                val nombreCliente = "CLIENTE: ${it.nombreCompleto ?: "N/A"}"
-                val idCliente = "N° DOC: ${it.numeroDocCliente}"
-                val totalJabas = "C. DE JABAS: ${it.totalJabas}"
-                val totalPollos = "C. DE POLLO: ${it.totalPollos}"
-                val totalPesoJabas = "TARA: ${it.totalPesoJabas}"
-                val totalPeso = "PESO BRUTO: ${it.totalPeso}"
-                val totalNeto = "NETO: ${it.totalNeto}"
-                val pkPollo = "PRECIO X KG: ${it.PKPollo}"
-                val totalPagar = "T. A PAGAR: ${it.TotalPagar}"
-                // Cálculo del peso promedio
-                val psPromedio = if (it.totalPollos > "0") {
-                    "PESO PROMEDIO: ${String.format("%.2f", it.totalNeto.toDouble() / it.totalPollos.toDouble())}"
-                } else {
-                    "PESO PROMEDIO: 0.00"
+                    // Devolver los datos necesarios como un objeto temporal para usar en el hilo principal
+                    Triple(pesoData, Pair(dataNucleo, dataGalpon), detallesPesoPollos)
                 }
-                val mensaje = "¡GRACIAS POR SU COMPRA!"
-                val sede = "SEDE: ${dataNucleo?.nombre} - ${dataGalpon?.nombre}"
 
-                // Obtener los detalles de peso de pollos
-                val detallesPesoPollos = db.obtenerDetaPesoPollosPorId(it.id.toString())
+                val (pollosData, nucleoGalpon, detalles) = pesoPollos
+                val (dataNucleo, dataGalpon) = nucleoGalpon
 
-                // Mostrar el modal con los detalles de la venta
-                showModal(venta.id, nombreComprobante, idEmpresa, rsEmpresa, correlativo, fecha, hora, nombreCliente, idCliente, totalJabas, totalPollos, totalPesoJabas, totalPeso, totalNeto, pkPollo, totalPagar, mensaje, sede, detallesPesoPollos, psPromedio)
+                pollosData?.let { it ->
+                    // Preparar los datos
+                    val nombreComprobante = "Nota de Venta"
+                    val idEmpresa = "RUC: ${dataNucleo?.idEmpresa}"
+                    val rsEmpresa = "MULTIGRANJAS SERLAN S.A.C."
+                    val correlativo = "${it.serie}-${it.numero}"
+                    val fecha = "FECHA: ${it.fecha.split(" ")[0]}"
+                    val hora = "HORA: ${it.fecha.split(" ")[1]}"
+                    val nombreCliente = "CLIENTE: ${it.nombreCompleto ?: "N/A"}"
+                    val idCliente = "N° DOC: ${it.numeroDocCliente}"
+                    val totalJabas = "C. DE JABAS: ${it.totalJabas}"
+                    val totalPollos = "C. DE POLLO: ${it.totalPollos}"
+                    val totalPesoJabas = "TARA: ${it.totalPesoJabas}"
+                    val totalPeso = "PESO BRUTO: ${it.totalPeso}"
+                    val totalNeto = "NETO: ${it.totalNeto}"
+                    val pkPollo = "PRECIO X KG: ${it.PKPollo}"
+                    val totalPagar = "T. A PAGAR: ${it.TotalPagar}"
+                    // Cálculo del peso promedio
+                    val psPromedio = if (it.totalPollos > "0") {
+                        "PESO PROMEDIO: ${
+                            String.format(
+                                "%.2f",
+                                it.totalNeto.toDouble() / it.totalPollos.toDouble()
+                            )
+                        }"
+                    } else {
+                        "PESO PROMEDIO: 0.00"
+                    }
+                    val mensaje = "¡GRACIAS POR SU COMPRA!"
+                    val sede = "SEDE: ${dataNucleo?.nombre} - ${dataGalpon?.nombre}"
+
+                    // Obtener los detalles de peso de pollos
+                    val detallesPesoPollos = db.obtenerDetaPesoPollosPorId(it.id.toString())
+
+                    // Mostrar el modal con los detalles de la venta
+                    showModal(
+                        venta.id,
+                        nombreComprobante,
+                        idEmpresa,
+                        rsEmpresa,
+                        correlativo,
+                        fecha,
+                        hora,
+                        nombreCliente,
+                        idCliente,
+                        totalJabas,
+                        totalPollos,
+                        totalPesoJabas,
+                        totalPeso,
+                        totalNeto,
+                        pkPollo,
+                        totalPagar,
+                        mensaje,
+                        sede,
+                        detallesPesoPollos,
+                        psPromedio
+                    )
+                }
             }
         }
 
@@ -91,13 +134,12 @@ class VentasFragment : Fragment() {
     // Método para cargar los datos de ventas en el RecyclerView
     private fun cargarVentas() {
         var serie = db.getSerieDevice()
-        if (serie != null){
+        if (serie != null) {
             listaVentas = db.getAllDataPesoPollosForDevice(serie.codigo)
             ventasAdapter.setVentas(listaVentas)
         }
     }
 
-    @SuppressLint("MissingInflatedId")
     private fun showModal(
         ventaId: Int,
         nombreComprobante: String, idEmpresa: String, rsEmpresa: String, correlativo: String,
@@ -107,7 +149,8 @@ class VentasFragment : Fragment() {
         detallesPesoPollos: List<DataDetaPesoPollosEntity>, psPromedio: String
     ) {
         // Inflamos el layout del modal
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.fragment_venta_detalle, null)
+        val dialogView =
+            LayoutInflater.from(requireContext()).inflate(R.layout.fragment_venta_detalle, null)
 
         // Mapa de TextView y sus valores
         val textViews = mapOf(
@@ -133,19 +176,17 @@ class VentasFragment : Fragment() {
 
         // Asignamos los valores a los TextView
         textViews.forEach { (id, value) ->
-            dialogView.findViewById<TextView>(id).text = value
+            dialogView.findViewById<TextView>(id)?.text = value
         }
 
         // Configurar el RecyclerView para mostrar los detalles de pesos
-        val recyclerViewDetalles = dialogView.findViewById<RecyclerView>(R.id.recyclerViewDetallesPesos)
-        recyclerViewDetalles.layoutManager = LinearLayoutManager(requireContext())
-
-        // Crear un adaptador para los detalles de pesos
-        val detalleAdapter = DetallesPesosDialogAdapter(detallesPesoPollos)
-        recyclerViewDetalles.adapter = detalleAdapter
+        val recyclerViewDetalles =
+            dialogView.findViewById<RecyclerView>(R.id.recyclerViewDetallesPesos)
+        recyclerViewDetalles.setHasFixedSize(true)
+        recyclerViewDetalles.layoutManager = LinearLayoutManager(context)
 
         // Creamos el diálogo con dos botones: Imprimir y Cerrar
-        val dialog = AlertDialog.Builder(requireContext())
+        val dialog = AlertDialog.Builder(context)
             .setView(dialogView)
             .setPositiveButton("Cerrar") { dialog, _ -> dialog.dismiss() }
             .setNeutralButton("Imprimir") { dialog, _ ->
@@ -156,8 +197,15 @@ class VentasFragment : Fragment() {
             }
             .create()
 
+        // Crear un adaptador para los detalles de pesos
+        val detalleAdapter = DetallesPesosDialogAdapter(detallesPesoPollos)
+        recyclerViewDetalles.adapter = detalleAdapter
+
         // Mostramos el diálogo
         dialog.show()
+
+        // Logs adicionales para depuración
+        Log.d("Dialog", "Dialog shown successfully")
     }
 
     private suspend fun imprimirDetalleVenta(ventaId: Int) {
@@ -170,7 +218,8 @@ class VentasFragment : Fragment() {
 
             val totalPollos = it.totalPollos.toIntOrNull() ?: 0
             val totalNeto = it.totalNeto.toDoubleOrNull() ?: 0.0
-            val pesoPromedio = if (totalPollos > 0) String.format("%.2f", totalNeto / totalPollos) else "0.00"
+            val pesoPromedio =
+                if (totalPollos > 0) String.format("%.2f", totalNeto / totalPollos) else "0.00"
             val correlativo = "${it.serie} - ${it.numero}"
             // Crear JSON
             val DATAPDF = JSONObject().apply {
@@ -237,7 +286,8 @@ class VentasFragment : Fragment() {
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DetalleViewHolder {
-            val itemView = LayoutInflater.from(parent.context).inflate(R.layout.list_pesos, parent, false)
+            val itemView =
+                LayoutInflater.from(parent.context).inflate(R.layout.list_pesos, parent, false)
             return DetalleViewHolder(itemView)
         }
 

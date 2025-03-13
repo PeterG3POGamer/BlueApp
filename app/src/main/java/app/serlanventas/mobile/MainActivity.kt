@@ -8,6 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -20,6 +22,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -34,13 +37,24 @@ import app.serlanventas.mobile.VersionControl.UpdateChecker
 import app.serlanventas.mobile.databinding.ActivityMainBinding
 import app.serlanventas.mobile.ui.Jabas.ManagerPost
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice
+import app.serlanventas.mobile.ui.Services.getAddressMacDivice.getDeviceModel
 import app.serlanventas.mobile.ui.Utilidades.Constants
+import app.serlanventas.mobile.ui.Utilidades.Constants.getCrashUrl
 import app.serlanventas.mobile.ui.ViewModel.SharedViewModel
 import app.serlanventas.mobile.ui.ViewModel.TabViewModel
 import app.serlanventas.mobile.ui.login.LogoutReceiver
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.launch
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.Response
 import java.io.File
+import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.text.SimpleDateFormat
@@ -547,34 +561,94 @@ class MainActivity : AppCompatActivity() {
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             try {
                 Log.e("CrashHandler", "Excepción no controlada", throwable)
-                val stackTrace = StringWriter()
-                throwable.printStackTrace(PrintWriter(stackTrace))
+                val stackTrace = StringWriter().also { throwable.printStackTrace(PrintWriter(it)) }
 
-                val timestamp =
-                    SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-                val filename = "crash_$timestamp.txt"
+                val idDevice = getDeviceModel()
+                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                val filename = "${idDevice}_crash_$timestamp.txt"
 
                 val file = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), filename)
                 } else {
                     @Suppress("DEPRECATION")
-                    (File(
-                        Environment.getExternalStorageDirectory(),
-                        "files/crashLogs/$filename"
-                    ))
+                    File(Environment.getExternalStorageDirectory(), "files/crashLogs/$filename")
                 }
 
                 try {
                     file.parentFile?.mkdirs()
                     file.writeText("Timestamp: $timestamp\n\n$stackTrace")
+
+                    // Enviar el archivo al servidor PHP en un hilo separado
+                    Thread {
+                        val crashUrl = getCrashUrl()
+                        Log.d("CrashHandler", "URL de envío: $crashUrl")
+                        uploadFile(file, crashUrl)
+
+                        // Pequeño retraso para asegurar que el envío se complete
+                        Thread.sleep(2000)
+
+                        // Cerrar la aplicación después de un retraso
+                        defaultExceptionHandler?.uncaughtException(thread, throwable)
+                    }.start()
                 } catch (e: Exception) {
                     e.printStackTrace()
+                    Log.e("CrashHandler", "Error al guardar o enviar el archivo", e)
+                    defaultExceptionHandler?.uncaughtException(thread, throwable)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                defaultExceptionHandler?.uncaughtException(thread, throwable)
+            }
+        }
+        }
+
+    private fun uploadFile(file: File, url: String) {
+        val client = OkHttpClient()
+        val requestBody = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart(
+                "file",
+                file.name,
+                file.asRequestBody("text/plain".toMediaTypeOrNull())
+            )
+            .build()
+
+        val request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                e.printStackTrace()
+                Log.e("CrashHandler", "Error al enviar el archivo", e)
             }
 
-            defaultExceptionHandler?.uncaughtException(thread, throwable)
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) {
+                    Log.d("CrashHandler", "Archivo enviado exitosamente")
+                } else {
+                    Log.e("CrashHandler", "Fallo al enviar el archivo. Código: ${response.code}")
+                }
+            }
+        })
+    }
+
+
+    override fun onBackPressed() {
+        // Crear un diálogo personalizado con un estilo más atractivo
+        val builder = AlertDialog.Builder(this, R.style.CustomAlertDialog)
+        val inflater = this.layoutInflater
+        val dialogView = inflater.inflate(R.layout.dialog_exit_confirmation, null)
+        builder.setView(dialogView)
+        val alertDialog = builder.create()
+        dialogView.findViewById<Button>(R.id.btnConfirmExit).setOnClickListener {
+            finishAffinity()
         }
+        dialogView.findViewById<Button>(R.id.btnCancelExit).setOnClickListener {
+            alertDialog.dismiss()
+        }
+        alertDialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        alertDialog.show()
     }
 }
