@@ -1,6 +1,6 @@
 package app.serlanventas.mobile.ui.Interfaces
 
 interface OnItemClickListener {
-    fun onItemDeleted()
+    fun onItemDeleted(id: Int)
     fun onItemAdd()
 }

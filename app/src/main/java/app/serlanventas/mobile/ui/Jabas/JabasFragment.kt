@@ -604,31 +604,38 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         }
 
         binding.btnSincronizarPesos.setOnClickListener {
-            binding.btnSincronizarPesos.isEnabled = false
-            showLoading()
-            val idPesoUtilizado = sharedViewModel.getIdListPesos() ?: 0
-            limpiarCampos()
-            limpiarClientes()
-            val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
-            val idGalpon =
-                galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
-            val idNucleo = binding.selectEstablecimiento.selectedItemPosition
-            idPesoShared = idPesoUtilizado
+            // Mostrar el cuadro de diálogo de confirmación
+            AlertDialog.Builder(requireContext())
+                .setTitle("Confirmar Sincronización")
+                .setMessage("¿Estás seguro de que deseas sincronizar los pesos?")
+                .setPositiveButton("Sincronizar") { _, _ ->
+                    // Código a ejecutar si el usuario confirma
+                    binding.btnSincronizarPesos.isEnabled = false
+                    showLoading()
+                    val idPesoUtilizado = sharedViewModel.getIdListPesos() ?: 0
+                    limpiarCampos()
+                    limpiarClientes()
+                    val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
+                    val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+                    val idNucleo = binding.selectEstablecimiento.selectedItemPosition
+                    idPesoShared = idPesoUtilizado
 
-            obtenerPesosServer(requireContext()) { success ->
-                if (success) {
-                    showCustomToast(requireContext(), "Pesos sincronizados con éxito", "success")
-                    updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
-                } else {
-                    showCustomToast(requireContext(), "Error al sincronizar pesos", "error")
+                    obtenerPesosServer(requireContext()) { success ->
+                        if (success) {
+                            showCustomToast(requireContext(), "Pesos sincronizados con éxito", "success")
+                            updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
+                        } else {
+                            showCustomToast(requireContext(), "Error al sincronizar pesos", "error")
+                        }
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            binding.btnSincronizarPesos.isEnabled = true
+                            hideLoading()
+                        }, 500)
+                    }
                 }
-                Handler(Looper.getMainLooper()).postDelayed({
-                    binding.btnSincronizarPesos.isEnabled = true
-                    hideLoading()
-                }, 500)
-            }
+                .setNegativeButton("Cancelar", null)
+                .show()
         }
-
 
         binding.inputNumeroJabas.setText("10")
         binding.inputCantPollos.setText("0")
@@ -1996,8 +2003,15 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         db.close()
     }
 
-    override fun onItemDeleted() {
-        updateUI()
+    override fun onItemDeleted(id: Int) {
+        // Find the position of the item to be deleted
+        val position = jabasList.indexOfFirst { it.id == id }
+        if (position != -1) {
+            // Remove the item from the data source
+            jabasAdapter.deleteItem(position)
+            // Update the UI to reflect the changes
+            updateUI()
+        }
     }
 
     override fun onItemAdd() {

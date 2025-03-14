@@ -66,7 +66,6 @@ class DataSyncManager(private val context: Context) {
                                 if (ventasLocales.isEmpty()) {
                                     progressCallback.onProgressUpdate("No hay ventas pendientes por sincronizar")
                                     delay(1000)
-                                    handleSyncResult(syncResult, isLoggedIn, callback)
                                 }
 
                                 // Verificar Pesos temporales
@@ -78,7 +77,6 @@ class DataSyncManager(private val context: Context) {
                                     ) { pesosUploadResult ->
                                         if (pesosUploadResult) {
                                             progressCallback.onProgressUpdate("Pesos temporales sincronizados correctamente")
-                                            handleSyncResult(syncResult, isLoggedIn, callback)
                                         } else {
                                             progressCallback.onProgressUpdate("Error al sincronizar pesos temporales")
                                             callback(false)
@@ -94,7 +92,6 @@ class DataSyncManager(private val context: Context) {
                                     ) { pesosUploadResult ->
                                         if (pesosUploadResult) {
                                             progressCallback.onProgressUpdate("Pesos temporales sincronizados correctamente")
-                                            handleSyncResult(syncResult, isLoggedIn, callback)
                                         } else {
                                             progressCallback.onProgressUpdate("Error al sincronizar pesos temporales")
                                             callback(false)
@@ -122,9 +119,16 @@ class DataSyncManager(private val context: Context) {
                                 }
 
                                 delay(1000)
-                                progressCallback.onProgressUpdate("Verificando sesión...")
+                                if (isLoggedIn){
+                                    progressCallback.onProgressUpdate("Autenticando, por favor espere...")
+                                }else{
+                                    progressCallback.onProgressUpdate("Verificando sesión...")
+                                }
                                 delay(2000)
                                 progressCallback.onProgressUpdate("Redirigiendo...")
+                                delay(1000)
+                                handleSyncResult(syncResult, isLoggedIn, callback)
+
                             }
                         }
 

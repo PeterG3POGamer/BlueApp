@@ -2,78 +2,98 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
+    android:background="@drawable/row_background"
     android:gravity="center"
-    android:padding="3dp"
-    android:background="@drawable/row_background">
+    android:orientation="horizontal">
 
     <TextView
         android:id="@+id/id_jabas"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="0.1"
-        android:text="#"
-        android:textSize="14sp"
         android:gravity="center"
-        android:textColor="@android:color/black" />
+        android:text="#"
+        android:textColor="@android:color/black"
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/numero_jabas"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="0.5"
-        android:text="N° Jabas"
-        android:textSize="14sp"
+        android:layout_weight="0.25"
         android:gravity="center"
-        android:textColor="@android:color/black" />
+        android:text="N° Jabas"
+        android:textColor="@android:color/black"
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/numero_pollos"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="0.4"
-        android:text="N° Pollos"
-        android:textSize="14sp"
+        android:layout_weight="0.2"
         android:gravity="center"
-        android:textColor="@android:color/black" />
+        android:text="N° Pollos"
+        android:textColor="@android:color/black"
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/peso_kg"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="0.4"
-        android:text="Peso"
-        android:textSize="14sp"
+        android:layout_weight="0.25"
         android:gravity="center"
-        android:textColor="@android:color/black" />
+        android:text="Peso"
+        android:textColor="@android:color/black"
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/con_pollos"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="0.4"
-        android:text="Estado"
-        android:textSize="14sp"
-        android:textColor="@android:color/black"
+        android:layout_weight="1"
         android:gravity="center"
-        android:visibility="gone"/>
+        android:text="Estado"
+        android:textColor="@android:color/black"
+        android:textSize="14sp"
+        android:visibility="gone" />
 
     <ImageView
         android:id="@+id/estado_icon"
         android:layout_width="30dp"
         android:layout_height="30dp"
-        android:layout_weight="0.3"
-        android:gravity="center"
-        android:elevation="8dp"/>
+        android:layout_weight="0.25"
+        android:elevation="8dp"
+        android:gravity="center" />
 
-    <TextView
-        android:id="@+id/fecha_peso"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:id="@+id/seccion_accion"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="0.4"
-        android:text="Estado"
-        android:textSize="14sp"
-        android:textColor="@android:color/black"
+        android:layout_gravity="center"
         android:gravity="center"
-        android:visibility="gone"/>
+        android:layout_marginEnd="30dp">
+
+        <TextView
+            android:id="@+id/fecha_peso"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.4"
+            android:gravity="center"
+            android:text="Estado"
+            android:textColor="@android:color/black"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/eliminar_icon"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_weight="0.2"
+            android:background="@drawable/rounded_background_red"
+            android:elevation="8dp"
+            android:gravity="center"
+            android:padding="5dp"
+            android:src="@drawable/ic_eliminar" />
+    </LinearLayout>
+
 </LinearLayout>
