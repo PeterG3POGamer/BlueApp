@@ -87,7 +87,7 @@ class UpdateManager(private val context: Context) {
         override fun onReceive(context: Context, intent: Intent) {
             val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
             if (downloadId == id) {
-                val file = File(context.getExternalFilesDir("Update"), "blueapp_update.apk")
+                val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "blueapp_update.apk")
                 installUpdate(file)
             }
         }
