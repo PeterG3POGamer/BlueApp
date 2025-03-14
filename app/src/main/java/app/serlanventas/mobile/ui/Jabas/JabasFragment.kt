@@ -984,7 +984,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     binding.PrecioKilo.requestFocus()
                     fetchData(500)
 
-                } else if (precio == null || dataPesoPollos.PKPollo.isBlank()) {
+                } else if (precio == null || dataPesoPollos.PKPollo.isBlank() || dataPesoPollos.PKPollo.toDouble() <= 0) {
                     binding.PrecioKilo.error =
                         "¡Para calcular el Total a Pagar necesitamos saber el precio por kilo!"
                     fetchData(500)

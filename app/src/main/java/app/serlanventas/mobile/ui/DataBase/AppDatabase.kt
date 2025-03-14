@@ -25,7 +25,7 @@ class AppDatabase(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "SerlanVentas.db"
-        private const val DATABASE_VERSION = 20
+        private const val DATABASE_VERSION = 21
 
         // Table names
         private const val TABLE_DETA_PESO_POLLOS = "DataDetaPesoPollos"
@@ -121,7 +121,7 @@ class AppDatabase(context: Context) :
                 + "$KEY_ID INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "$KEY_NUMERO_JABAS TEXT, "
                 + "$KEY_NUMERO_POLLOS TEXT, "
-                + "$KEY_PESO_KG TEXT, "
+                + "$KEY_PESO_KG REAL, "
                 + "$KEY_CON_POLLOS INTEGER, "
                 + "$KEY_FECHA_PESO TEXT, "
                 + "$KEY_ID_PESO_POLLO INTEGER)")
@@ -132,21 +132,22 @@ class AppDatabase(context: Context) :
                 + "$KEY_SERIE TEXT, "
                 + "$KEY_NUMERO TEXT, "
                 + "$KEY_FECHA TEXT, "
-                + "$KEY_TOTAL_JABAS TEXT, "
-                + "$KEY_TOTAL_POLLOS TEXT, "
-                + "$KEY_TOTAL_PESO TEXT, "
-                + "$KEY_TOTAL_PESOJABAS TEXT, "
-                + "$KEY_TOTAL_NETO TEXT, "
-                + "$KEY_TOTAL_PAGAR TEXT, "
+                + "$KEY_TOTAL_JABAS REAL, "
+                + "$KEY_TOTAL_POLLOS REAL, "
+                + "$KEY_TOTAL_PESO REAL, "
+                + "$KEY_TOTAL_PESOJABAS REAL, "
+                + "$KEY_TOTAL_NETO REAL, "
+                + "$KEY_TOTAL_PAGAR REAL, "
                 + "$KEY_DNI_USUARIO TEXT, "
                 + "$KEY_TIPO INTEGER, "
-                + "$KEY_PRECIO_K_POLLO TEXT, "
+                + "$KEY_PRECIO_K_POLLO REAL, "
                 + "$KEY_NUMERO_DOC_CLIENTE TEXT, "
                 + "$KEY_ID_GALPON TEXT, "
                 + "$KEY_ID_NUCLEO TEXT, "
                 + "$KEY_ID_ESTADO TEXT, "
                 + "$KEY_NOMBRE_COMPLETO TEXT)")
         db.execSQL(CREATE_TABLE_PESO_POLLOS)
+
 
         val CREATE_TABLE_CLIENTE = ("CREATE TABLE $TABLE_CLIENTE("
                 + "$KEY_ID INTEGER PRIMARY KEY AUTOINCREMENT, "
