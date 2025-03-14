@@ -288,7 +288,7 @@ class FragmentPreliminar : Fragment() {
                 peso = jsonObject.getDouble("_DPP_peso"),
                 tipo = jsonObject.getString("_DPP_tipo"),
                 idPesoPollo = jsonObject.optString("_DPP_idPesoPollo", ""),
-                fechaPeso = jsonObject.optString("_DPP_fechPeso", "")
+                fechaPeso = jsonObject.optString("_DPP_fechaPeso", "")
 
             )
             detalles.add(detalle)

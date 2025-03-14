@@ -163,7 +163,7 @@ class LoginActivity : AppCompatActivity(), ProgressCallback {
                 val filename = "crash_$timestamp.txt"
 
                 val file = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), filename)
+                    File(getExternalFilesDir(null), filename)
                 } else {
                     @Suppress("DEPRECATION")
                     (File(

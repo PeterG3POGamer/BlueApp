@@ -391,7 +391,7 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
                     val pesoValue = detalleJson.getDouble("peso")
                     val tipo = detalleJson.getString("tipo")
                     val idPesoPollo = detalleJson.getString("idPesoPollo")
-                    val fechaPeso = "" // detalleJson.getString("fechaPeso")
+                    val fechaPeso = detalleJson.getString("fechaPeso")
 
                     val detalleEntity = DataDetaPesoPollosEntity(
                         idDetaPP = idDetaPP,

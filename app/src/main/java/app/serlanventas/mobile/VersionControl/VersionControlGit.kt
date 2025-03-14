@@ -342,7 +342,7 @@ class UpdateManager(private val context: Context) {
         )
         intent.setDataAndType(downloadedApk, "application/vnd.android.package-archive")
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
         context.startActivity(intent)
 
         Handler(Looper.getMainLooper()).postDelayed({

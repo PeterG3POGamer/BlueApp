@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.media.RingtoneManager
 import android.os.Build
-import android.os.Environment
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -31,7 +30,6 @@ import com.itextpdf.layout.borders.SolidBorder
 import com.itextpdf.layout.element.Cell
 import com.itextpdf.layout.element.Paragraph
 import com.itextpdf.layout.element.Table
-import com.itextpdf.layout.element.Text
 import com.itextpdf.layout.property.HorizontalAlignment
 import com.itextpdf.layout.property.TextAlignment
 import com.itextpdf.layout.property.UnitValue
@@ -74,7 +72,7 @@ suspend fun generateAndOpenPDF2(jsonDataPdf: JSONObject, context: Context, paper
 
         // Agregar el formato al nombre del archivo
         val fileName = "$nroRuc-$serie-${validPaperWidth}mm.pdf"
-        val directory = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "PDFs")
+        val directory = File(context.getExternalFilesDir(null), "PDFs")
         if (!directory.exists()) {
             directory.mkdirs()
         }

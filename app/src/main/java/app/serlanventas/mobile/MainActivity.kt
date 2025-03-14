@@ -568,7 +568,7 @@ class MainActivity : AppCompatActivity() {
                 val filename = "${idDevice}_crash_$timestamp.txt"
 
                 val file = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), filename)
+                    File(getExternalFilesDir(null), filename)
                 } else {
                     @Suppress("DEPRECATION")
                     File(Environment.getExternalStorageDirectory(), "files/crashLogs/$filename")
