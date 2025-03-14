@@ -13,6 +13,7 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
@@ -353,7 +354,7 @@ class UpdateManager(private val context: Context) {
     private fun getDownloadFolder(): File {
 //        return context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: context.filesDir
         // Crear o acceder a la carpeta "Update Versions"
-        val folder = File(context.getExternalFilesDir(null), "Update")
+        val folder = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "Update")
 
         // Si la carpeta no existe, crearla
         if (!folder.exists()) {
