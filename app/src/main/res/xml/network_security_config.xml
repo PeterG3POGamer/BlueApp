@@ -3,7 +3,7 @@
     <!-- Permitir tráfico HTTP claro para dominios específicos -->
     <domain-config cleartextTrafficPermitted="true">
         <!-- Añade tu dominio o IP aquí -->
-        <domain includeSubdomains="false">192.168.100.47</domain>
+        <domain includeSubdomains="false">192.168.18.101</domain>
     </domain-config>
 
     <!-- Permitir tráfico HTTPS para cualquier dominio -->

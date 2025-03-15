@@ -38,7 +38,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:visibility="gone"
+            android:visibility="visible"
             android:padding="8dp">
 
             <!-- Sección de entrada y botón -->
@@ -74,6 +74,7 @@
 
             <!-- Peso Crudo Sin Formatear -->
             <ScrollView
+                android:id="@+id/scrollViewCrudo"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:fillViewport="true">
@@ -82,7 +83,7 @@
                 android:id="@+id/etPesoCrudo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@android:color/darker_gray"
+                android:background="@color/gray"
                 android:gravity="start"
                 android:padding="12dp"
                 android:text="Peso Crudo Sin Formatear"
@@ -92,39 +93,39 @@
             </ScrollView>
 
             <!-- Botones de configuración -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center"
-                android:layout_marginTop="16dp">
+<!--            <LinearLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:orientation="horizontal"-->
+<!--                android:gravity="center"-->
+<!--                android:layout_marginTop="16dp">-->
 
-                <Button
-                    android:id="@+id/btnConfConexion"
-                    android:layout_width="0dp"
-                    android:layout_height="38dp"
-                    android:layout_weight="1"
-                    android:text="Conf. Conexión"
-                    android:background="@drawable/rounded_button_background"
-                    android:textColor="@android:color/white"
-                    android:layout_marginEnd="2dp"
-                    android:padding="4dp"
-                    android:textSize="12sp"
-                    android:enabled="false" />
+<!--                <Button-->
+<!--                    android:id="@+id/btnConfConexion"-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="38dp"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:text="Conf. Conexión"-->
+<!--                    android:background="@drawable/rounded_button_background"-->
+<!--                    android:textColor="@android:color/white"-->
+<!--                    android:layout_marginEnd="2dp"-->
+<!--                    android:padding="4dp"-->
+<!--                    android:textSize="12sp"-->
+<!--                    android:enabled="false" />-->
 
 
-                <Button
-                    android:id="@+id/btnConfCaptura"
-                    android:layout_width="0dp"
-                    android:layout_height="38dp"
-                    android:layout_weight="1"
-                    android:text="Conf. Captura"
-                    android:background="@drawable/rounded_button_background"
-                    android:textColor="@android:color/white"
-                    android:layout_marginEnd="2dp"
-                    android:padding="4dp"
-                    android:textSize="12sp" />
-            </LinearLayout>
+<!--                <Button-->
+<!--                    android:id="@+id/btnConfCaptura"-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="38dp"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:text="Conf. Captura"-->
+<!--                    android:background="@drawable/rounded_button_background"-->
+<!--                    android:textColor="@android:color/white"-->
+<!--                    android:layout_marginEnd="2dp"-->
+<!--                    android:padding="4dp"-->
+<!--                    android:textSize="12sp" />-->
+<!--            </LinearLayout>-->
         </LinearLayout>
     </LinearLayout>
 

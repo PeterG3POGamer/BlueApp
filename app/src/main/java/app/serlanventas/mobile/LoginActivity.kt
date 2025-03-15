@@ -19,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import app.serlanventas.mobile.VersionControl.UpdateChecker
 import app.serlanventas.mobile.ui.DataSyncManager.DataSyncManager
 import app.serlanventas.mobile.ui.Interfaces.ProgressCallback
+import app.serlanventas.mobile.ui.Services.getAddressMacDivice.getDeviceModel
 import app.serlanventas.mobile.ui.Utilidades.Constants
 import app.serlanventas.mobile.ui.Utilidades.NetworkChangeReceiver
 import app.serlanventas.mobile.ui.login.LoginFragment
@@ -158,9 +159,9 @@ class LoginActivity : AppCompatActivity(), ProgressCallback {
                 val stackTrace = StringWriter()
                 throwable.printStackTrace(PrintWriter(stackTrace))
 
-                val timestamp =
-                    SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-                val filename = "crash_$timestamp.txt"
+                val idDevice = getDeviceModel()
+                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                val filename = "${idDevice}_crash_$timestamp.txt"
 
                 val file = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     File(getExternalFilesDir(null), filename)

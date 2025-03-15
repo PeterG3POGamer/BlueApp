@@ -342,14 +342,14 @@
                     android:id="@+id/imgConfigBal"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
-                    android:src="@drawable/icon_config"
+                    android:src="@drawable/ic_bluetooth"
                     android:contentDescription="Confi"/>
 
                 <TextView
                     android:id="@+id/tvConfig"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Conexion y Configuración"
+                    android:text="Conexión y Configuración"
                     android:textStyle="bold"
                     android:textColor="@color/black"
                     android:paddingTop="8dp"/>

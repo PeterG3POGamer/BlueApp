@@ -19,7 +19,7 @@ data class BluetoothMessage(val rawData: String, val processedValue: String)
 class BluetoothConnectionService(
     private val context: Context,
     private val bluetoothAdapter: BluetoothAdapter,
-    private val onMessageReceived: (BluetoothMessage) -> Unit
+    private val onMessageReceived: (BluetoothMessage) -> Unit,
 ) {
     private val TAG = "BluetoothConnectionService"
     private val uuid: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
@@ -29,6 +29,7 @@ class BluetoothConnectionService(
     private val openSockets = mutableListOf<BluetoothSocket>()
     private var serverSocket: BluetoothServerSocket? = null
     private var dividename: String = "Sin Conexión"
+
 
     @SuppressLint("MissingPermission")
     fun connect(device: BluetoothDevice) {

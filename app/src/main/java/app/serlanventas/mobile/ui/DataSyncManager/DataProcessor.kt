@@ -3,6 +3,7 @@ package app.serlanventas.mobile.ui.DataSyncManager
 import android.content.Context
 import android.util.Log
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
+import app.serlanventas.mobile.ui.DataBase.Entities.CaptureDeviceEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.ClienteEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
@@ -26,7 +27,8 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
         establecimientosNube: JSONArray,
         galponesNube: JSONArray,
         serieNube: JSONArray,
-        tempPesos: JSONArray
+        tempPesos: JSONArray,
+        confCapture: JSONArray
     ): Boolean {
         try {
             needsSync = false
@@ -47,6 +49,9 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
 
             // Procesar TempPesos
             processTempPesos(tempPesos)
+
+            // Procesar CoonfCapture
+            processConfCapture(confCapture)
 
             // Procesar ventas y sus detalles
             needsSync = processVentas(ventasNube, detallesVentasNube)
@@ -270,6 +275,60 @@ class DataProcessor(private val context: Context, private val db: AppDatabase) {
                     }else{
                         db.updatePesoBySerieDevice(serieDevice, serieDeviceEntity)
                     }
+                }
+
+                val pesosLocales = db.getAllPesosNotSync()
+                if (pesosLocales.isNotEmpty()) {
+                    needsSync = true
+                }
+                db.setTransactionSuccessful()
+                return needsSync
+            } finally {
+                db.endTransaction()
+            }
+        } catch (e: Exception) {
+            Log.e("DataProcessor", "Error procesando series: ${e.message}")
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    private fun processConfCapture(confCapture: JSONArray): Boolean {
+        var needsSync = false
+        try {
+            db.beginTransaction()
+            try {
+                for (i in 0 until confCapture.length()) {
+                    val configCap = confCapture.getJSONObject(i)
+
+                    val mac = configCap.getString("macDispositivo")
+                    val estado = configCap.getInt("estado")
+
+                    val confCaptureEntity = CaptureDeviceEntity(
+                        _idCaptureDevice = 0,
+                        _cadenaClave = configCap.getString("cadenaClave"),
+                        _nombreDispositivo = configCap.getString("nombreDispositivo"),
+                        _macDispositivo = configCap.getString("macDispositivo"),
+                        _longitud = configCap.getInt("longitud"),
+                        _formatoPeo = configCap.getInt("formatoPeo"),
+                        _estado = configCap.getInt("estado"),
+                        _cadenaClaveCierre = configCap.getString("cadenaClaveCierre"),
+                        _bloque = configCap.getString("bloque"),
+                        _isSync = "1"
+                    )
+
+                    val existeConfig = db.obtenerConfCapturePorMac(mac)
+
+                    if (existeConfig == null) {
+                        db.insertarConfCapture(confCaptureEntity)
+                    }else{
+                        db.actualizarConfCapture(confCaptureEntity)
+                    }
+
+                    if (estado > 0){
+                        db.actualizarEstadoPorMac(mac)
+                    }
+
                 }
 
                 val pesosLocales = db.getAllPesosNotSync()

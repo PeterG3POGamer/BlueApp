@@ -604,17 +604,24 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         }
 
         binding.btnSincronizarPesos.setOnClickListener {
+            var warningMsg = ""
+            if(idPesoShared != 0){
+                warningMsg = "Advertencia: Usted esta usando un peso, es posible que la lista sea diferente al momento de sincronizar. "
+            }
             // Mostrar el cuadro de diálogo de confirmación
             AlertDialog.Builder(requireContext())
                 .setTitle("Confirmar Sincronización")
-                .setMessage("¿Estás seguro de que deseas sincronizar los pesos?")
+                .setMessage("${warningMsg}\n¿Estás seguro de que deseas sincronizar los pesos?")
                 .setPositiveButton("Sincronizar") { _, _ ->
                     // Código a ejecutar si el usuario confirma
                     binding.btnSincronizarPesos.isEnabled = false
                     showLoading()
                     val idPesoUtilizado = sharedViewModel.getIdListPesos() ?: 0
-                    limpiarCampos()
-                    limpiarClientes()
+                    if (idPesoUtilizado > 0){
+                        limpiarCampos()
+                        limpiarClientes()
+                    }
+
                     val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
                     val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
                     val idNucleo = binding.selectEstablecimiento.selectedItemPosition
@@ -2037,6 +2044,8 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         updateSaveButton(nuevoContador, isEditMode, isConPollos)
         updateSendButton(nuevoContador, isEditMode)
         showToastMessage(nuevoContador)
+        calcularTotalPagar()
+
     }
 
     private fun updateSaveButton(contador: Int, isEditMode: Boolean, isConPollos: Boolean) {

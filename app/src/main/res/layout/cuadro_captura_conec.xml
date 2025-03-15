@@ -1,59 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@android:color/white"
     android:orientation="vertical"
-    android:padding="8dp"
-    android:background="@android:color/white">
+    android:padding="8dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="0dp"
+        android:layout_marginTop="5dp"
         android:background="@drawable/toast_h_background_top"
-        android:layout_marginTop="5dp">
+        android:orientation="vertical"
+        android:padding="0dp">
 
         <!-- TÍTULO -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="CONFIGURACIÓN DE CAPTURA"
-            android:textSize="14sp"
-            android:textColor="@android:color/black"
-            android:textStyle="bold"
+            android:background="#D1C4B7"
             android:gravity="center"
             android:paddingBottom="6dp"
-            android:background="#D1C4B7" />
+            android:text="CONFIGURACIÓN DE CAPTURA"
+            android:textColor="@android:color/black"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
         <TextView
             android:id="@+id/txtNombreDispositivo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Nombre: "
-            android:padding="1dp"
             android:background="#E2C391"
-            android:textStyle="bold"
-            android:textSize="18sp" />
+            android:padding="1dp"
+            android:text="Nombre: "
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/txtMacDispositivo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="MAC: "
-            android:padding="1dp"
-            android:background="#E2C391"
             android:layout_marginBottom="6dp"
-            android:textStyle="bold"
-            android:textSize="18sp" />
+            android:background="#E2C391"
+            android:padding="1dp"
+            android:text="MAC: "
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
         <!-- CADENA CLAVE -->
         <!-- LONGITUD Y FORMATO PESO -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:gravity="center"
+            android:orientation="horizontal"
             android:paddingBottom="2dp">
 
             <LinearLayout
@@ -67,19 +68,19 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Patron Inicio"
-                    android:textStyle="bold"
                     android:gravity="center"
-                    android:paddingBottom="1dp" />
+                    android:paddingBottom="1dp"
+                    android:text="Patron Inicio"
+                    android:textStyle="bold" />
 
                 <EditText
                     android:id="@+id/edtCadenaClave"
                     android:layout_width="match_parent"
                     android:layout_height="38dp"
-                    android:hint="Ej: ="
                     android:background="@drawable/rounded_edittext_background"
-                    android:padding="0dp"
-                    android:gravity="center" />
+                    android:gravity="center"
+                    android:hint="Ej: ="
+                    android:padding="0dp" />
             </LinearLayout>
 
             <LinearLayout
@@ -93,19 +94,19 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Patron Cierre"
-                    android:textStyle="bold"
                     android:gravity="center"
-                    android:paddingBottom="1dp" />
+                    android:paddingBottom="1dp"
+                    android:text="Patron Cierre"
+                    android:textStyle="bold" />
 
                 <EditText
                     android:id="@+id/edtCadenaClaveCierre"
                     android:layout_width="match_parent"
                     android:layout_height="38dp"
-                    android:hint="Ej: ;"
                     android:background="@drawable/rounded_edittext_background"
-                    android:padding="0dp"
-                    android:gravity="center" />
+                    android:gravity="center"
+                    android:hint="Ej: ;"
+                    android:padding="0dp" />
             </LinearLayout>
         </LinearLayout>
 
@@ -113,8 +114,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:gravity="center"
+            android:orientation="horizontal"
             android:paddingBottom="2dp">
 
             <LinearLayout
@@ -128,20 +129,20 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Longitud de Enteros"
-                    android:textStyle="bold"
                     android:gravity="center"
-                    android:paddingBottom="1dp" />
+                    android:paddingBottom="1dp"
+                    android:text="Longitud de Enteros"
+                    android:textStyle="bold" />
 
                 <EditText
                     android:id="@+id/edtLongitud"
                     android:layout_width="match_parent"
                     android:layout_height="38dp"
+                    android:background="@drawable/rounded_edittext_background"
+                    android:gravity="center"
                     android:hint="Ej: 10"
                     android:inputType="number"
-                    android:background="@drawable/rounded_edittext_background"
-                    android:padding="0dp"
-                    android:gravity="center" />
+                    android:padding="0dp" />
             </LinearLayout>
 
             <LinearLayout
@@ -155,20 +156,20 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Longitud Decimales"
-                    android:textStyle="bold"
                     android:gravity="center"
-                    android:paddingBottom="1dp" />
+                    android:paddingBottom="1dp"
+                    android:text="Longitud Decimales"
+                    android:textStyle="bold" />
 
                 <EditText
                     android:id="@+id/edtFormatoPeso"
                     android:layout_width="match_parent"
                     android:layout_height="38dp"
+                    android:background="@drawable/rounded_edittext_background"
+                    android:gravity="center"
                     android:hint="Ej: 2"
                     android:inputType="number"
-                    android:background="@drawable/rounded_edittext_background"
-                    android:padding="0dp"
-                    android:gravity="center" />
+                    android:padding="0dp" />
             </LinearLayout>
 
             <LinearLayout
@@ -182,25 +183,25 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
                     android:gravity="center"
+                    android:orientation="horizontal"
                     android:padding="0dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:paddingEnd="8dp"
                         android:text="Datos en Bloques"
-                        android:textStyle="bold"
-                        android:paddingEnd="8dp" />
+                        android:textStyle="bold" />
 
                     <ImageButton
                         android:id="@+id/btnInfo"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:src="@drawable/baseline_info_24"
-                        android:contentDescription="Imagen de ejemplo"
+                        android:layout_marginStart="8dp"
                         android:background="?android:attr/selectableItemBackgroundBorderless"
-                        android:layout_marginStart="8dp" />
+                        android:contentDescription="Imagen de ejemplo"
+                        android:src="@drawable/baseline_info_24" />
 
                 </LinearLayout>
 
@@ -208,10 +209,10 @@
                     android:id="@+id/btnDataBloque"
                     android:layout_width="match_parent"
                     android:layout_height="38dp"
-                    android:text="ENTERO"
-                    app:cornerRadius="8dp"
                     android:layout_marginStart="8dp"
-                    android:backgroundTint="@color/cardview_dark_background" />
+                    android:backgroundTint="@color/cardview_dark_background"
+                    android:text="ENTERO"
+                    app:cornerRadius="8dp" />
 
             </LinearLayout>
 
@@ -222,22 +223,22 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="0dp"
+        android:layout_marginTop="5dp"
         android:background="@drawable/toast_h_background_top"
-        android:layout_marginTop="5dp">
+        android:orientation="vertical"
+        android:padding="0dp">
 
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="DISPOSITIVO BLUETOOTH"
-            android:textSize="14sp"
-            android:textColor="@android:color/black"
-            android:textStyle="bold"
+            android:background="#D1C4B7"
             android:gravity="center"
             android:paddingBottom="6dp"
-            android:background="#D1C4B7" />
+            android:text="DISPOSITIVO BLUETOOTH"
+            android:textColor="@android:color/black"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
         <RadioGroup
             android:id="@+id/rgTipoConexion"
@@ -250,25 +251,25 @@
                 android:id="@+id/rbPreviamenteConectados"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Previamente conectados"
-                android:checked="true"
                 android:layout_weight="1"
-                android:padding="8dp" />
+                android:checked="true"
+                android:padding="8dp"
+                android:text="Previamente conectados" />
 
             <RadioButton
                 android:id="@+id/rbConectadoAhora"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Conectado ahora"
                 android:layout_weight="1"
-                android:padding="8dp" />
+                android:padding="8dp"
+                android:text="Conectado ahora" />
         </RadioGroup>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:padding="8dp">
 
             <!-- Spinner con borde negro y altura ajustada -->
@@ -277,8 +278,8 @@
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
+                android:background="@color/colorRowBackground1"
                 android:padding="8dp"
-                android:background="@drawable/border_black_spinner"
                 android:visibility="visible" />
 
             <!-- ImageButton con borde negro y altura ajustada -->
@@ -286,22 +287,21 @@
                 android:id="@+id/btnRefreshBluetooth"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:src="@drawable/baseline_refresh_24"
-                android:background="@drawable/border_black_spinner"
+                android:background="@drawable/rounded_button_background"
+                android:contentDescription="Actualizar conexión Bluetooth"
                 android:padding="8dp"
-                android:contentDescription="Actualizar conexión Bluetooth" />
+                android:src="@drawable/baseline_refresh_24" />
         </LinearLayout>
 
     </LinearLayout>
-
 
 
     <!-- BOTONES -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:gravity="center"
+        android:orientation="horizontal"
         android:paddingStart="8dp"
         android:paddingTop="8dp"
         android:paddingEnd="8dp">
@@ -310,50 +310,74 @@
             android:id="@+id/btnGuardar"
             android:layout_width="0dp"
             android:layout_height="38dp"
-            android:layout_weight="1"
-            android:text="GUARDAR"
-            android:background="@drawable/rounded_button_background"
-            android:textColor="@android:color/white"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/rounded_button_background"
             android:padding="0dp"
-            android:textSize="12sp" />
+            android:text="GUARDAR"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:textSize="15sp" />
 
         <Button
             android:id="@+id/btnActualizar"
             android:layout_width="0dp"
             android:layout_height="38dp"
-            android:layout_weight="1"
-            android:text="ACTUALIZAR"
-            android:background="@drawable/rounded_button_background"
-            android:textColor="@android:color/white"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/rounded_button_background"
             android:padding="4dp"
-            android:textSize="12sp" />
+            android:text="ACTUALIZAR"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:textSize="15sp" />
 
         <Button
             android:id="@+id/btnLimpiar"
             android:layout_width="0dp"
             android:layout_height="38dp"
-            android:layout_weight="1"
-            android:text="LIMPIAR"
-            android:background="@drawable/rounded_button_background"
-            android:textColor="@android:color/white"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/rounded_button_background"
             android:padding="4dp"
-            android:textSize="12sp" />
+            android:text="LIMPIAR"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:textSize="15sp" />
     </LinearLayout>
 
     <!-- ListView para mostrar los registros -->
-    <ListView
-        android:id="@+id/listViewRegistros"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:divider="@android:color/darker_gray"
-        android:dividerHeight="0.5dp"
-        android:paddingTop="6dp"
-        android:layout_marginTop="6dp" />
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingStart="8dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="8dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#D1C4B7"
+            android:gravity="center"
+            android:paddingBottom="6dp"
+            android:text="DISPOSITIVOS CONFIGURADOS"
+            android:textColor="@android:color/black"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <ListView
+            android:id="@+id/listViewRegistros"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="6dp"
+            android:layout_weight="1"
+            android:divider="@android:color/darker_gray"
+            android:dividerHeight="0.5dp"
+            android:paddingTop="6dp" />
+    </LinearLayout>
 </LinearLayout>

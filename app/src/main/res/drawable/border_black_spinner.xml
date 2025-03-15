@@ -1,7 +1,7 @@
 <!-- res/drawable/border_black_spinner.xml -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Fondo transparente -->
-    <solid android:color="@android:color/transparent" />
+    <solid android:color="@android:color/holo_orange_light" />
 
     <!-- Borde negro -->
     <stroke

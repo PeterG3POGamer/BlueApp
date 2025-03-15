@@ -4,6 +4,7 @@ import NetworkUtils
 import android.content.Context
 import android.util.Log
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
+import app.serlanventas.mobile.ui.DataBase.Entities.CaptureDeviceEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.PesosEntity
 import app.serlanventas.mobile.ui.Interfaces.ProgressCallback
@@ -52,19 +53,12 @@ class DataSyncManager(private val context: Context) {
                                 val pesosLocales = db.getAllPesosNotSync()
                                 val pesosLocalesEliminar = db.getAllPesosEliminar()
                                 val ventasLocales = db.getAllDataPesoPollosNotSync()
+                                val configLocales = db.getConfigCaptureNotSync()
 
                                 progressCallback.onProgressUpdate("Verificando Pesos Temporales por sincronizar...")
                                 delay(2000)
-
                                 if (pesosLocales.isEmpty()) {
                                     progressCallback.onProgressUpdate("No hay pesos temporalses pendientes por sincronizar")
-                                    delay(1000)
-                                }
-
-                                progressCallback.onProgressUpdate("Verificando Ventas por sincronizar...")
-                                delay(2000)
-                                if (ventasLocales.isEmpty()) {
-                                    progressCallback.onProgressUpdate("No hay ventas pendientes por sincronizar")
                                     delay(1000)
                                 }
 
@@ -99,7 +93,33 @@ class DataSyncManager(private val context: Context) {
                                     }
                                 }
 
-                                // Verificar Ventas
+                                progressCallback.onProgressUpdate("Verificando configuraciones bluetoth por sincronizar...")
+                                delay(2000)
+                                if (ventasLocales.isEmpty()) {
+                                    progressCallback.onProgressUpdate("No hay configuraciones bluetoth pendientes por sincronizar")
+                                    delay(1000)
+                                }
+                                if (configLocales.isNotEmpty()) {
+                                    progressCallback.onProgressUpdate("Subiendo configuraciones bluetooth...")
+                                    subirConfigLocales(
+                                        baseUrl,
+                                        configLocales
+                                    ) { configUploadResult ->
+                                        if (configUploadResult) {
+                                            progressCallback.onProgressUpdate("Configuraciones bluetooth sincronizados correctamente")
+                                        } else {
+                                            progressCallback.onProgressUpdate("Error al sincronizar configuracioens bluetooth")
+                                            callback(false)
+                                        }
+                                    }
+                                }
+
+                                progressCallback.onProgressUpdate("Verificando Ventas por sincronizar...")
+                                delay(2000)
+                                if (ventasLocales.isEmpty()) {
+                                    progressCallback.onProgressUpdate("No hay ventas pendientes por sincronizar")
+                                    delay(1000)
+                                }
                                 if (ventasLocales.isNotEmpty()) {
                                     progressCallback.onProgressUpdate("Subiendo ventas locales al servidor...")
                                     subirVentasLocales(
@@ -128,7 +148,6 @@ class DataSyncManager(private val context: Context) {
                                 progressCallback.onProgressUpdate("Redirigiendo...")
                                 delay(1000)
                                 handleSyncResult(syncResult, isLoggedIn, callback)
-
                             }
                         }
 
@@ -180,6 +199,7 @@ class DataSyncManager(private val context: Context) {
                         val galponesNube = data.getJSONArray("galpones")
                         val serieNube = data.getJSONArray("series")
                         val tempPesos = data.getJSONArray("tempPesos")
+                        val confCapture = data.getJSONArray("confCapture")
 
 
                         // Procesar los datos y guardar en la base de datos local
@@ -191,7 +211,8 @@ class DataSyncManager(private val context: Context) {
                             establecimientosNube,
                             galponesNube,
                             serieNube,
-                            tempPesos
+                            tempPesos,
+                            confCapture
                         )
 
                         callback(SyncResult.Success(needsSync))
@@ -411,6 +432,73 @@ class DataSyncManager(private val context: Context) {
             }
 
             // Call the callback on the main thread
+            withContext(Dispatchers.Main) {
+                callback(allSuccess)
+            }
+        }
+    }
+
+
+    fun subirConfigLocales(
+        baseUrl: String,
+        configLocales: List<CaptureDeviceEntity>,
+        callback: (Boolean) -> Unit
+    ) {
+        val urlString =  "${baseUrl}controllers/ConfigCaptureController.php?op=insertar"
+
+        CoroutineScope(Dispatchers.IO).launch {
+            var allSuccess = true
+
+            configLocales.forEach { config ->
+                val jsonConfig = config.toJson()
+                val jsonParam = JSONObject()
+
+                // Asegúrate de que los campos en jsonPeso coincidan con los esperados por el servidor
+                jsonParam.put("_idCaptureDevice", jsonConfig.optString("_cc_idCaptureDevice"))
+                jsonParam.put("_cadenaClave", jsonConfig.optString("_cc_cadenaClave"))
+                jsonParam.put("_nombreDispositivo", jsonConfig.optString("_cc_nombreDispositivo"))
+                jsonParam.put("_macDispositivo", jsonConfig.optString("_cc_macDispositivo"))
+                jsonParam.put("_longitud", jsonConfig.optString("_cc_longitud"))
+                jsonParam.put("_formatoPeo", jsonConfig.optString("_cc_formatoPeo"))
+                jsonParam.put("_estado", jsonConfig.optString("_cc_estado"))
+                jsonParam.put("_cadenaClaveCierre", jsonConfig.optString("_cc_cadenaClaveCierre"))
+                jsonParam.put("_bloque", jsonConfig.optString("_cc_bloque"))
+
+                try {
+                    apiService.makePostRequest(urlString, jsonParam) { response, error ->
+                        if (error != null) {
+                            Log.e("DataSyncManager", "Error al subir peso: ${error.message}")
+                            allSuccess = false
+                            return@makePostRequest
+                        }
+
+                        try {
+                            Log.d("DataSyncManager", "Respuesta del servidor: $response")
+                            val jsonResponse = JSONObject(response)
+                            val success = jsonResponse.getString("status")
+
+                            if (success == "success") {
+                                // Marcar peso como sincronizado en la base de datos local
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    db.updateStatusCaptureSync(config._macDispositivo)
+                                }
+                            } else {
+                                val mensaje = jsonResponse.getString("message")
+                                Log.e("DataSyncManager", "Error de sincronización: $mensaje")
+                                allSuccess = false
+                            }
+                        } catch (e: Exception) {
+                            Log.e("DataSyncManager", "Error al procesar respuesta: ${e.message}")
+                            allSuccess = false
+                        }
+                    }
+                } catch (ex: Exception) {
+                    ex.printStackTrace()
+                    Log.e("DataSyncManager", "Error: ${ex.message}")
+                    allSuccess = false
+                }
+            }
+
             withContext(Dispatchers.Main) {
                 callback(allSuccess)
             }

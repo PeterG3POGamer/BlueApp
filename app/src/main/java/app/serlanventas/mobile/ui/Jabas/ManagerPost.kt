@@ -31,6 +31,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import app.serlanventas.mobile.R
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
+import app.serlanventas.mobile.ui.DataBase.Entities.CaptureDeviceEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.GalponEntity
@@ -1305,7 +1306,6 @@ object ManagerPost {
             }
 
         }
-
     }
 
     private fun processTempPesos(context: Context, tempPesos: JSONArray): Boolean {
@@ -1362,6 +1362,170 @@ object ManagerPost {
             Log.e("DataProcessor", "Error procesando series: ${e.message}")
             e.printStackTrace()
             return false
+        }
+    }
+
+
+    /*
+        SECCION CONFIGURACIONES SYYNC
+    */
+
+    // FUNCION PARA OBTENER DATOS DE SINCRNIZACION Y ELEGIR LAS CONFIGURACIONES
+    fun obtenerConfigServer(
+        context: Context,
+        callback: (Boolean) -> Unit
+    ) {
+        val db = AppDatabase(context)
+        val baseUrl = Constants.getBaseUrl()
+        val apiService = ApiService()
+        var idDevice = db.getSerieIdDeviceLocal()
+        if (idDevice.isEmpty()) {
+            idDevice = getDeviceId(context)
+        }
+        val deviceModel = getAddressMacDivice.getDeviceManufacturer()
+
+        val urlString = "${baseUrl}controllers/PesoPollosController.php?op=getAllDataSynchronized"
+        // Crea un objeto JSON con el campo mac
+        val jsonBody = JSONObject().apply {
+            put("mac", idDevice)
+            put("deviceModel", deviceModel)
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                apiService.makePostRequest(urlString, jsonBody) { response, error ->
+                    if (error != null) {
+                        Log.e("DataSyncManager", "Error: ${error.message}")
+                        callback(false)
+                        return@makePostRequest
+                    }
+
+                    try {
+                        val jsonResponse = JSONObject(response)
+                        val dataString = jsonResponse.getString("data")
+                        val data = JSONObject(dataString)
+
+                        // Procesar los datos recibidos
+                        val tempPesos = data.getJSONArray("confCapture")
+
+                        processTempPesos(context, tempPesos)
+                        callback(true)
+                    } catch (e: Exception) {
+                        Log.e("DataSyncManager", "Error al procesar JSON: ${e.message}")
+                        callback(false)
+                    }
+                }
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Log.e("DataSyncManager", "Error: ${ex.message}")
+                    callback(false)
+                }
+            }
+
+        }
+    }
+
+    private fun processConfigCapture(context: Context, configCapture: JSONArray): Boolean {
+        var needsSync = false
+        val db = AppDatabase(context)
+        try {
+            db.beginTransaction()
+            try {
+                for (i in 0 until configCapture.length()) {
+                    val configCap = configCapture.getJSONObject(i)
+
+                    var mac = configCap.getString("macDispositivo")
+
+                    val serieDeviceEntity = CaptureDeviceEntity(
+                        _idCaptureDevice = 0,
+                        _cadenaClave = configCap.getString("cadenaClave"),
+                        _nombreDispositivo = configCap.getString("nombreDispositivo"),
+                        _macDispositivo = configCap.getString("macDispositivo"),
+                        _longitud = configCap.getInt("longitud"),
+                        _formatoPeo = configCap.getInt("formatoPeo"),
+                        _estado = 0,
+                        _cadenaClaveCierre = configCap.getString("cadenaClaveCierre"),
+                        _bloque = configCap.getString("bloque"),
+                        _isSync = "1"
+                    )
+
+                    val existeConfig = db.obtenerConfCapturePorMac(mac)
+
+                    if (existeConfig == null) {
+                        db.insertarConfCapture(serieDeviceEntity)
+                    } else {
+                        db.actualizarConfCapture(serieDeviceEntity)
+                    }
+                }
+                db.setTransactionSuccessful()
+                return needsSync
+            } finally {
+                db.endTransaction()
+            }
+        } catch (e: Exception) {
+            Log.e("DataProcessor", "Error procesando series: ${e.message}")
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    // GUARDAR CONFIGURACION DE DISPOSITIVOS BLUETOOTH AL SERVIDOR
+    fun insertarConfigConexion(
+        context: Context,
+        captureDeviceEntity: CaptureDeviceEntity,
+        callback: (Boolean) -> Unit
+    ) {
+        val db = AppDatabase(context)
+        val baseUrl = Constants.getBaseUrl()
+        val apiService = ApiService()
+        val urlString = "${baseUrl}controllers/ConfigCaptureController.php?op=insertar"
+
+        // Crear JSON con la configuración a enviar
+        val jsonBody = JSONObject()
+        jsonBody.put("config", captureDeviceEntity.toJson())
+
+        Log.d("insertarConfigConexion", "JSON enviado: $jsonBody")
+
+        // Cambiar el estado de sincronización a 1 si hay internet
+        if (NetworkUtils.isNetworkAvailable(context)) {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    apiService.makePostRequest(urlString, jsonBody) { response, error ->
+                        if (error != null) {
+                            Log.e("DataSyncManager", "Error: ${error.message}")
+                            callback(false)
+                            return@makePostRequest
+                        }
+
+                        try {
+                            val jsonResponse = JSONObject(response)
+                            val success = jsonResponse.getString("success")
+
+                            if (success == "success") {
+                                // Procesar cualquier acción adicional si es necesario
+                                db.updateStatusCaptureSync(captureDeviceEntity._macDispositivo)
+                                callback(true)
+                                return@makePostRequest
+                            } else {
+                                val mensaje = jsonResponse.getString("mensaje")
+                                Log.e("DataSyncManager", "Error de sincronización: $mensaje")
+                                callback(false)
+                                return@makePostRequest
+                            }
+                        } catch (e: Exception) {
+                            Log.e("DataSyncManager", "Error al procesar JSON: ${e.message}")
+                            callback(false)
+                        }
+                    }
+                } catch (ex: Exception) {
+                    ex.printStackTrace()
+                    withContext(Dispatchers.Main) {
+                        Log.e("DataSyncManager", "Error: ${ex.message}")
+                        callback(false)
+                    }
+                }
+            }
         }
     }
 }

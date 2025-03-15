@@ -10,12 +10,14 @@ object Constants {
     private const val LOGIN_PATH = "controllers/LoginControllerApp.php?op=verificar"
 
     const val BASE_URL_PRODUCCION = "https://emprender.guru/sp_20393514630/"
-    const val WEB_URL_GUIA_PRODUCCION =
-        "https://emprender.guru/sp_20393514630/view/index.php?action=NucleoGalpon"
-    const val WEB_URL_VENTAS_PRODUCCION =
-        "https://emprender.guru/sp_20393514630/view/index.php?action=VentasApp"
-    const val URL_CRASH_SYNC =
-        "https://emprender.guru/APIS_REST/api_log_crash/api.php"
+    const val WEB_URL_GUIA_PRODUCCION = "https://emprender.guru/sp_20393514630/view/index.php?action=NucleoGalpon"
+    const val WEB_URL_VENTAS_PRODUCCION = "https://emprender.guru/sp_20393514630/view/index.php?action=VentasApp"
+    const val URL_CRASH_SYNC = "https://emprender.guru/APIS_REST/api_log_crash/api.php"
+
+//    const val BASE_URL_PRODUCCION = "http://192.168.18.101/VentaPollos/"
+//    const val WEB_URL_GUIA_PRODUCCION = "http://192.168.18.101/VentaPollos/view/index.php?action=NucleoGalpon"
+//    const val WEB_URL_VENTAS_PRODUCCION = "http://192.168.18.101/VentaPollos/view/index.php?action=VentasApp"
+//    const val URL_CRASH_SYNC = "http://192.168.18.101/APIS_REST/api_log_crash/api.php"
 
     fun getBaseUrl(): String {
         return BASE_URL_PRODUCCION

@@ -52,11 +52,14 @@ class ConfigConexFragment : Fragment() {
         sharedViewModel.rawData.observe(viewLifecycleOwner) { rawData ->
             accumulatedText += rawData
 
-            if (accumulatedText.length >= 300) {
+            if (accumulatedText.length >= 800) {
                 binding.etPesoCrudo.setText("")
                 accumulatedText = ""
             } else {
                 binding.etPesoCrudo.setText(accumulatedText)
+                binding.scrollViewCrudo.post {
+                    binding.scrollViewCrudo.fullScroll(View.FOCUS_DOWN)
+                }
             }
         }
 
@@ -73,13 +76,13 @@ class ConfigConexFragment : Fragment() {
         // Muestra la configuración de conexión por defecto
         mostrarFragmento(ConfCapturaFragment())
 
-        binding.btnConfConexion.setOnClickListener {
-            mostrarFragmento(ConfConexionFragment())
-        }
-
-        binding.btnConfCaptura.setOnClickListener {
-            mostrarFragmento(ConfCapturaFragment())
-        }
+//        binding.btnConfConexion.setOnClickListener {
+//            mostrarFragmento(ConfConexionFragment())
+//        }
+//
+//        binding.btnConfCaptura.setOnClickListener {
+//            mostrarFragmento(ConfCapturaFragment())
+//        }
     }
 
     // Método para proporcionar acceso al BluetoothConnectionService desde otros fragmentos

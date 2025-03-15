@@ -25,7 +25,7 @@ class AppDatabase(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "SerlanVentas.db"
-        private const val DATABASE_VERSION = 21
+        private const val DATABASE_VERSION = 22
 
         // Table names
         private const val TABLE_DETA_PESO_POLLOS = "DataDetaPesoPollos"
@@ -221,7 +221,8 @@ class AppDatabase(context: Context) :
                 + "$KEY_CC_FORMATO_PEO INTEGER, "
                 + "$KEY_CC_ESTADO INTEGER, "
                 + "$KEY_CC_CADENA_CLAVE_CIERRE INTEGER, "
-                + "$KEY_CC_BLOQUE INTEGER)")
+                + "$KEY_CC_BLOQUE INTEGER, "
+                + "$KEY_ISSYNC TEXT)")
         db.execSQL(TABLE_CONFCAPTURE)
     }
 
@@ -267,25 +268,36 @@ class AppDatabase(context: Context) :
         db.beginTransaction()
 
         try {
-            // Primero, actualizamos todos los registros a estado 0, excepto el que tiene la MAC que se pasa como parámetro
-            val updateQuery1 =
-                "UPDATE $TABLE_CONFCAPTURE SET $KEY_CC_ESTADO = 0 WHERE $KEY_CC_MAC_DISPOSITIVO != ?"
-            val statement1 = db.compileStatement(updateQuery1)
-            statement1.bindString(1, mac)
-            val rowsAffected1 = statement1.executeUpdateDelete()
+            // Verificar el estado actual del registro con la MAC especificada
+            val query = "SELECT $KEY_CC_ESTADO FROM $TABLE_CONFCAPTURE WHERE $KEY_CC_MAC_DISPOSITIVO = ?"
+            val cursor = db.rawQuery(query, arrayOf(mac))
 
-            // Ahora, actualizamos el registro con la MAC especificada para que su estado se mantenga igual (no cambia)
-            val updateQuery2 =
-                "UPDATE $TABLE_CONFCAPTURE SET $KEY_CC_ESTADO = 1 WHERE $KEY_CC_MAC_DISPOSITIVO = ?"
-            val statement2 = db.compileStatement(updateQuery2)
-            statement2.bindString(1, mac)
-            val rowsAffected2 = statement2.executeUpdateDelete()
+            var currentState = 0
+            if (cursor.moveToFirst()) {
+                currentState = cursor.getInt(0)
+            }
+            cursor.close()
 
-            // Confirmamos la transacción
-            db.setTransactionSuccessful()
+            if (currentState == 1) {
+                // Si el estado actual es 1, simplemente desactivarlo
+                val updateQuery = "UPDATE $TABLE_CONFCAPTURE SET $KEY_CC_ESTADO = 0 WHERE $KEY_CC_MAC_DISPOSITIVO = ?"
+                val statement = db.compileStatement(updateQuery)
+                statement.bindString(1, mac)
+                val rowsAffected = statement.executeUpdateDelete()
+                db.setTransactionSuccessful()
+                return rowsAffected
+            } else {
+                // Si el estado actual es 0, desactivar todos los demás y activar este
+                val updateQuery1 = "UPDATE $TABLE_CONFCAPTURE SET $KEY_CC_ESTADO = 0"
+                db.execSQL(updateQuery1)
 
-            // Retornamos la cantidad de registros actualizados
-            return rowsAffected1 + rowsAffected2
+                val updateQuery2 = "UPDATE $TABLE_CONFCAPTURE SET $KEY_CC_ESTADO = 1 WHERE $KEY_CC_MAC_DISPOSITIVO = ?"
+                val statement = db.compileStatement(updateQuery2)
+                statement.bindString(1, mac)
+                val rowsAffected = statement.executeUpdateDelete()
+                db.setTransactionSuccessful()
+                return rowsAffected
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             return 0  // Retorna 0 en caso de error
@@ -319,7 +331,8 @@ class AppDatabase(context: Context) :
                 _formatoPeo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_FORMATO_PEO)),
                 _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)),
                 _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE)),
-                _bloque = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_BLOQUE))
+                _bloque = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_BLOQUE)),
+                _isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC))
             )
         }
         cursor.close()
@@ -334,14 +347,28 @@ class AppDatabase(context: Context) :
             put(KEY_CC_MAC_DISPOSITIVO, data._macDispositivo)
             put(KEY_CC_LONGITUD, data._longitud)
             put(KEY_CC_FORMATO_PEO, data._formatoPeo)
-            put(KEY_CC_ESTADO, data._estado)
             put(KEY_CC_CADENA_CLAVE_CIERRE, data._cadenaClaveCierre)
             put(KEY_CC_BLOQUE, data._bloque)
+            put(KEY_ISSYNC, data._isSync)
         }
 
         // Realizamos la actualización basado en la MAC del dispositivo
         val selection = "$KEY_CC_MAC_DISPOSITIVO = ?"
         val selectionArgs = arrayOf(data._macDispositivo)
+
+        // Retorna el número de filas afectadas por la actualización
+        return db.update(TABLE_CONFCAPTURE, values, selection, selectionArgs)
+    }
+
+    fun updateStatusCaptureSync(mac: String): Int {
+        val db = this.writableDatabase
+        val values = ContentValues().apply {
+            put(KEY_ISSYNC, "1")
+        }
+
+        // Realizamos la actualización basado en la MAC del dispositivo
+        val selection = "$KEY_CC_MAC_DISPOSITIVO = ?"
+        val selectionArgs = arrayOf(mac)
 
         // Retorna el número de filas afectadas por la actualización
         return db.update(TABLE_CONFCAPTURE, values, selection, selectionArgs)
@@ -372,7 +399,43 @@ class AppDatabase(context: Context) :
                     _formatoPeo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_FORMATO_PEO)),
                     _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)),
                     _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE)),
-                    _bloque = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_BLOQUE))
+                    _bloque = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_BLOQUE)),
+                    _isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC))
+                )
+                dataList.add(data)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return dataList
+    }
+
+    fun getConfigCaptureNotSync(): List<CaptureDeviceEntity> {
+        val dataList = mutableListOf<CaptureDeviceEntity>()
+        val db = this.readableDatabase
+        val selectQuery = "SELECT * FROM $TABLE_CONFCAPTURE WHERE $KEY_ISSYNC = '0'"
+        val cursor = db.rawQuery(selectQuery, null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                val data = CaptureDeviceEntity(
+                    _idCaptureDevice = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ID)),
+                    _cadenaClave = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE)),
+                    _nombreDispositivo = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_CC_NOMBRE_DISPOSITIVO
+                        )
+                    ),
+                    _macDispositivo = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_CC_MAC_DISPOSITIVO
+                        )
+                    ),
+                    _longitud = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_LONGITUD)),
+                    _formatoPeo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_FORMATO_PEO)),
+                    _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)),
+                    _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE)),
+                    _bloque = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_BLOQUE)),
+                    _isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC))
                 )
                 dataList.add(data)
             } while (cursor.moveToNext())
@@ -395,6 +458,7 @@ class AppDatabase(context: Context) :
             put(KEY_CC_ESTADO, data._estado)
             put(KEY_CC_CADENA_CLAVE_CIERRE, data._cadenaClaveCierre)
             put(KEY_CC_BLOQUE, data._bloque)
+            put(KEY_ISSYNC, data._isSync)
         }
 
         // Insertar los valores en la tabla y devolver el id de la fila insertada
@@ -436,7 +500,8 @@ class AppDatabase(context: Context) :
                 _formatoPeo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_FORMATO_PEO)),
                 _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)),
                 _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE)),
-                _bloque = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_BLOQUE))
+                _bloque = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_BLOQUE)),
+                _isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC))
             )
         }
         cursor.close()

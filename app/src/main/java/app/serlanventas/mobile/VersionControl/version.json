@@ -1,16 +1,10 @@
 {
   "version_code": 3,
-  "version_name": "1.17.15",
+  "version_name": "1.17.16",
   "download_url2": "https://github.com/PeterG3POGamer/BlueApp/tree/master/app/build/outputs/apk/debug/app-debug.apk",
   "download_url": "https://github.com/PeterG3POGamer/BlueApp/releases/download/v.0.1-beta/app-debug.apk",
   "changes": [
-    {"type": "Nuevo", "description": "¡Ahora se puede trabajar Offline!"},
-    {"type": "Nuevo", "description": "Sincronización de pesos manualmente."},
-    {"type": "Actualizado", "description": "Sincronización de pesos automático."},
-    {"type": "Arreglado", "description": "Cierre inesperado al ingresar a repores online."},
-    {"type": "Arreglado", "description": "Eliminación de pesos finalizados"},
-    {"type": "Actualizado", "description": "Mejor eliminación de pesos en la lista de pesos"},
-    {"type": "Actualizado", "description": "Imprimir y compartir la venta realizada."}
+    {"type": "Nuevo", "description": "¡Ahora se puede trabajar Offline!"}
   ],
   "inherit": true
 }
