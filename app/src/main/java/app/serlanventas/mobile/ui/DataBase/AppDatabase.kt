@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 import app.serlanventas.mobile.ui.DataBase.Entities.CaptureDeviceEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.ClienteEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
@@ -26,7 +27,7 @@ class AppDatabase(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "SerlanVentas.db"
-        private const val DATABASE_VERSION = 22
+        private const val DATABASE_VERSION = 23
 
         // Table names
         private const val TABLE_DETA_PESO_POLLOS = "DataDetaPesoPollos"
@@ -1137,14 +1138,17 @@ class AppDatabase(context: Context) :
         val db = this.readableDatabase
 
         // Ajustar la fecha final para incluir todo el día
+        val fechaInicioConHora = "$fechaInicio 00:00:00"
         val fechaFinConHora = "$fechaFin 23:59:59"
+
+        Log.d("FechaDebug", "Fecha Inicio: $fechaInicioConHora, Fecha Fin: $fechaFinConHora")
 
         val selectQuery = """
         SELECT * FROM $TABLE_PESO_POLLOS
         WHERE $KEY_NUMERO_DOC_CLIENTE = ?
         AND $KEY_FECHA BETWEEN ? AND ?
     """
-        val cursor = db.rawQuery(selectQuery, arrayOf(numDoc, fechaInicio, fechaFinConHora))
+        val cursor = db.rawQuery(selectQuery, arrayOf(numDoc, fechaInicioConHora, fechaFinConHora))
 
         if (cursor.moveToFirst()) {
             do {
@@ -1179,11 +1183,15 @@ class AppDatabase(context: Context) :
     fun getDataPesoPollosByDate(fechaInicio: String, fechaFin: String): List<DataPesoPollosEntity> {
         val dataList = mutableListOf<DataPesoPollosEntity>()
         val db = this.readableDatabase
+
+        val fechaInicioConHora = "$fechaInicio 00:00:00"
+        val fechaFinConHora = "$fechaFin 23:59:59"
+
         val selectQuery = """
         SELECT * FROM $TABLE_PESO_POLLOS
         WHERE $KEY_FECHA BETWEEN ? AND ?
     """
-        val cursor = db.rawQuery(selectQuery, arrayOf(fechaInicio, fechaFin))
+        val cursor = db.rawQuery(selectQuery, arrayOf(fechaInicioConHora, fechaFinConHora))
 
         if (cursor.moveToFirst()) {
             do {
@@ -1257,8 +1265,13 @@ class AppDatabase(context: Context) :
         }
 
         cursor.close()
-        return listaDetaPesoPollos  // Devuelve todos los registros encontrados
+
+        // Ordenar la lista: primero "JABAS SIN POLLOS", luego "JABAS CON POLLOS"
+        return listaDetaPesoPollos.sortedBy {
+            if (it.tipo == "JABAS SIN POLLOS") 0 else 1
+        }
     }
+
 
     // Consulta para obtener el detalle de PesoPollos por ID
     fun obtenerPesoPollosPorId(idPesoPollo: Int): DataPesoPollosEntity? {
@@ -1400,7 +1413,6 @@ class AppDatabase(context: Context) :
         }
         return db.insert(TABLE_IMPRESORA, null, values)
     }
-
 
     fun insertSerieDevice(serieDevice: SerieDeviceEntity): Long {
         val db = this.writableDatabase

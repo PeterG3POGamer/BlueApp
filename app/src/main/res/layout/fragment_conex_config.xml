@@ -38,7 +38,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:visibility="visible"
+            android:visibility="gone"
             android:padding="8dp">
 
             <!-- Sección de entrada y botón -->
@@ -140,7 +140,7 @@
         <FrameLayout
             android:id="@+id/contenedorConfiguracion"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
             <!-- Aquí puedes agregar el contenido que desees -->
         </FrameLayout>
     </ScrollView>

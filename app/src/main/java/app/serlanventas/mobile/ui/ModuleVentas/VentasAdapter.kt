@@ -5,6 +5,7 @@ package app.serlanventas.mobile.ui.ModuleVentas
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import app.serlanventas.mobile.R
@@ -13,7 +14,8 @@ import com.google.android.material.button.MaterialButton
 
 class VentasAdapter(
     private var ventas: List<DataPesoPollosEntity>,
-    private val onMostrarClick: (DataPesoPollosEntity) -> Unit
+    private val onMostrarClick: (DataPesoPollosEntity) -> Unit,
+    private val onSyncClick: (DataPesoPollosEntity) -> Unit
 ) : RecyclerView.Adapter<VentasAdapter.VentaViewHolder>() {
 
     class VentaViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -23,6 +25,7 @@ class VentasAdapter(
         val fecha: TextView = itemView.findViewById(R.id.fecha)
         val totalPeso: TextView = itemView.findViewById(R.id.totalPeso)
         val totalPagar: TextView = itemView.findViewById(R.id.totalPagar)
+        val btnSync: ImageView = itemView.findViewById(R.id.estado_sync)
         val btnMostrar: MaterialButton = itemView.findViewById(R.id.btnMostrar)
     }
 
@@ -41,10 +44,23 @@ class VentasAdapter(
         holder.fecha.text = "REGISTRO: ${venta.fecha}"
         holder.totalPeso.text = "PS BRUTO: ${venta.totalPeso} kg"
         holder.totalPagar.text = "PAGO TOTAL: ${venta.TotalPagar}"
+        val estadoSincronizado = venta.idEstado
+
+        if (estadoSincronizado == "1") {
+            holder.btnSync.setImageResource(R.drawable.icon_yes_sync)
+            holder.btnSync.contentDescription = "Sincronizado"
+        } else {
+            holder.btnSync.setImageResource(R.drawable.icon_not_sync)
+            holder.btnSync.contentDescription = "No sincronizado"
+        }
 
         // Configurar el botón "Mostrar"
         holder.btnMostrar.setOnClickListener {
             onMostrarClick(venta)
+        }
+
+        holder.btnSync.setOnClickListener {
+            onSyncClick(venta)
         }
     }
 

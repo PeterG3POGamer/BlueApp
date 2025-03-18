@@ -409,6 +409,12 @@ class ConfCapturaFragment : Fragment() {
             binding.txtMacDispositivo.text = "MAC: N/A"
         }
         binding.btnDataBloque.text = "NO DETECTADO"
+        binding.btnDataBloque.setTextColor(
+            ContextCompat.getColor(
+                binding.root.context,
+                R.color.black
+            )
+        )
     }
 
     private fun cargarRegistros() {

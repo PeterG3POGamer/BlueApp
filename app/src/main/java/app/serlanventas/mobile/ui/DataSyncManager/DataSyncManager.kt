@@ -120,7 +120,6 @@ class DataSyncManager(private val context: Context) {
                                         ) { uploadResult ->
                                             if (uploadResult) {
                                                 progressCallback.onProgressUpdate("Ventas sincronizadas correctamente")
-                                                handleSyncResult(syncResult, isLoggedIn, callback)
                                             } else {
                                                 progressCallback.onProgressUpdate("Error al sincronizar ventas")
                                                 callback(false)

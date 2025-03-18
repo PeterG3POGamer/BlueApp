@@ -103,6 +103,15 @@
                 android:text="@string/search"
                 android:textAllCaps="false"
                 app:cornerRadius="8dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sincronizar_all_ventas"
+                android:layout_width="65dp"
+                android:layout_height="wrap_content"
+                app:icon="@drawable/baseline_cloud_24"
+                app:cornerRadius="8dp"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="@color/cardview_dark_background"/>
         </LinearLayout>
 
 

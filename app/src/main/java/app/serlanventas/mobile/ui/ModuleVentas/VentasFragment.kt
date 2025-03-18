@@ -19,6 +19,7 @@ import android.widget.ArrayAdapter
 import android.widget.Filter
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -64,9 +65,9 @@ class VentasFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         db = AppDatabase(requireContext())
 
-        ventasAdapter = VentasAdapter(emptyList()) { venta ->
+        // Definir las funciones para manejar los clics
+        val onMostrarClick: (DataPesoPollosEntity) -> Unit = { venta ->
             lifecycleScope.launch {
-
                 val pesoPollos = withContext(Dispatchers.IO) {
                     val pesoData = db.obtenerPesoPollosPorId(venta.id)
                     val dataNucleo = pesoData?.let { db.obtenerNucleoPorId(it.idNucleo) }
@@ -75,7 +76,6 @@ class VentasFragment : Fragment() {
                         pesoData?.let { db.obtenerDetaPesoPollosPorId(it.id.toString()) }
                             ?: emptyList()
 
-                    // Devolver los datos necesarios como un objeto temporal para usar en el hilo principal
                     Triple(pesoData, Pair(dataNucleo, dataGalpon), detallesPesoPollos)
                 }
 
@@ -83,7 +83,6 @@ class VentasFragment : Fragment() {
                 val (dataNucleo, dataGalpon) = nucleoGalpon
 
                 pollosData?.let { it ->
-                    // Preparar los datos
                     val nombreComprobante = "Nota de Venta"
                     val idEmpresa = "RUC: ${dataNucleo?.idEmpresa}"
                     val rsEmpresa = "MULTIGRANJAS SERLAN S.A.C."
@@ -99,7 +98,6 @@ class VentasFragment : Fragment() {
                     val totalNeto = "NETO: ${it.totalNeto}"
                     val pkPollo = "PRECIO X KG: ${it.PKPollo}"
                     val totalPagar = "T. A PAGAR: ${it.TotalPagar}"
-                    // Cálculo del peso promedio
                     val psPromedio = if (it.totalPollos > "0") {
                         "PESO PROMEDIO: ${
                             String.format(
@@ -113,10 +111,8 @@ class VentasFragment : Fragment() {
                     val mensaje = "¡GRACIAS POR SU COMPRA!"
                     val sede = "SEDE: ${dataNucleo?.nombre} - ${dataGalpon?.nombre}"
 
-                    // Obtener los detalles de peso de pollos
                     val detallesPesoPollos = db.obtenerDetaPesoPollosPorId(it.id.toString())
 
-                    // Mostrar el modal con los detalles de la venta
                     showModal(
                         venta.id,
                         nombreComprobante,
@@ -143,14 +139,24 @@ class VentasFragment : Fragment() {
             }
         }
 
+        val onSyncClick: (DataPesoPollosEntity) -> Unit = { venta ->
+           Log.d("Sync", "Sync clicked for venta ID: ${venta.id}")
+            Toast.makeText(requireContext(), "Proximamente...", Toast.LENGTH_SHORT).show()
+        }
+
+        // Crear la instancia del adaptador con las funciones definidas
+        ventasAdapter = VentasAdapter(emptyList(), onMostrarClick, onSyncClick)
+
         setupDateFilters()
         setupSearchButton()
+        setupSynAllVentasButton()
         setupClientDropdown()
 
         binding.recyclerViewVentas.layoutManager = LinearLayoutManager(context)
         binding.recyclerViewVentas.adapter = ventasAdapter
         cargarVentas()
     }
+
 
     // Método para cargar los datos de ventas en el RecyclerView
     private fun cargarVentas() {
@@ -304,11 +310,12 @@ class VentasFragment : Fragment() {
             val pesoKg: TextView = itemView.findViewById(R.id.peso_kg)
             val conPollos: TextView = itemView.findViewById(R.id.con_pollos)
             val estadoIcon: ImageView = itemView.findViewById(R.id.estado_icon)
+            val fechaPeso: TextView = itemView.findViewById(R.id.fecha_peso)
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DetalleViewHolder {
             val itemView =
-                LayoutInflater.from(parent.context).inflate(R.layout.list_pesos, parent, false)
+                LayoutInflater.from(parent.context).inflate(R.layout.list_detalle_pesos, parent, false)
             return DetalleViewHolder(itemView)
         }
 
@@ -320,6 +327,28 @@ class VentasFragment : Fragment() {
             holder.numeroJabas.text = "${detalle.cantJabas}"
             holder.numeroPollos.text = "${detalle.cantPollos}"
             holder.pesoKg.text = "${detalle.peso} kg"
+
+            val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+
+            try {
+                // Parsear la cadena a un objeto Date
+                val fechaPesoDate = inputFormat.parse(detalle.fechaPeso)
+
+                // Formatear la fecha
+                val dateFormat = SimpleDateFormat("MMM dd, yyyy")
+                val date = dateFormat.format(fechaPesoDate)
+
+                // Formatear la hora
+                val timeFormat = SimpleDateFormat("HH:mm:ss")
+                val time = timeFormat.format(fechaPesoDate)
+
+                // Establecer el texto con la fecha y la hora
+                holder.fechaPeso.text = "$date\n$time"
+            } catch (e: Exception) {
+                // Manejar el caso donde el formato de la fecha no es el esperado
+                holder.fechaPeso.text = "Fecha no válida"
+            }
+
 
             // Configurar el estado y el ícono según el tipo
             holder.conPollos.visibility = View.VISIBLE
@@ -468,6 +497,16 @@ class VentasFragment : Fragment() {
             // Buscar por cliente y fecha
             val selectedClient = findClienteByDisplayName(selectedClientText)
             filtrarVentasPorClienteYFecha(selectedClient)
+        }
+    }
+
+    private fun setupSynAllVentasButton() {
+        binding.btnSincronizarAllVentas.setOnClickListener {
+            Log.d("Sync", "Sync clicked All")
+            Toast.makeText(requireContext(), "Proximamente...", Toast.LENGTH_SHORT).show()
+//            var baseUrl = Constants.getBaseUrl()
+//            val ventasNotSync = db.getAllDataPesoPollosNotSync()
+//            subirVentasLocales(baseUrl, ventasNotSync, requireContext(), null)
         }
     }
 
