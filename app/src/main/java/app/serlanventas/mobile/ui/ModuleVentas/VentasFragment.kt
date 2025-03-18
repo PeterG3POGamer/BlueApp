@@ -467,14 +467,15 @@ class VentasFragment : Fragment() {
 
         lifecycleScope.launch {
             listaVentas = withContext(Dispatchers.IO) {
-                if (cliente != null) {
-                    db.getDataPesoPollosByClienteAndDate(
+                val serie = db.getSerieDevice()
+                if (cliente != null && serie != null) {
+                    db.getDataPesoPollosByClienteAndDate(serie.codigo,
                         cliente.numeroDocCliente,
                         startDate,
                         endDate
                     )
                 } else {
-                    db.getDataPesoPollosByDate(startDate, endDate)
+                    db.getDataPesoPollosByDate(serie!!.codigo, startDate, endDate)
                 }
             }
             ventasAdapter.setVentas(listaVentas)

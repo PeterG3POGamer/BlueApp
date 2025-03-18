@@ -1133,7 +1133,7 @@ class AppDatabase(context: Context) :
         return dataList
     }
 
-    fun getDataPesoPollosByClienteAndDate(numDoc: String, fechaInicio: String, fechaFin: String): List<DataPesoPollosEntity> {
+    fun getDataPesoPollosByClienteAndDate(serie: String, numDoc: String, fechaInicio: String, fechaFin: String): List<DataPesoPollosEntity> {
         val dataList = mutableListOf<DataPesoPollosEntity>()
         val db = this.readableDatabase
 
@@ -1145,10 +1145,10 @@ class AppDatabase(context: Context) :
 
         val selectQuery = """
         SELECT * FROM $TABLE_PESO_POLLOS
-        WHERE $KEY_NUMERO_DOC_CLIENTE = ?
+        WHERE $KEY_SERIE = ? AND $KEY_NUMERO_DOC_CLIENTE = ?
         AND $KEY_FECHA BETWEEN ? AND ?
     """
-        val cursor = db.rawQuery(selectQuery, arrayOf(numDoc, fechaInicioConHora, fechaFinConHora))
+        val cursor = db.rawQuery(selectQuery, arrayOf(serie, numDoc, fechaInicioConHora, fechaFinConHora))
 
         if (cursor.moveToFirst()) {
             do {
@@ -1180,18 +1180,20 @@ class AppDatabase(context: Context) :
     }
 
 
-    fun getDataPesoPollosByDate(fechaInicio: String, fechaFin: String): List<DataPesoPollosEntity> {
+    fun getDataPesoPollosByDate(serie: String, fechaInicio: String, fechaFin: String): List<DataPesoPollosEntity> {
         val dataList = mutableListOf<DataPesoPollosEntity>()
         val db = this.readableDatabase
 
         val fechaInicioConHora = "$fechaInicio 00:00:00"
         val fechaFinConHora = "$fechaFin 23:59:59"
 
+        Log.d("FechaDebug2", "Fecha Inicio: $fechaInicioConHora, Fecha Fin: $fechaFinConHora")
+
         val selectQuery = """
         SELECT * FROM $TABLE_PESO_POLLOS
-        WHERE $KEY_FECHA BETWEEN ? AND ?
+        WHERE $KEY_SERIE = ? AND $KEY_FECHA BETWEEN ? AND ?
     """
-        val cursor = db.rawQuery(selectQuery, arrayOf(fechaInicioConHora, fechaFinConHora))
+        val cursor = db.rawQuery(selectQuery, arrayOf(serie, fechaInicioConHora, fechaFinConHora))
 
         if (cursor.moveToFirst()) {
             do {
