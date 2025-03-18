@@ -1,6 +1,7 @@
 package app.serlanventas.mobile.ui.preliminar
 
 import android.Manifest
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -10,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity.MODE_PRIVATE
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -33,6 +35,7 @@ import org.json.JSONObject
 
 class FragmentPreliminar : Fragment() {
 
+    private lateinit var sharedPreferences: SharedPreferences
     private lateinit var db: AppDatabase
     private lateinit var sharedViewModel: SharedViewModel
     private lateinit var tabViewModel: TabViewModel
@@ -73,6 +76,9 @@ class FragmentPreliminar : Fragment() {
 
         tabViewModel = ViewModelProvider(requireActivity()).get(TabViewModel::class.java)
         sharedViewModel = ViewModelProvider(requireActivity()).get(SharedViewModel::class.java)
+
+        sharedPreferences = requireContext().getSharedPreferences("app_prefs", MODE_PRIVATE)
+
 
         // Observar los datos del ViewModel y actualizar los inputs
 
@@ -218,7 +224,6 @@ class FragmentPreliminar : Fragment() {
         // Actualizas el JSON en tu ViewModel
         sharedViewModel.setDataPesoPollosJson(nuevoJson.toString())
         sharedViewModel.setDataDetaPesoPollosJson("")
-
 
         findNavController().navigate(R.id.action_nav_initPreliminar_to_nav_initReportePeso)
     }

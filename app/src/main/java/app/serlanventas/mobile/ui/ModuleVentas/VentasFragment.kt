@@ -1,11 +1,22 @@
 package app.serlanventas.mobile.ui.ModuleVentas
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.app.DatePickerDialog
+import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
+import android.widget.ArrayAdapter
+import android.widget.Filter
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -15,14 +26,19 @@ import androidx.recyclerview.widget.RecyclerView
 import app.serlanventas.mobile.R
 import app.serlanventas.mobile.databinding.FragmentModuleVentasBinding
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
+import app.serlanventas.mobile.ui.DataBase.Entities.ClienteEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.Services.generateAndOpenPDF2
+import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 class VentasFragment : Fragment() {
 
@@ -31,6 +47,7 @@ class VentasFragment : Fragment() {
     private lateinit var db: AppDatabase
     private lateinit var ventasAdapter: VentasAdapter
     private var listaVentas: List<DataPesoPollosEntity> = emptyList()
+    private var listaClientes: List<ClienteEntity> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -125,6 +142,10 @@ class VentasFragment : Fragment() {
                 }
             }
         }
+
+        setupDateFilters()
+        setupSearchButton()
+        setupClientDropdown()
 
         binding.recyclerViewVentas.layoutManager = LinearLayoutManager(context)
         binding.recyclerViewVentas.adapter = ventasAdapter
@@ -312,6 +333,248 @@ class VentasFragment : Fragment() {
         }
 
         override fun getItemCount(): Int = detalles.size
+    }
+
+    // Configurar el AutoCompleteTextView para clientes
+    @SuppressLint("ClickableViewAccessibility", "SetTextI18n")
+    private fun setupClientDropdown() {
+        lifecycleScope.launch {
+            // Cargar la lista de clientes en segundo plano
+            listaClientes = withContext(Dispatchers.IO) {
+                try {
+                    db.getAllClientes()
+                } catch (e: Exception) {
+                    // Manejar errores de carga de datos
+                    emptyList()
+                }
+            }
+
+            // Configurar el adaptador con la lista de clientes
+            val clienteAdapter = ClienteAdapter(requireContext(), listaClientes)
+            binding.clientFilterInput.setAdapter(clienteAdapter)
+
+            // Configurar el OnItemClickListener para manejar la selección de un cliente
+            binding.clientFilterInput.setOnItemClickListener { parent, _, position, _ ->
+                val cliente = parent.getItemAtPosition(position) as ClienteEntity
+                binding.clientFilterInput.setText("${cliente.numeroDocCliente} - ${cliente.nombreCompleto}")
+                filtrarVentasPorClienteYFecha(cliente)
+            }
+
+            // Configurar el OnTouchListener para manejar el clic y mostrar la lista desplegable
+            binding.clientFilterInput.setOnTouchListener { _, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    // Mover el cursor al final del texto
+                    binding.clientFilterInput.post {
+                        binding.clientFilterInput.setSelection(binding.clientFilterInput.text.length)
+                    }
+
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        binding.clientFilterInput.selectAll()
+                        binding.clientFilterInput.setText("")
+                    }, 300)
+
+
+                    // Mostrar el teclado y la lista desplegable
+                    binding.clientFilterInput.showKeyboard()
+                    binding.clientFilterInput.requestFocus()
+                    binding.clientFilterInput.showDropDown()
+
+                }
+                true
+            }
+
+            // Configurar el OnFocusChangeListener para mostrar el teclado pero no la lista desplegable
+            binding.clientFilterInput.onFocusChangeListener =
+                View.OnFocusChangeListener { _, hasFocus ->
+                    if (hasFocus) {
+                        // Mover el cursor al final del texto
+                        binding.clientFilterInput.post {
+                            binding.clientFilterInput.setSelection(binding.clientFilterInput.text.length)
+                        }
+
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            binding.clientFilterInput.selectAll()
+                        }, 300)
+
+                        // Mostrar el teclado
+                        binding.clientFilterInput.showKeyboard()
+                    }
+                }
+
+            // Configurar el threshold para mostrar la lista desplegable después de ingresar un carácter
+            binding.clientFilterInput.threshold = 1
+
+            // Configurar el OnTextChangedListener para mostrar la lista desplegable cuando se escribe
+            binding.clientFilterInput.addTextChangedListener(object : TextWatcher {
+                override fun afterTextChanged(s: Editable?) {
+                    if (s.toString().isNotEmpty()) {
+                        binding.clientFilterInput.showDropDown()
+                    }
+                }
+
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) {
+                }
+
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            })
+        }
+    }
+
+    // Extensión para mostrar el teclado
+    fun View.showKeyboard() {
+        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        this.requestFocus()
+        imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+    }
+
+    private fun filtrarVentasPorClienteYFecha(cliente: ClienteEntity?) {
+        val startDate = binding.startDateFilterInput.text.toString()
+        val endDate = binding.endDateFilterInput.text.toString()
+
+        lifecycleScope.launch {
+            listaVentas = withContext(Dispatchers.IO) {
+                if (cliente != null) {
+                    db.getDataPesoPollosByClienteAndDate(
+                        cliente.numeroDocCliente,
+                        startDate,
+                        endDate
+                    )
+                } else {
+                    db.getDataPesoPollosByDate(startDate, endDate)
+                }
+            }
+            ventasAdapter.setVentas(listaVentas)
+        }
+    }
+
+    private fun findClienteByDisplayName(displayName: String): ClienteEntity? {
+        // Buscar el cliente en la lista basándose en el texto mostrado (númeroDocCliente - nombreCompleto)
+        return listaClientes.find { cliente ->
+            "${cliente.numeroDocCliente} - ${cliente.nombreCompleto}" == displayName
+        }
+    }
+
+    private fun setupSearchButton() {
+        binding.searchButton.setOnClickListener {
+            val selectedClientText = binding.clientFilterInput.text.toString().trim()
+            val startDate = binding.startDateFilterInput.text.toString().trim()
+            val endDate = binding.endDateFilterInput.text.toString().trim()
+
+            // Buscar por cliente y fecha
+            val selectedClient = findClienteByDisplayName(selectedClientText)
+            filtrarVentasPorClienteYFecha(selectedClient)
+        }
+    }
+
+    // First, create a Client adapter class
+    class ClienteAdapter(context: Context, private val clientes: List<ClienteEntity>) :
+        ArrayAdapter<ClienteEntity>(
+            context,
+            android.R.layout.simple_dropdown_item_1line,
+            clientes
+        ) {
+
+        // Lista filtrada que se muestra en el AutoCompleteTextView
+        private var filteredClientes: List<ClienteEntity> = clientes
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            val view = convertView ?: LayoutInflater.from(context)
+                .inflate(android.R.layout.simple_dropdown_item_1line, parent, false)
+
+            val cliente = filteredClientes[position]
+            val textView = view.findViewById<TextView>(android.R.id.text1)
+            textView.text = "${cliente.numeroDocCliente} - ${cliente.nombreCompleto}"
+
+            return view
+        }
+
+        override fun getCount(): Int {
+            return filteredClientes.size
+        }
+
+        override fun getItem(position: Int): ClienteEntity {
+            return filteredClientes[position]
+        }
+
+        override fun getFilter(): Filter {
+            return object : Filter() {
+                override fun performFiltering(constraint: CharSequence?): FilterResults {
+                    val results = FilterResults()
+
+                    // Filtrar la lista de clientes basándose en el texto ingresado
+                    val filteredList = if (constraint.isNullOrEmpty()) {
+                        clientes // Mostrar todos los clientes si no hay restricción
+                    } else {
+                        clientes.filter { cliente ->
+                            // Buscar en el número de documento o en el nombre completo
+                            cliente.numeroDocCliente.contains(
+                                constraint.toString(),
+                                ignoreCase = true
+                            ) ||
+                                    cliente.nombreCompleto.contains(
+                                        constraint.toString(),
+                                        ignoreCase = true
+                                    )
+                        }
+                    }
+
+                    results.values = filteredList
+                    results.count = filteredList.size
+                    return results
+                }
+
+                override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
+                    @Suppress("UNCHECKED_CAST")
+                    filteredClientes = results?.values as? List<ClienteEntity> ?: emptyList()
+                    notifyDataSetChanged() // Notificar cambios para actualizar la vista
+                }
+            }
+        }
+    }
+
+    private fun setupDateFilters() {
+        val startDateInput = binding.startDateFilterInput
+        val endDateInput = binding.endDateFilterInput
+
+        // Configurar el OnClickListener para el campo de fecha de inicio
+        startDateInput.setOnClickListener {
+            showDatePickerDialog(startDateInput)
+        }
+
+        // Configurar el OnClickListener para el campo de fecha de fin
+        endDateInput.setOnClickListener {
+            showDatePickerDialog(endDateInput)
+        }
+    }
+
+    private fun showDatePickerDialog(editText: TextInputEditText) {
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH)
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+        // Crear el DatePickerDialog
+        val datePickerDialog =
+            DatePickerDialog(requireContext(), { _, selectedYear, selectedMonth, selectedDay ->
+                val selectedDate = Calendar.getInstance()
+                selectedDate.set(selectedYear, selectedMonth, selectedDay)
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                editText.setText(dateFormat.format(selectedDate.time))
+            }, year, month, day)
+
+        // Prellenar el campo con la fecha actual si está vacío
+        if (editText.text.isNullOrEmpty()) {
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            editText.setText(dateFormat.format(calendar.time))
+        }
+
+        // Mostrar el DatePickerDialog
+        datePickerDialog.show()
     }
 
     override fun onDestroyView() {

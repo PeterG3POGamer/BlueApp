@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Uri
@@ -87,6 +88,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
 
     private var isProduction: Boolean = false
     private var baseUrl: String = ""
+    private lateinit var sharedPreferences: SharedPreferences
 
     private lateinit var dataSyncManager: DataSyncManager
     private val handler = Handler(Looper.getMainLooper())
@@ -605,8 +607,9 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
 
         binding.btnSincronizarPesos.setOnClickListener {
             var warningMsg = ""
-            if(idPesoShared != 0){
-                warningMsg = "Advertencia: Usted esta usando un peso, es posible que la lista sea diferente al momento de sincronizar. "
+            if (idPesoShared != 0) {
+                warningMsg =
+                    "Advertencia: Usted esta usando un peso, es posible que la lista sea diferente al momento de sincronizar. "
             }
             // Mostrar el cuadro de diálogo de confirmación
             AlertDialog.Builder(requireContext())
@@ -617,19 +620,25 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     binding.btnSincronizarPesos.isEnabled = false
                     showLoading()
                     val idPesoUtilizado = sharedViewModel.getIdListPesos() ?: 0
-                    if (idPesoUtilizado > 0){
+                    if (idPesoUtilizado > 0) {
                         limpiarCampos()
                         limpiarClientes()
                     }
 
                     val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
-                    val idGalpon = galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull() ?: 0
+                    val idGalpon =
+                        galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull()
+                            ?: 0
                     val idNucleo = binding.selectEstablecimiento.selectedItemPosition
                     idPesoShared = idPesoUtilizado
 
                     obtenerPesosServer(requireContext()) { success ->
                         if (success) {
-                            showCustomToast(requireContext(), "Pesos sincronizados con éxito", "success")
+                            showCustomToast(
+                                requireContext(),
+                                "Pesos sincronizados con éxito",
+                                "success"
+                            )
                             updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
                         } else {
                             showCustomToast(requireContext(), "Error al sincronizar pesos", "error")
@@ -1447,19 +1456,6 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         }
     }
 
-
-    private fun showNoInternetDialog() {
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Datos locales guardados")
-            .setMessage("Hay datos antiguos guardados localmente, pero no hay conexión a Internet para enviarlos. Se enviaran cuando se detecte una conexión a internet")
-            .setPositiveButton("OK") { dialog, which ->
-                dialog.dismiss()
-            }
-            .setCancelable(false)
-            .show()
-    }
-
-
     fun showDialogLimpiarCliente() {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("¿Que acción quiere realizar?")
@@ -1628,11 +1624,11 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         // Inicializa y registra el receptor de cambios en la red
         networkChangeReceiver = NetworkChangeReceiver { isConnected ->
             if (isConnected) {
-                dataSyncManager.checkSincronizarData(baseUrl, isLoggedIn, this) { success ->
-                    if (success) {
+//                dataSyncManager.checkSincronizarData(baseUrl, isLoggedIn, this) { success ->
+//                    if (success) {
                         //
-                    }
-                }
+//                    }
+//                }
             }
         }
 

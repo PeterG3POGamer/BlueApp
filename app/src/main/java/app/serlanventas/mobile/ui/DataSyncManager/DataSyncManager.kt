@@ -2,6 +2,7 @@ package app.serlanventas.mobile.ui.DataSyncManager
 
 import NetworkUtils
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.CaptureDeviceEntity
@@ -23,6 +24,7 @@ class DataSyncManager(private val context: Context) {
     private val dataProcessor = DataProcessor(context, db)
     private val dataComparator = DataComparator(db)
     private val dialogManager = DialogManager(context)
+    private lateinit var sharedPreferences: SharedPreferences
 
     fun checkSincronizarData(
         baseUrl: String,
@@ -32,8 +34,7 @@ class DataSyncManager(private val context: Context) {
     ) {
         if (NetworkUtils.isNetworkAvailable(context)) {
             CoroutineScope(Dispatchers.IO).launch {
-                progressCallback.onProgressUpdate("Iniciando sincronización...")
-                delay(1000)
+                animateProgressMessage(progressCallback,"Iniciando sincronización")
 
                 var idDevice = db.getSerieIdDeviceLocal()
                 if (idDevice.isEmpty()) {
@@ -42,117 +43,110 @@ class DataSyncManager(private val context: Context) {
                 val deviceModel = getAddressMacDivice.getDeviceManufacturer()
 
                 // Aquí se envia el idDevice y el deviceModel para obtener los datos
-                progressCallback.onProgressUpdate("Obteniendo datos del servidor...")
+                animateProgressMessage(progressCallback,"Obteniendo datos del servidor")
 
                 obtenerDatosNube(baseUrl, idDevice, deviceModel) { syncResult ->
                     when (syncResult) {
                         is SyncResult.Success -> {
                             CoroutineScope(Dispatchers.IO).launch {
-                                progressCallback.onProgressUpdate("Comparando datos locales y remotos...")
+                                animateProgressMessage(progressCallback, "Comparando datos locales y remotos")
                                 // Verificar si hay cambios pendientes para subir
                                 val pesosLocales = db.getAllPesosNotSync()
                                 val pesosLocalesEliminar = db.getAllPesosEliminar()
                                 val ventasLocales = db.getAllDataPesoPollosNotSync()
                                 val configLocales = db.getConfigCaptureNotSync()
+                                var needSync2 :Boolean
 
-                                progressCallback.onProgressUpdate("Verificando Pesos Temporales por sincronizar...")
-                                delay(2000)
-                                if (pesosLocales.isEmpty()) {
-                                    progressCallback.onProgressUpdate("No hay pesos temporalses pendientes por sincronizar")
-                                    delay(1000)
-                                }
-
-                                // Verificar Pesos temporales
-                                if (pesosLocales.isNotEmpty()) {
-                                    progressCallback.onProgressUpdate("Subiendo pesos temporales al servidor...")
-                                    subirPesosLocales(
-                                        baseUrl,
-                                        pesosLocales
-                                    ) { pesosUploadResult ->
-                                        if (pesosUploadResult) {
-                                            progressCallback.onProgressUpdate("Pesos temporales sincronizados correctamente")
-                                        } else {
-                                            progressCallback.onProgressUpdate("Error al sincronizar pesos temporales")
-                                            callback(false)
-                                        }
-                                    }
-                                }
-
-                                if (pesosLocalesEliminar.isNotEmpty()){
-                                    progressCallback.onProgressUpdate("Eliminando Pesos Vendidos...")
-                                    elimiarPesosLocales(
-                                        baseUrl,
-                                        pesosLocalesEliminar
-                                    ) { pesosUploadResult ->
-                                        if (pesosUploadResult) {
-                                            progressCallback.onProgressUpdate("Pesos temporales sincronizados correctamente")
-                                        } else {
-                                            progressCallback.onProgressUpdate("Error al sincronizar pesos temporales")
-                                            callback(false)
-                                        }
-                                    }
-                                }
-
-                                progressCallback.onProgressUpdate("Verificando configuraciones bluetoth por sincronizar...")
-                                delay(2000)
-                                if (ventasLocales.isEmpty()) {
-                                    progressCallback.onProgressUpdate("No hay configuraciones bluetoth pendientes por sincronizar")
-                                    delay(1000)
-                                }
-                                if (configLocales.isNotEmpty()) {
-                                    progressCallback.onProgressUpdate("Subiendo configuraciones bluetooth...")
-                                    subirConfigLocales(
-                                        baseUrl,
-                                        configLocales
-                                    ) { configUploadResult ->
-                                        if (configUploadResult) {
-                                            progressCallback.onProgressUpdate("Configuraciones bluetooth sincronizados correctamente")
-                                        } else {
-                                            progressCallback.onProgressUpdate("Error al sincronizar configuracioens bluetooth")
-                                            callback(false)
-                                        }
-                                    }
-                                }
-
-                                progressCallback.onProgressUpdate("Verificando Ventas por sincronizar...")
-                                delay(2000)
-                                if (ventasLocales.isEmpty()) {
-                                    progressCallback.onProgressUpdate("No hay ventas pendientes por sincronizar")
-                                    delay(1000)
-                                }
-                                if (ventasLocales.isNotEmpty()) {
-                                    progressCallback.onProgressUpdate("Subiendo ventas locales al servidor...")
-                                    subirVentasLocales(
-                                        baseUrl,
-                                        idDevice,
-                                        deviceModel,
-                                        ventasLocales
-                                    ) { uploadResult ->
-                                        if (uploadResult) {
-                                            progressCallback.onProgressUpdate("Ventas sincronizadas correctamente")
-                                            handleSyncResult(syncResult, isLoggedIn, callback)
-                                        } else {
-                                            progressCallback.onProgressUpdate("Error al sincronizar ventas")
-                                            callback(false)
-                                        }
-                                    }
-                                }
-
-                                delay(1000)
-                                if (isLoggedIn){
-                                    progressCallback.onProgressUpdate("Autenticando, por favor espere...")
+                                if (pesosLocales.isEmpty() && pesosLocalesEliminar.isEmpty() && ventasLocales.isEmpty() && configLocales.isEmpty()) {
+                                    progressCallback.onProgressUpdate("No hay datos para sincronizar")
+                                    needSync2 = false
                                 }else{
-                                    progressCallback.onProgressUpdate("Verificando sesión...")
+                                    needSync2 = true
+                                }
+
+                                if (needSync2){
+                                    animateProgressMessage(progressCallback, "Procesando Datos")
+
+                                    // Verificar Pesos temporales
+                                    if (pesosLocales.isNotEmpty()) {
+                                        subirPesosLocales(
+                                            baseUrl,
+                                            pesosLocales
+                                        ) { pesosUploadResult ->
+                                            if (pesosUploadResult) {
+                                                progressCallback.onProgressUpdate("Pesos temporales sincronizados correctamente")
+                                            } else {
+                                                progressCallback.onProgressUpdate("Error al sincronizar pesos temporales")
+                                                callback(false)
+                                            }
+                                        }
+                                    }
+
+                                    if (pesosLocalesEliminar.isNotEmpty()) {
+                                        elimiarPesosLocales(
+                                            baseUrl,
+                                            pesosLocalesEliminar
+                                        ) { pesosUploadResult ->
+                                            if (pesosUploadResult) {
+                                                progressCallback.onProgressUpdate("Pesos temporales sincronizados correctamente")
+                                            } else {
+                                                progressCallback.onProgressUpdate("Error al sincronizar pesos temporales")
+                                                callback(false)
+                                            }
+                                        }
+                                    }
+
+                                    if (configLocales.isNotEmpty()) {
+                                        subirConfigLocales(
+                                            baseUrl,
+                                            configLocales
+                                        ) { configUploadResult ->
+                                            if (configUploadResult) {
+                                                progressCallback.onProgressUpdate("Configuraciones bluetooth sincronizados correctamente")
+                                            } else {
+                                                progressCallback.onProgressUpdate("Error al sincronizar configuracioens bluetooth")
+                                                callback(false)
+                                            }
+                                        }
+                                    }
+
+                                    if (ventasLocales.isNotEmpty()) {
+                                        animateProgressMessage(progressCallback,"Subiendo ventas locales al servidor")
+                                        subirVentasLocales(
+                                            baseUrl,
+                                            idDevice,
+                                            deviceModel,
+                                            ventasLocales
+                                        ) { uploadResult ->
+                                            if (uploadResult) {
+                                                progressCallback.onProgressUpdate("Ventas sincronizadas correctamente")
+                                                handleSyncResult(syncResult, isLoggedIn, callback)
+                                            } else {
+                                                progressCallback.onProgressUpdate("Error al sincronizar ventas")
+                                                callback(false)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                delay(1000)
+                                if (isLoggedIn) {
+                                    animateProgressMessage(progressCallback,"Autenticando")
+                                    delay(1000)
+                                    progressCallback.onProgressUpdate("Un momento por favor...")
+                                    delay(1000)
+                                } else {
+                                    animateProgressMessage(progressCallback, "Verificando sesión")
+                                    delay(1000)
+                                    progressCallback.onProgressUpdate("No pudimos encontrar su session")
                                 }
                                 delay(2000)
-                                progressCallback.onProgressUpdate("Redirigiendo...")
-                                delay(1000)
                                 handleSyncResult(syncResult, isLoggedIn, callback)
                             }
                         }
 
                         is SyncResult.Error -> {
-                            progressCallback.onProgressUpdate("Error: ${syncResult.message}")
+                            Log.d("DataSyncManager","Error: ${syncResult.message}")
                             handleSyncResult(syncResult, isLoggedIn, callback)
                         }
                     }
@@ -444,7 +438,7 @@ class DataSyncManager(private val context: Context) {
         configLocales: List<CaptureDeviceEntity>,
         callback: (Boolean) -> Unit
     ) {
-        val urlString =  "${baseUrl}controllers/ConfigCaptureController.php?op=insertar"
+        val urlString = "${baseUrl}controllers/ConfigCaptureController.php?op=insertar"
 
         CoroutineScope(Dispatchers.IO).launch {
             var allSuccess = true
@@ -529,6 +523,37 @@ class DataSyncManager(private val context: Context) {
                     callback(false)
                 }
             }
+        }
+    }
+
+    private suspend fun animateProgressMessage(
+        progressCallback: ProgressCallback,
+        baseMessage: String,
+        durationMillis: Long = 3000,
+        dotIntervalMillis: Long = 500
+    ) {
+        val startTime = System.currentTimeMillis()
+        var dots = 0
+
+        while (System.currentTimeMillis() - startTime < durationMillis) {
+            dots = (dots + 1) % 4 // Rotación de 0 a 3 puntos
+            val message = "$baseMessage${".".repeat(dots)}"
+            progressCallback.onProgressUpdate(message)
+            delay(dotIntervalMillis)
+        }
+    }
+
+    private suspend fun simulateProgressBar(
+        progressCallback: ProgressCallback,
+        baseMessage: String,
+        steps: Int = 10,
+        stepDurationMillis: Long = 500
+    ) {
+        for (step in 1..steps) {
+            val progress = (step * 100 / steps).coerceAtMost(100) // Asegurar que no exceda 100%
+            val message = "$baseMessage $progress%"
+            progressCallback.onProgressUpdate(message)
+            delay(stepDurationMillis)
         }
     }
 }

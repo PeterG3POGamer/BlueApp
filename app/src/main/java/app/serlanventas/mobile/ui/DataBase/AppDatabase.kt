@@ -19,6 +19,7 @@ import app.serlanventas.mobile.ui.DataBase.Entities.pesoUsedEntity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 class AppDatabase(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
@@ -269,7 +270,8 @@ class AppDatabase(context: Context) :
 
         try {
             // Verificar el estado actual del registro con la MAC especificada
-            val query = "SELECT $KEY_CC_ESTADO FROM $TABLE_CONFCAPTURE WHERE $KEY_CC_MAC_DISPOSITIVO = ?"
+            val query =
+                "SELECT $KEY_CC_ESTADO FROM $TABLE_CONFCAPTURE WHERE $KEY_CC_MAC_DISPOSITIVO = ?"
             val cursor = db.rawQuery(query, arrayOf(mac))
 
             var currentState = 0
@@ -280,7 +282,8 @@ class AppDatabase(context: Context) :
 
             if (currentState == 1) {
                 // Si el estado actual es 1, simplemente desactivarlo
-                val updateQuery = "UPDATE $TABLE_CONFCAPTURE SET $KEY_CC_ESTADO = 0 WHERE $KEY_CC_MAC_DISPOSITIVO = ?"
+                val updateQuery =
+                    "UPDATE $TABLE_CONFCAPTURE SET $KEY_CC_ESTADO = 0 WHERE $KEY_CC_MAC_DISPOSITIVO = ?"
                 val statement = db.compileStatement(updateQuery)
                 statement.bindString(1, mac)
                 val rowsAffected = statement.executeUpdateDelete()
@@ -291,7 +294,8 @@ class AppDatabase(context: Context) :
                 val updateQuery1 = "UPDATE $TABLE_CONFCAPTURE SET $KEY_CC_ESTADO = 0"
                 db.execSQL(updateQuery1)
 
-                val updateQuery2 = "UPDATE $TABLE_CONFCAPTURE SET $KEY_CC_ESTADO = 1 WHERE $KEY_CC_MAC_DISPOSITIVO = ?"
+                val updateQuery2 =
+                    "UPDATE $TABLE_CONFCAPTURE SET $KEY_CC_ESTADO = 1 WHERE $KEY_CC_MAC_DISPOSITIVO = ?"
                 val statement = db.compileStatement(updateQuery2)
                 statement.bindString(1, mac)
                 val rowsAffected = statement.executeUpdateDelete()
@@ -330,7 +334,11 @@ class AppDatabase(context: Context) :
                 _longitud = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_LONGITUD)),
                 _formatoPeo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_FORMATO_PEO)),
                 _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)),
-                _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE)),
+                _cadenaClaveCierre = cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        KEY_CC_CADENA_CLAVE_CIERRE
+                    )
+                ),
                 _bloque = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_BLOQUE)),
                 _isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC))
             )
@@ -398,7 +406,11 @@ class AppDatabase(context: Context) :
                     _longitud = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_LONGITUD)),
                     _formatoPeo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_FORMATO_PEO)),
                     _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)),
-                    _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE)),
+                    _cadenaClaveCierre = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_CC_CADENA_CLAVE_CIERRE
+                        )
+                    ),
                     _bloque = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_BLOQUE)),
                     _isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC))
                 )
@@ -433,7 +445,11 @@ class AppDatabase(context: Context) :
                     _longitud = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_LONGITUD)),
                     _formatoPeo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_FORMATO_PEO)),
                     _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)),
-                    _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE)),
+                    _cadenaClaveCierre = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_CC_CADENA_CLAVE_CIERRE
+                        )
+                    ),
                     _bloque = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_BLOQUE)),
                     _isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC))
                 )
@@ -499,7 +515,11 @@ class AppDatabase(context: Context) :
                 _longitud = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_LONGITUD)),
                 _formatoPeo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_FORMATO_PEO)),
                 _estado = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_CC_ESTADO)),
-                _cadenaClaveCierre = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_CADENA_CLAVE_CIERRE)),
+                _cadenaClaveCierre = cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        KEY_CC_CADENA_CLAVE_CIERRE
+                    )
+                ),
                 _bloque = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CC_BLOQUE)),
                 _isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC))
             )
@@ -522,17 +542,32 @@ class AppDatabase(context: Context) :
             do {
                 val peso = PesosEntity(
                     id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
-                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)) ?: "",
+                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME))
+                        ?: "",
                     idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
                     idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
-                    numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)) ?: "",
-                    nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)) ?: "",
-                    dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)) ?: "",
-                    dataDetaPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)) ?: "",
+                    numeroDocCliente = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NUMERO_DOC_CLIENTE
+                        )
+                    ) ?: "",
+                    nombreCompleto = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NOMBRE_COMPLETO
+                        )
+                    ) ?: "",
+                    dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON))
+                        ?: "",
+                    dataDetaPesoJson = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_DATA_DETAPESO_JSON
+                        )
+                    ) ?: "",
                     idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)) ?: "0",
                     isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC)),
                     serieDevice = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE_DEVICE)),
-                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO)) ?: ""
+                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
+                        ?: ""
                 )
                 listaPesos.add(peso)
             } while (cursor.moveToNext())
@@ -551,17 +586,32 @@ class AppDatabase(context: Context) :
             do {
                 val peso = PesosEntity(
                     id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
-                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)) ?: "",
+                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME))
+                        ?: "",
                     idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
                     idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
-                    numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)) ?: "",
-                    nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)) ?: "",
-                    dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)) ?: "",
-                    dataDetaPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)) ?: "",
+                    numeroDocCliente = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NUMERO_DOC_CLIENTE
+                        )
+                    ) ?: "",
+                    nombreCompleto = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NOMBRE_COMPLETO
+                        )
+                    ) ?: "",
+                    dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON))
+                        ?: "",
+                    dataDetaPesoJson = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_DATA_DETAPESO_JSON
+                        )
+                    ) ?: "",
                     idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)) ?: "0",
                     isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC)),
                     serieDevice = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE_DEVICE)),
-                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO)) ?: ""
+                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
+                        ?: ""
                 )
                 listaPesos.add(peso)
             } while (cursor.moveToNext())
@@ -580,17 +630,32 @@ class AppDatabase(context: Context) :
             do {
                 val peso = PesosEntity(
                     id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
-                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)) ?: "",
+                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME))
+                        ?: "",
                     idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
                     idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
-                    numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)) ?: "",
-                    nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)) ?: "",
-                    dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)) ?: "",
-                    dataDetaPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)) ?: "",
+                    numeroDocCliente = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NUMERO_DOC_CLIENTE
+                        )
+                    ) ?: "",
+                    nombreCompleto = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NOMBRE_COMPLETO
+                        )
+                    ) ?: "",
+                    dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON))
+                        ?: "",
+                    dataDetaPesoJson = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_DATA_DETAPESO_JSON
+                        )
+                    ) ?: "",
                     idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)) ?: "0",
                     isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC)),
                     serieDevice = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE_DEVICE)),
-                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO)) ?: ""
+                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
+                        ?: ""
                 )
                 listaPesos.add(peso)
             } while (cursor.moveToNext())
@@ -611,14 +676,25 @@ class AppDatabase(context: Context) :
                 devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)) ?: "",
                 idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
                 idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
-                numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)) ?: "",
-                nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)) ?: "",
-                dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)) ?: "",
-                dataDetaPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)) ?: "",
+                numeroDocCliente = cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        KEY_NUMERO_DOC_CLIENTE
+                    )
+                ) ?: "",
+                nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO))
+                    ?: "",
+                dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON))
+                    ?: "",
+                dataDetaPesoJson = cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        KEY_DATA_DETAPESO_JSON
+                    )
+                ) ?: "",
                 idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)) ?: "0",
                 isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC)),
                 serieDevice = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE_DEVICE)),
-                fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO)) ?: ""
+                fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
+                    ?: ""
             )
         }
         cursor.close()
@@ -654,7 +730,7 @@ class AppDatabase(context: Context) :
         return db.insert(TABLE_PESOS, null, values)
     }
 
-    fun updatePesoById(idPesoShared: Int,pesos: PesosEntity): Int {
+    fun updatePesoById(idPesoShared: Int, pesos: PesosEntity): Int {
         val db = this.writableDatabase
         val currentDate = getCurrentDateTime()
 
@@ -676,7 +752,7 @@ class AppDatabase(context: Context) :
         return db.update(TABLE_PESOS, values, whereClause, whereArgs)
     }
 
-    fun updatePesoBySerieDevice(devideName: String ,pesos: PesosEntity): Int {
+    fun updatePesoBySerieDevice(devideName: String, pesos: PesosEntity): Int {
         val db = this.writableDatabase
         val values = ContentValues().apply {
             put(KEY_NUMERO_DOC_CLIENTE, pesos.numeroDocCliente)
@@ -706,6 +782,7 @@ class AppDatabase(context: Context) :
             arrayOf(serie)
         )
     }
+
     fun updateStatusPesoSync(serie: String): Int {
         val db = this.writableDatabase
         val contentValues = ContentValues().apply {
@@ -760,17 +837,32 @@ class AppDatabase(context: Context) :
             do {
                 val pesos = PesosEntity(
                     id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
-                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)) ?: "",
+                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME))
+                        ?: "",
                     idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
                     idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
-                    numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)) ?: "",
-                    nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)) ?: "",
-                    dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)) ?: "",
-                    dataDetaPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)) ?: "",
+                    numeroDocCliente = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NUMERO_DOC_CLIENTE
+                        )
+                    ) ?: "",
+                    nombreCompleto = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NOMBRE_COMPLETO
+                        )
+                    ) ?: "",
+                    dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON))
+                        ?: "",
+                    dataDetaPesoJson = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_DATA_DETAPESO_JSON
+                        )
+                    ) ?: "",
                     idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)) ?: "0",
                     isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC)),
                     serieDevice = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE_DEVICE)),
-                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO)) ?: ""
+                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
+                        ?: ""
                 )
                 pesoList.add(pesos)
             } while (cursor.moveToNext())
@@ -848,7 +940,8 @@ class AppDatabase(context: Context) :
 
     fun getUltimoNumeroSerie(serie: String): String? {
         val db = this.readableDatabase
-        val selectQuery = "SELECT * FROM $TABLE_PESO_POLLOS WHERE $KEY_SERIE = ? ORDER BY $KEY_NUMERO DESC LIMIT 1"
+        val selectQuery =
+            "SELECT * FROM $TABLE_PESO_POLLOS WHERE $KEY_SERIE = ? ORDER BY $KEY_NUMERO DESC LIMIT 1"
         val cursor = db.rawQuery(selectQuery, arrayOf(serie))
 
         var ultimoNumero: String? = null
@@ -947,7 +1040,8 @@ class AppDatabase(context: Context) :
     fun getAllDataPesoPollosBySerie(serie: String, numero: String): List<DataPesoPollosEntity> {
         val dataList = mutableListOf<DataPesoPollosEntity>()
         val db = this.readableDatabase
-        val selectQuery = "SELECT * FROM $TABLE_PESO_POLLOS WHERE $KEY_SERIE = ? AND $KEY_NUMERO = ?"
+        val selectQuery =
+            "SELECT * FROM $TABLE_PESO_POLLOS WHERE $KEY_SERIE = ? AND $KEY_NUMERO = ?"
         val cursor = db.rawQuery(selectQuery, arrayOf(serie, numero))
 
         if (cursor.moveToFirst()) {
@@ -1038,22 +1132,41 @@ class AppDatabase(context: Context) :
         return dataList
     }
 
-    fun getAllDataDetaPesoPollos(): List<DataDetaPesoPollosEntity> {
-        val dataList = mutableListOf<DataDetaPesoPollosEntity>()
+    fun getDataPesoPollosByClienteAndDate(numDoc: String, fechaInicio: String, fechaFin: String): List<DataPesoPollosEntity> {
+        val dataList = mutableListOf<DataPesoPollosEntity>()
         val db = this.readableDatabase
-        val selectQuery = "SELECT * FROM $TABLE_DETA_PESO_POLLOS"
-        val cursor = db.rawQuery(selectQuery, null)
+
+        // Ajustar la fecha final para incluir todo el día
+        val fechaFinConHora = "$fechaFin 23:59:59"
+
+        val selectQuery = """
+        SELECT * FROM $TABLE_PESO_POLLOS
+        WHERE $KEY_NUMERO_DOC_CLIENTE = ?
+        AND $KEY_FECHA BETWEEN ? AND ?
+    """
+        val cursor = db.rawQuery(selectQuery, arrayOf(numDoc, fechaInicio, fechaFinConHora))
 
         if (cursor.moveToFirst()) {
             do {
-                val data = DataDetaPesoPollosEntity(
-                    idDetaPP = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
-                    cantJabas = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_NUMERO_JABAS)),
-                    cantPollos = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_NUMERO_POLLOS)),
-                    peso = cursor.getDouble(cursor.getColumnIndexOrThrow(KEY_PESO_KG)),
-                    tipo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_CON_POLLOS)),
-                    idPesoPollo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_PESO_POLLO)),
-                    fechaPeso = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_PESO))
+                val data = DataPesoPollosEntity(
+                    id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                    serie = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE)),
+                    numero = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO)),
+                    fecha = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA)),
+                    totalJabas = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_JABAS)),
+                    totalPollos = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_POLLOS)),
+                    totalPeso = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PESO)),
+                    tipo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TIPO)),
+                    numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)),
+                    idGalpon = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
+                    idNucleo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
+                    nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)),
+                    PKPollo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_PRECIO_K_POLLO)),
+                    totalPesoJabas = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PESOJABAS)),
+                    totalNeto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_NETO)),
+                    TotalPagar = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PAGAR)),
+                    idUsuario = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DNI_USUARIO)),
+                    idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)),
                 )
                 dataList.add(data)
             } while (cursor.moveToNext())
@@ -1061,6 +1174,46 @@ class AppDatabase(context: Context) :
         cursor.close()
         return dataList
     }
+
+
+    fun getDataPesoPollosByDate(fechaInicio: String, fechaFin: String): List<DataPesoPollosEntity> {
+        val dataList = mutableListOf<DataPesoPollosEntity>()
+        val db = this.readableDatabase
+        val selectQuery = """
+        SELECT * FROM $TABLE_PESO_POLLOS
+        WHERE $KEY_FECHA BETWEEN ? AND ?
+    """
+        val cursor = db.rawQuery(selectQuery, arrayOf(fechaInicio, fechaFin))
+
+        if (cursor.moveToFirst()) {
+            do {
+                val data = DataPesoPollosEntity(
+                    id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                    serie = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE)),
+                    numero = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO)),
+                    fecha = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA)),
+                    totalJabas = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_JABAS)),
+                    totalPollos = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_POLLOS)),
+                    totalPeso = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PESO)),
+                    tipo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TIPO)),
+                    numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)),
+                    idGalpon = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
+                    idNucleo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
+                    nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)),
+                    PKPollo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_PRECIO_K_POLLO)),
+                    totalPesoJabas = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PESOJABAS)),
+                    totalNeto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_NETO)),
+                    TotalPagar = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PAGAR)),
+                    idUsuario = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DNI_USUARIO)),
+                    idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)),
+                )
+                dataList.add(data)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return dataList
+    }
+
 
     fun updateStatusVentaSync(id: Int): Int {
         val db = this.writableDatabase
@@ -1080,7 +1233,10 @@ class AppDatabase(context: Context) :
     // Consulta para obtener el detalle de DetaPesoPollos por ID
     fun obtenerDetaPesoPollosPorId(idPesoPollo: String): List<DataDetaPesoPollosEntity> {
         val db = this.readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM $TABLE_DETA_PESO_POLLOS WHERE $KEY_ID_PESO_POLLO = ?", arrayOf(idPesoPollo))
+        val cursor = db.rawQuery(
+            "SELECT * FROM $TABLE_DETA_PESO_POLLOS WHERE $KEY_ID_PESO_POLLO = ?",
+            arrayOf(idPesoPollo)
+        )
 
         val listaDetaPesoPollos = mutableListOf<DataDetaPesoPollosEntity>()
 
@@ -1107,7 +1263,10 @@ class AppDatabase(context: Context) :
     // Consulta para obtener el detalle de PesoPollos por ID
     fun obtenerPesoPollosPorId(idPesoPollo: Int): DataPesoPollosEntity? {
         val db = this.readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM $TABLE_PESO_POLLOS WHERE $KEY_ID = ?", arrayOf(idPesoPollo.toString()))
+        val cursor = db.rawQuery(
+            "SELECT * FROM $TABLE_PESO_POLLOS WHERE $KEY_ID = ?",
+            arrayOf(idPesoPollo.toString())
+        )
 
         // Verificamos si existe un registro
         return if (cursor.moveToFirst()) {
@@ -1120,7 +1279,11 @@ class AppDatabase(context: Context) :
                 totalPollos = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_POLLOS)),
                 totalPeso = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TOTAL_PESO)),
                 tipo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_TIPO)),
-                numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)),
+                numeroDocCliente = cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        KEY_NUMERO_DOC_CLIENTE
+                    )
+                ),
                 nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)),
                 idGalpon = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
                 idNucleo = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
@@ -1239,7 +1402,6 @@ class AppDatabase(context: Context) :
     }
 
 
-
     fun insertSerieDevice(serieDevice: SerieDeviceEntity): Long {
         val db = this.writableDatabase
 
@@ -1256,6 +1418,7 @@ class AppDatabase(context: Context) :
 
     private fun getCurrentDateTime(): String {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        dateFormat.timeZone = TimeZone.getTimeZone("America/Lima")
         val date = Date()
         return dateFormat.format(date)
     }
@@ -1344,20 +1507,34 @@ class AppDatabase(context: Context) :
         SELECT * FROM $TABLE_PESOS
         WHERE $KEY_ID_GALPON = ? AND $KEY_ID_NUCLEO = ? AND $KEY_ID_ESTADO != '2'
     """
-        val cursor = db.rawQuery(selectQuery, arrayOf(idGalpon.toString(), idEstablecimiento.toString()))
+        val cursor =
+            db.rawQuery(selectQuery, arrayOf(idGalpon.toString(), idEstablecimiento.toString()))
 
         if (cursor.moveToFirst()) {
             do {
-                val deviceName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)) ?: ""
+                val deviceName =
+                    cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME)) ?: ""
 
                 val pesos = PesosEntity(
                     id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
                     idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
                     idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
-                    numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)),
-                    nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)),
+                    numeroDocCliente = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NUMERO_DOC_CLIENTE
+                        )
+                    ),
+                    nombreCompleto = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NOMBRE_COMPLETO
+                        )
+                    ),
                     dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)),
-                    dataDetaPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)),
+                    dataDetaPesoJson = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_DATA_DETAPESO_JSON
+                        )
+                    ),
                     idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)),
                     isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC)),
                     serieDevice = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE_DEVICE)),
@@ -1489,6 +1666,7 @@ class AppDatabase(context: Context) :
         cursor.close()
         return galpon
     }
+
     fun getGalponByName(name: String): GalponEntity? {
         val db = this.readableDatabase
         val selectQuery = "SELECT * FROM $TABLE_GALPON WHERE $KEY_GALPON_NAME = ?"
@@ -1656,10 +1834,18 @@ class AppDatabase(context: Context) :
                 id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
                 idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
                 idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
-                numeroDocCliente = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NUMERO_DOC_CLIENTE)),
+                numeroDocCliente = cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        KEY_NUMERO_DOC_CLIENTE
+                    )
+                ),
                 nombreCompleto = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NOMBRE_COMPLETO)),
                 dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON)),
-                dataDetaPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_DETAPESO_JSON)),
+                dataDetaPesoJson = cursor.getString(
+                    cursor.getColumnIndexOrThrow(
+                        KEY_DATA_DETAPESO_JSON
+                    )
+                ),
                 idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)),
                 isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC)),
                 serieDevice = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE_DEVICE)),
@@ -1795,7 +1981,6 @@ class AppDatabase(context: Context) :
     fun endTransaction() {
         writableDatabase.endTransaction()
     }
-
 
 }
 

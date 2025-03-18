@@ -120,6 +120,17 @@ object ManagerPost {
                             "Error al insertar el registro en la tabla de peso pollos"
                         )
                     }
+                    var baseUrl = Constants.getBaseUrl()
+                    if (NetworkUtils.isNetworkAvailable(context)) {
+                        subirVentasLocales(baseUrl, dataPesoPollos, context, idPesoPollo.toInt()){ success ->
+                            if (success) {
+                                Log.d("ManagerPost", "Ventas locales subidas correctamente")
+                            } else {
+                                Log.e("ManagerPost", "Error al subir ventas locales")
+                            }
+                        }
+                    }
+
                     withContext(Dispatchers.Main) {
                         showSuccessNotification(context)
                     }
@@ -204,6 +215,81 @@ object ManagerPost {
         }
 
 
+    }
+
+    fun subirVentasLocales(
+        baseUrl: String,
+        ventaLocal: DataPesoPollosEntity,
+        context: Context,
+        idVenta: Int,
+        callback: (Boolean) -> Unit
+    ) {
+        val urlString = "${baseUrl}controllers/PesoPollosController.php?op=InsertarDataPesoPollos"
+
+        val db = AppDatabase(context)
+        val apiService = ApiService()
+        var macDevice = db.getSerieIdDeviceLocal()
+        if (macDevice.isEmpty()) {
+            macDevice = getDeviceId(context)
+        }
+        val deviceModel = getAddressMacDivice.getDeviceManufacturer()
+
+        val jsonParam = JSONObject()
+        val datosPesoPollos = JSONArray()
+        val datosDetaPesoPollos = JSONArray()
+
+        val jsonPesoPollos = ventaLocal.toJson()
+        datosPesoPollos.put(jsonPesoPollos)
+
+        val detalles = db.obtenerDetaPesoPollosPorId(ventaLocal.id.toString())
+
+        detalles.forEach { detalle ->
+            val jsonDetalle = detalle.toJson()
+            datosDetaPesoPollos.put(jsonDetalle)
+        }
+
+        // Añadir arrays al objeto JSON principal
+        jsonParam.put("datosDetaPesoPollos", datosDetaPesoPollos)
+        jsonParam.put("datosPesoPollos", datosPesoPollos)
+        jsonParam.put("mac", macDevice)
+        jsonParam.put("deviceModel", deviceModel)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                apiService.makePostRequest(urlString, jsonParam) { response, error ->
+                    if (error != null) {
+                        Log.e("DataSyncManager", "Error al subir ventas: ${error.message}")
+                        callback(false)
+                        return@makePostRequest
+                    }
+
+                    try {
+                        Log.d("DataSyncManager", "Respuesta del servidor: $response")
+                        val jsonResponse = JSONObject(response)
+                        val success = jsonResponse.getString("status")
+
+                        if (success == "success") {
+                            // Marcar la venta como sincronizada en la base de datos local
+                            db.updateStatusVentaSync(idVenta)
+                            callback(true)
+                        } else {
+                            val mensaje = jsonResponse.getString("mensaje")
+                            Log.e("DataSyncManager", "Error de sincronización: $mensaje")
+                            callback(false)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("DataSyncManager", "Error al procesar respuesta: ${e.message}")
+                        callback(false)
+                    }
+                }
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Log.e("DataSyncManager", "Error: ${ex.message}")
+                    callback(false)
+                }
+            }
+        }
     }
 
 
