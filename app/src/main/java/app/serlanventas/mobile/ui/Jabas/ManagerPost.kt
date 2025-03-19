@@ -1,6 +1,7 @@
 package app.serlanventas.mobile.ui.Jabas
 
 import NetworkUtils
+import NetworkUtils.isNetworkAvailable
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
@@ -129,10 +130,6 @@ object ManagerPost {
                                 Log.e("ManagerPost", "Error al subir ventas locales")
                             }
                         }
-                    }
-
-                    withContext(Dispatchers.Main) {
-                        showSuccessNotification(context)
                     }
 
                     val pesoPollos = db.obtenerPesoPollosPorId(idPesoPollo.toInt())

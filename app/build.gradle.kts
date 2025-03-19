@@ -10,7 +10,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 3
-        versionName = "1.18.2"
+        versionName = "1.18.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         namespace = "app.serlanventas.mobile"
         vectorDrawables {
@@ -99,8 +99,8 @@ dependencies {
     implementation ("org.mindrot:jbcrypt:0.4")
     implementation ("com.squareup.okhttp3:okhttp:4.9.3")
     implementation ("com.github.bumptech.glide:glide:4.15.1")
-    implementation(libs.androidx.compose)
     annotationProcessor ("com.github.bumptech.glide:compiler:4.15.1")
+    implementation(libs.androidx.compose)
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.androidx.room.common)
     implementation(libs.androidx.room.common.jvm)

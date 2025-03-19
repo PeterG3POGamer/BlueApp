@@ -1,15 +1,18 @@
 package app.serlanventas.mobile.ui.DataSyncManager
 
 import NetworkUtils
+import android.app.Activity
 import android.content.Context
-import android.content.SharedPreferences
 import android.util.Log
+import android.widget.ImageView
+import app.serlanventas.mobile.R
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.CaptureDeviceEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.PesosEntity
 import app.serlanventas.mobile.ui.Interfaces.ProgressCallback
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice
+import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -24,7 +27,11 @@ class DataSyncManager(private val context: Context) {
     private val dataProcessor = DataProcessor(context, db)
     private val dataComparator = DataComparator(db)
     private val dialogManager = DialogManager(context)
-    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var progressGif: ImageView
+
+    fun setProgressGif(progressGif: ImageView) {
+        this.progressGif = progressGif
+    }
 
     fun checkSincronizarData(
         baseUrl: String,
@@ -34,7 +41,8 @@ class DataSyncManager(private val context: Context) {
     ) {
         if (NetworkUtils.isNetworkAvailable(context)) {
             CoroutineScope(Dispatchers.IO).launch {
-                animateProgressMessage(progressCallback,"Iniciando sincronización")
+                updateProgressGif(context, progressGif, R.drawable.icon_loading2)
+                animateProgressMessage(progressCallback, "Iniciando sincronización")
 
                 var idDevice = db.getSerieIdDeviceLocal()
                 if (idDevice.isEmpty()) {
@@ -43,30 +51,42 @@ class DataSyncManager(private val context: Context) {
                 val deviceModel = getAddressMacDivice.getDeviceManufacturer()
 
                 // Aquí se envia el idDevice y el deviceModel para obtener los datos
-                animateProgressMessage(progressCallback,"Obteniendo datos del servidor")
+                updateProgressGif(context, progressGif, R.drawable.icon_get)
+                animateProgressMessage(progressCallback, "Obteniendo datos del servidor")
 
                 obtenerDatosNube(baseUrl, idDevice, deviceModel) { syncResult ->
                     when (syncResult) {
                         is SyncResult.Success -> {
                             CoroutineScope(Dispatchers.IO).launch {
-                                animateProgressMessage(progressCallback, "Comparando datos locales y remotos")
+                                updateProgressGif(
+                                    context,
+                                    progressGif,
+                                    R.drawable.icon_escaneo_file
+                                )
+                                animateProgressMessage(
+                                    progressCallback,
+                                    "Comparando datos locales y remotos"
+                                )
                                 // Verificar si hay cambios pendientes para subir
                                 val pesosLocales = db.getAllPesosNotSync()
                                 val pesosLocalesEliminar = db.getAllPesosEliminar()
                                 val ventasLocales = db.getAllDataPesoPollosNotSync()
                                 val configLocales = db.getConfigCaptureNotSync()
-                                var needSync2 :Boolean
+                                var needSync2: Boolean
 
                                 if (pesosLocales.isEmpty() && pesosLocalesEliminar.isEmpty() && ventasLocales.isEmpty() && configLocales.isEmpty()) {
                                     progressCallback.onProgressUpdate("No hay datos para sincronizar")
                                     needSync2 = false
-                                }else{
+                                } else {
                                     needSync2 = true
                                 }
 
-                                if (needSync2){
+                                if (needSync2) {
+                                    delay(1000)
+                                    updateProgressGif(context, progressGif, R.drawable.icon_post)
+                                    delay(1000)
                                     animateProgressMessage(progressCallback, "Procesando Datos")
-
+                                    delay(1000)
                                     // Verificar Pesos temporales
                                     if (pesosLocales.isNotEmpty()) {
                                         subirPesosLocales(
@@ -81,7 +101,7 @@ class DataSyncManager(private val context: Context) {
                                             }
                                         }
                                     }
-
+                                    delay(1000)
                                     if (pesosLocalesEliminar.isNotEmpty()) {
                                         elimiarPesosLocales(
                                             baseUrl,
@@ -95,7 +115,7 @@ class DataSyncManager(private val context: Context) {
                                             }
                                         }
                                     }
-
+                                    delay(1000)
                                     if (configLocales.isNotEmpty()) {
                                         subirConfigLocales(
                                             baseUrl,
@@ -109,9 +129,12 @@ class DataSyncManager(private val context: Context) {
                                             }
                                         }
                                     }
-
+                                    delay(1000)
                                     if (ventasLocales.isNotEmpty()) {
-                                        animateProgressMessage(progressCallback,"Subiendo ventas locales al servidor")
+                                        animateProgressMessage(
+                                            progressCallback,
+                                            "Subiendo ventas locales al servidor"
+                                        )
                                         subirVentasLocales(
                                             baseUrl,
                                             idDevice,
@@ -129,15 +152,28 @@ class DataSyncManager(private val context: Context) {
                                 }
 
                                 delay(1000)
+                                updateProgressGif(context, progressGif, R.drawable.icon_employee)
+                                animateProgressMessage(progressCallback, "Verificando sesión")
+                                delay(1000)
                                 if (isLoggedIn) {
-                                    animateProgressMessage(progressCallback,"Autenticando")
+                                    animateProgressMessage(progressCallback, "Autenticando")
+                                    delay(2000)
+                                    updateProgressGif(
+                                        context,
+                                        progressGif,
+                                        R.drawable.icon_identify
+                                    )
                                     delay(1000)
-                                    progressCallback.onProgressUpdate("Un momento por favor...")
+                                    progressCallback.onProgressUpdate("¡Sesión exitosa!")
+                                    delay(1000)
+                                    animateProgressMessage(progressCallback, "Redirigiendo")
                                     delay(1000)
                                 } else {
-                                    animateProgressMessage(progressCallback, "Verificando sesión")
+                                    progressCallback.onProgressUpdate("¡Sesión cerrada!")
                                     delay(1000)
-                                    progressCallback.onProgressUpdate("No pudimos encontrar su session")
+                                    animateProgressMessage(progressCallback, "Un momento por favor")
+                                    delay(1000)
+                                    progressCallback.onProgressUpdate("Por favor, inicie sesión")
                                 }
                                 delay(2000)
                                 handleSyncResult(syncResult, isLoggedIn, callback)
@@ -145,7 +181,7 @@ class DataSyncManager(private val context: Context) {
                         }
 
                         is SyncResult.Error -> {
-                            Log.d("DataSyncManager","Error: ${syncResult.message}")
+                            Log.d("DataSyncManager", "Error: ${syncResult.message}")
                             handleSyncResult(syncResult, isLoggedIn, callback)
                         }
                     }
@@ -553,6 +589,14 @@ class DataSyncManager(private val context: Context) {
             val message = "$baseMessage $progress%"
             progressCallback.onProgressUpdate(message)
             delay(stepDurationMillis)
+        }
+    }
+
+    fun updateProgressGif(context: Context, progressGif: ImageView, gifResId: Int) {
+        if (context is Activity && !context.isDestroyed) {
+            context.runOnUiThread {
+                Glide.with(context).asGif().load(gifResId).into(progressGif)
+            }
         }
     }
 }

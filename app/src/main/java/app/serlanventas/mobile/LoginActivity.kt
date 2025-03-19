@@ -11,7 +11,7 @@ import android.os.Environment
 import android.provider.Settings
 import android.util.Log
 import android.view.View
-import android.widget.ProgressBar
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -23,6 +23,7 @@ import app.serlanventas.mobile.ui.Services.getAddressMacDivice.getDeviceModel
 import app.serlanventas.mobile.ui.Utilidades.Constants
 import app.serlanventas.mobile.ui.Utilidades.NetworkChangeReceiver
 import app.serlanventas.mobile.ui.login.LoginFragment
+import com.bumptech.glide.Glide
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.PrintWriter
@@ -34,14 +35,13 @@ import java.util.Locale
 class LoginActivity : AppCompatActivity(), ProgressCallback {
     private lateinit var sharedPreferences: SharedPreferences
     private val updateChecker by lazy { UpdateChecker(this) }
-    private lateinit var progressBar: ProgressBar
+    private lateinit var progressGif: ImageView
     private lateinit var statusMessage: TextView
     private lateinit var progressDetails: TextView
     private var isProduction: Boolean = false
     private var baseUrl: String = ""
     private lateinit var dataSyncManager: DataSyncManager
     private lateinit var networkChangeReceiver: NetworkChangeReceiver
-
 
     // Mueve la inicialización de isLoggedIn dentro de onCreate
     private var isLoggedIn: Boolean = false
@@ -61,14 +61,14 @@ class LoginActivity : AppCompatActivity(), ProgressCallback {
         isProduction = Constants.obtenerEstadoModo(this)
         baseUrl = Constants.getBaseUrl()
         dataSyncManager = DataSyncManager(this)
-
         // Inicializar vistas de progreso
-        progressBar = findViewById(R.id.progress_bar)
+        progressGif = findViewById(R.id.progress_gif)
         statusMessage = findViewById(R.id.status_message)
         progressDetails = findViewById(R.id.progress_details)
+        dataSyncManager.setProgressGif(progressGif)
 
-        // Mostrar ProgressBar mientras se sincronizan los datos
-        progressBar.visibility = View.VISIBLE
+        // Mostrar GIF mientras se sincronizan los datos
+        Glide.with(this).asGif().load(R.drawable.icon_loading2).into(progressGif)
         statusMessage.visibility = View.VISIBLE
         progressDetails.visibility = View.VISIBLE
 

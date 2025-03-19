@@ -1049,11 +1049,31 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             sharedViewModel.setDataPesoPollosJson(dataPesoPollosJson.toString())
             sharedViewModel.setDataDetaPesoPollosJson(dataDetaPesoPollosJson.toString())
             db.deleteAllPesoUsed()
+        }else{
+            dataPesoPollosJson =  sharedViewModel.getDataPesoPollosJson()
+            dataDetaPesoPollosJson = sharedViewModel.getDataDetaPesoPollosJson()
         }
+
         if (!dataDetaPesoPollosJson.isNullOrEmpty()) {
             val dataDetaPesoPollos = JSONArray(dataDetaPesoPollosJson)
             detallesList = procesarDataDetaPesoPollos(dataDetaPesoPollos)
             Log.d("JabasFragment detallesList", "${detallesList}")
+
+            if (idPesoShared == 0){
+                detallesList.forEach { detalle ->
+                    val newItem = JabasItem(
+                        id = detalle.idDetaPP,
+                        numeroJabas = detalle.cantJabas,
+                        numeroPollos = detalle.cantPollos,
+                        pesoKg = detalle.peso,
+                        conPollos = detalle.tipo,
+                        idPesoPollo = detalle.idPesoPollo,
+                        fechaPeso = detalle.fechaPeso
+                    )
+
+                    jabasAdapter.addItem(newItem)
+                }
+            }
 
             val dataPesoPollos = JSONObject(dataPesoPollosJson.toString())
             distribuirDatosEnInputs(dataPesoPollos)
@@ -1859,6 +1879,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                         galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull()
                             ?: 0
                     val idNucleo = binding.selectEstablecimiento.selectedItemPosition
+
                     val dataDetaPesoPollos = ManagerPost.captureData(jabasList)
                     val dataPesoPollos = ManagerPost.captureDataPesoPollos(
                         id = idPesoTemp,
@@ -1917,6 +1938,47 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                         )
                     }
                 }
+            }else{
+                val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
+                val idGalpon =
+                    galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull()
+                        ?: 0
+                val idNucleo = binding.selectEstablecimiento.selectedItemPosition
+
+                val dataDetaPesoPollos = ManagerPost.captureData(jabasList)
+                val dataPesoPollos = ManagerPost.captureDataPesoPollos(
+                    id = idPesoTemp,
+                    serie = "",
+                    numero = "",
+                    fecha = "",
+                    totalJabas = "",
+                    totalPollos = "",
+                    totalPeso = "",
+                    tipo = "",
+                    numeroDocCliente = binding.textDocCli.text.toString(),
+                    nombreCompleto = binding.textNomCli.text.toString(),
+                    idGalpon = idGalpon.toString(),
+                    idNucleo = idNucleo.toString(),
+                    PKPollo = binding.PrecioKilo.text.toString(),
+                    totalPesoJabas = "",
+                    totalNeto = "",
+                    totalPagar = binding.totalPagarPreview.text.toString(),
+                    idUsuario = "",
+                    idEstado = "0",
+                )
+
+                dataPesoPollosJsonTemp = dataPesoPollos.toJson().toString()
+                dataDetaPesoPollosJsonTemp =
+                    JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
+
+                val pesoUsed = pesoUsedEntity(
+                    idPesoUsed = 1,
+                    devicedName = device,
+                    dataPesoPollosJson = dataPesoPollosJsonTemp,
+                    dataDetaPesoPollosJson = dataDetaPesoPollosJsonTemp,
+                    fechaRegistro = ""
+                )
+                db.addPesoUsed(pesoUsed)
             }
         } else {
             // Si se redirige a preliminar
