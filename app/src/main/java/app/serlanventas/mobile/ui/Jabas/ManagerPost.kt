@@ -122,7 +122,14 @@ object ManagerPost {
                     }
                     var baseUrl = Constants.getBaseUrl()
                     if (isNetworkAvailable(context)) {
-                        subirVentasLocales(baseUrl, dataPesoPollos, context, idPesoPollo.toInt()){ success ->
+                        subirVentasLocales(baseUrl, dataPesoPollos.copy(
+                            numeroDocCliente = numeroDocumento,
+                            nombreCompleto = nombreCliente,
+                            serie = serie.codigo,
+                            numero = nuevoNumero.toString(),
+                            idEstado = "0",
+                            idNucleo = idNucleo
+                        ), context, idPesoPollo.toInt()){ success ->
                             if (success) {
                                 Log.d("ManagerPost", "Ventas locales subidas correctamente")
                             } else {
