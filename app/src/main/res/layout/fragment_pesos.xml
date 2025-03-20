@@ -688,8 +688,7 @@
 
     </ScrollView>
 
-    <!-- Fondo semitransparente y ProgressBar (sin cambios) -->
-    <!-- Fondo semitransparente -->
+    <!-- Fondo semitransparente y ProgressBar -->
     <View
         android:id="@+id/overlay"
         android:layout_width="match_parent"
@@ -700,10 +699,15 @@
         android:visibility="gone" />
 
     <!-- ProgressBar centrado -->
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <ImageView
+        android:id="@+id/loadingGif"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:visibility="gone"
         android:layout_gravity="center"
-        android:visibility="gone" />
+        android:src="@drawable/icon_loading2"
+        app:tint="#3A57E8"/>
+
 </FrameLayout>

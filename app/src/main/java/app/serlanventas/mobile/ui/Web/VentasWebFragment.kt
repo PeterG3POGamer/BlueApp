@@ -23,15 +23,18 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import app.serlanventas.mobile.LoginActivity
+import app.serlanventas.mobile.R
 import app.serlanventas.mobile.databinding.FragmentVentasWebBinding
 import app.serlanventas.mobile.ui.Utilidades.Constants
 import app.serlanventas.mobile.ui.ViewModel.VentasWebViewModel
+import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,6 +53,7 @@ class VentasWebFragment : Fragment() {
     private lateinit var webView: WebView
     private lateinit var swipeRefreshLayout: CustomSwipeRefreshLayout
     private var webViewStateRestored = false
+    private lateinit var progressBar: ImageView
 
     private var downloadID: Long = 0
 
@@ -62,12 +66,21 @@ class VentasWebFragment : Fragment() {
         viewModel = ViewModelProvider(requireActivity()).get(VentasWebViewModel::class.java)
         webView = binding.webView
         swipeRefreshLayout = binding.swipeRefreshLayout
+        progressBar = binding.loadingGif
+        val overlay = binding.overlay.findViewById<View>(R.id.overlay)
+        val loadingGif = binding.loadingGif.findViewById<ImageView>(R.id.loadingGif)
 
         setupWebView()
 
         // Ocultar WebView y mostrar ProgressBar al inicio
-        webView.visibility = View.GONE
-        binding.progressBar.visibility = View.VISIBLE
+        webView.visibility = View.VISIBLE
+        overlay.visibility = View.VISIBLE
+        loadingGif.visibility = View.VISIBLE
+
+        Glide.with(this)
+            .asGif()
+            .load(R.drawable.icon_loader)
+            .into(loadingGif)
 
         if (!webViewStateRestored && viewModel.webViewState != null) {
             Log.d(TAG, "Restoring WebView state...")
@@ -181,17 +194,20 @@ class VentasWebFragment : Fragment() {
                 if (url == loginUrl) {
                     // Mantener WebView oculto y ProgressBar visible
                     webView.visibility = View.GONE
-                    binding.progressBar.visibility = View.VISIBLE
+                    binding.overlay.visibility = View.VISIBLE
+                    binding.loadingGif.visibility = View.VISIBLE
                     iniciarSesion()
                 } else if (url == ventasUrl) {
                     // Mostrar WebView y ocultar ProgressBar
                     webView.visibility = View.VISIBLE
-                    binding.progressBar.visibility = View.GONE
+                    binding.overlay.visibility = View.GONE
+                    binding.loadingGif.visibility = View.GONE
                     Log.d(TAG, "Página WEB_URL_GUIA cargada correctamente.")
                 } else {
                     // Mantener WebView oculto y ProgressBar visible
                     webView.visibility = View.GONE
-                    binding.progressBar.visibility = View.VISIBLE
+                    binding.overlay.visibility = View.VISIBLE
+                    binding.loadingGif.visibility = View.VISIBLE
                     Log.d(TAG, "La URL cargada no coincide con LOGIN_URL ni WEB_URL_GUIA, volviendo a cargar...")
                     webView.loadUrl(loginUrl)
                 }
@@ -203,7 +219,8 @@ class VentasWebFragment : Fragment() {
                 Log.e(TAG, "onReceivedError: ${error?.description}")
                 // Mostrar WebView y ocultar ProgressBar en caso de error
                 webView.visibility = View.VISIBLE
-                binding.progressBar.visibility = View.GONE
+                binding.overlay.visibility = View.GONE
+                binding.loadingGif.visibility = View.GONE
                 // Detener la animación de recarga
                 swipeRefreshLayout.isRefreshing = false
             }
@@ -267,7 +284,8 @@ class VentasWebFragment : Fragment() {
                     withContext(Dispatchers.Main) {
                         // Mostrar WebView y ocultar ProgressBar en caso de error
                         webView.visibility = View.VISIBLE
-                        binding.progressBar.visibility = View.GONE
+                        binding.overlay.visibility = View.GONE
+                        binding.loadingGif.visibility = View.GONE
                     }
                 }
                 conn.disconnect()
@@ -276,7 +294,8 @@ class VentasWebFragment : Fragment() {
                 withContext(Dispatchers.Main) {
                     // Mostrar WebView y ocultar ProgressBar en caso de error
                     webView.visibility = View.VISIBLE
-                    binding.progressBar.visibility = View.GONE
+                    binding.overlay.visibility = View.GONE
+                    binding.loadingGif.visibility = View.GONE
                 }
             }
         }
@@ -301,7 +320,8 @@ class VentasWebFragment : Fragment() {
                     else -> {
                         Log.d(TAG, "Estado no exitoso: $status")
                         webView.visibility = View.VISIBLE
-                        binding.progressBar.visibility = View.GONE
+                        binding.overlay.visibility = View.GONE
+                        binding.loadingGif.visibility = View.GONE
                         redirectToLoginActivity()
                     }
                 }
@@ -309,7 +329,8 @@ class VentasWebFragment : Fragment() {
                 Log.e(TAG, "Error parsing JSON: ${e.message}")
                 // Mostrar WebView y ocultar ProgressBar en caso de error
                 webView.visibility = View.VISIBLE
-                binding.progressBar.visibility = View.GONE
+                binding.overlay.visibility = View.GONE
+                binding.loadingGif.visibility = View.GONE
             }
         }
     }
@@ -318,7 +339,8 @@ class VentasWebFragment : Fragment() {
         // Asegurar que esta función se ejecute en el hilo principal
         activity?.runOnUiThread {
             // Ocultar ProgressBar y WebView
-            binding.progressBar.visibility = View.GONE
+            binding.overlay.visibility = View.GONE
+            binding.loadingGif.visibility = View.GONE
             webView.visibility = View.GONE
 
             val sharedPreferences = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)

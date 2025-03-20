@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.PorterDuff
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
@@ -26,7 +27,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.EditText
-import android.widget.ProgressBar
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -60,7 +61,6 @@ import app.serlanventas.mobile.ui.Jabas.ManagerPost.setStatusUsed
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.showCustomToast
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.updateListPesos
 import app.serlanventas.mobile.ui.Services.Logger
-import app.serlanventas.mobile.ui.Services.PreLoading
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice.getDeviceId
 import app.serlanventas.mobile.ui.Utilidades.Constants
 import app.serlanventas.mobile.ui.Utilidades.Constants.getCurrentDateTime
@@ -68,6 +68,7 @@ import app.serlanventas.mobile.ui.Utilidades.NetworkChangeReceiver
 import app.serlanventas.mobile.ui.ViewModel.SharedViewModel
 import app.serlanventas.mobile.ui.ViewModel.TabViewModel
 import app.serlanventas.mobile.ui.slideshow.BluetoothConnectionService
+import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -104,7 +105,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
     private var dataPesoPollosJson: String? = ""
     private var dataDetaPesoPollosJson: String? = ""
     private var connectedDeviceAddress: String? = null
-    private lateinit var progressBar: ProgressBar
+    private lateinit var progressBar: ImageView
 
     private lateinit var requestMultiplePermissions: ActivityResultLauncher<Array<String>>
 
@@ -139,7 +140,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
     ): View {
         _binding = FragmentPesosBinding.inflate(inflater, container, false)
         val root: View = binding.root
-        progressBar = binding.progressBar.findViewById(R.id.progressBar)
+        progressBar = binding.loadingGif
 
         val baseUrl = Constants.getBaseUrl()
 
@@ -809,8 +810,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         }
 
         binding.botonCliente.setOnClickListener {
-            val preLoading = PreLoading(requireContext())
-            preLoading.showPreCarga()
+            showLoading()
 
             val numeroCliente = binding.textDocCli.text.toString()
 
@@ -818,7 +818,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             if (numeroCliente.length < 8 || numeroCliente.length > 11 || !numeroCliente.matches("[0-9]+".toRegex())) {
                 binding.textDocCli.error = "Ingrese un número válido (8-11 dígitos)"
                 binding.textDocCli.requestFocus()
-                preLoading.hidePreCarga()
+                hideLoading()
                 return@setOnClickListener
             }
 
@@ -835,7 +835,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     binding.textNomCli.isEnabled = false
                     binding.botonCliente.isEnabled = false
                     // Actualizar la vista con los datos del cliente desde la base de datos
-                    preLoading.hidePreCarga()
+                    hideLoading()
                 } else {
                     val jsonParam = JSONObject()
                     jsonParam.put("numeroDocumento", numeroCliente)
@@ -848,7 +848,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     ) { nombreCompleto ->
                         binding.textNomCli.setText(nombreCompleto ?: "")
 
-                        preLoading.hidePreCarga()
+                        hideLoading()
                         if (nombreCompleto.isNullOrBlank()) {
                             showCustomToast(
                                 requireContext(),
@@ -917,7 +917,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     binding.textNomCli.isEnabled = false
                     binding.botonCliente.isEnabled = false
 
-                    preLoading.hidePreCarga()
+                    hideLoading()
                 } else {
                     binding.textDocCli.isEnabled = true
                     binding.textNomCli.isEnabled = true
@@ -928,7 +928,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                         "No se encontró el cliente, Ingrese un nombre manualmente",
                         "info"
                     )
-                    preLoading.hidePreCarga()
+                    hideLoading()
                 }
             }
         }
@@ -1049,8 +1049,8 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             sharedViewModel.setDataPesoPollosJson(dataPesoPollosJson.toString())
             sharedViewModel.setDataDetaPesoPollosJson(dataDetaPesoPollosJson.toString())
             db.deleteAllPesoUsed()
-        }else{
-            dataPesoPollosJson =  sharedViewModel.getDataPesoPollosJson()
+        } else {
+            dataPesoPollosJson = sharedViewModel.getDataPesoPollosJson()
             dataDetaPesoPollosJson = sharedViewModel.getDataDetaPesoPollosJson()
         }
 
@@ -1059,7 +1059,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             detallesList = procesarDataDetaPesoPollos(dataDetaPesoPollos)
             Log.d("JabasFragment detallesList", "${detallesList}")
 
-            if (idPesoShared == 0){
+            if (idPesoShared == 0) {
                 detallesList.forEach { detalle ->
                     val newItem = JabasItem(
                         id = detalle.idDetaPP,
@@ -1646,7 +1646,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
             if (isConnected) {
 //                dataSyncManager.checkSincronizarData(baseUrl, isLoggedIn, this) { success ->
 //                    if (success) {
-                        //
+                //
 //                    }
 //                }
             }
@@ -1938,7 +1938,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                         )
                     }
                 }
-            }else{
+            } else {
                 val galponNombreSeleccionado = binding.selectGalpon.selectedItem.toString()
                 val idGalpon =
                     galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull()
@@ -1972,7 +1972,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     JSONArray(dataDetaPesoPollos.map { it.toJson() }).toString()
 
                 val pesoUsed = pesoUsedEntity(
-                    idPesoUsed = 1,
+                    idPesoUsed = idPesoTemp,
                     devicedName = device,
                     dataPesoPollosJson = dataPesoPollosJsonTemp,
                     dataDetaPesoPollosJson = dataDetaPesoPollosJsonTemp,
@@ -2205,9 +2205,20 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
     fun showLoading() {
         _binding?.let { binding ->
             val overlay = binding.overlay.findViewById<View>(R.id.overlay)
-            val progressBar = binding.progressBar.findViewById<ProgressBar>(R.id.progressBar)
+            val loadingGif = binding.loadingGif.findViewById<ImageView>(R.id.loadingGif)
             overlay.visibility = View.VISIBLE
-            progressBar.visibility = View.VISIBLE
+            loadingGif.visibility = View.VISIBLE
+
+            loadingGif.setColorFilter(
+                ContextCompat.getColor(requireContext(), R.color.purple_500), // Color deseado
+                PorterDuff.Mode.SRC_IN // Modo de mezcla
+            )
+
+            // Cargar el GIF usando Glide
+            Glide.with(this)
+                .asGif()
+                .load(R.drawable.icon_loader)
+                .into(loadingGif)
         }
     }
 
@@ -2215,11 +2226,15 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
     fun hideLoading() {
         _binding?.let { binding ->
             val overlay = binding.overlay.findViewById<View>(R.id.overlay)
-            val progressBar = binding.progressBar.findViewById<ProgressBar>(R.id.progressBar)
+            val loadingGif = binding.loadingGif.findViewById<ImageView>(R.id.loadingGif)
             overlay.visibility = View.GONE
-            progressBar.visibility = View.GONE
+            loadingGif.visibility = View.GONE
+
+            // Detener la animación del GIF
+            Glide.with(this).clear(loadingGif)
         }
     }
+
 
     fun toggleAcordionisGone() {
         if (binding.accordionContent.visibility == View.GONE) {

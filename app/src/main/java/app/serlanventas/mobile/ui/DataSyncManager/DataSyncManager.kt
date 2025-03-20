@@ -3,8 +3,10 @@ package app.serlanventas.mobile.ui.DataSyncManager
 import NetworkUtils
 import android.app.Activity
 import android.content.Context
+import android.graphics.PorterDuff
 import android.util.Log
 import android.widget.ImageView
+import androidx.core.content.ContextCompat
 import app.serlanventas.mobile.R
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.CaptureDeviceEntity
@@ -42,6 +44,10 @@ class DataSyncManager(private val context: Context) {
         if (NetworkUtils.isNetworkAvailable(context)) {
             CoroutineScope(Dispatchers.IO).launch {
                 updateProgressGif(context, progressGif, R.drawable.icon_loading2)
+                progressGif.setColorFilter(
+                    ContextCompat.getColor(context, R.color.purple), // Color deseado
+                    PorterDuff.Mode.SRC_IN // Modo de mezcla
+                )
                 animateProgressMessage(progressCallback, "Iniciando sincronización")
 
                 var idDevice = db.getSerieIdDeviceLocal()
@@ -51,6 +57,7 @@ class DataSyncManager(private val context: Context) {
                 val deviceModel = getAddressMacDivice.getDeviceManufacturer()
 
                 // Aquí se envia el idDevice y el deviceModel para obtener los datos
+                progressGif.clearColorFilter();
                 updateProgressGif(context, progressGif, R.drawable.icon_get)
                 animateProgressMessage(progressCallback, "Obteniendo datos del servidor")
 
@@ -156,26 +163,29 @@ class DataSyncManager(private val context: Context) {
                                 animateProgressMessage(progressCallback, "Verificando sesión")
                                 delay(1000)
                                 if (isLoggedIn) {
-                                    animateProgressMessage(progressCallback, "Autenticando")
-                                    delay(2000)
                                     updateProgressGif(
                                         context,
                                         progressGif,
-                                        R.drawable.icon_identify
+                                        R.drawable.icon_identify_cara
                                     )
+                                    animateProgressMessage(progressCallback, "Autenticando")
                                     delay(1000)
+                                    updateProgressGif(
+                                        context,
+                                        progressGif,
+                                        R.drawable.icon_success
+                                    )
                                     progressCallback.onProgressUpdate("¡Sesión exitosa!")
-                                    delay(1000)
+                                    delay(2000)
                                     animateProgressMessage(progressCallback, "Redirigiendo")
-                                    delay(1000)
                                 } else {
                                     progressCallback.onProgressUpdate("¡Sesión cerrada!")
-                                    delay(1000)
+                                    delay(2000)
                                     animateProgressMessage(progressCallback, "Un momento por favor")
                                     delay(1000)
                                     progressCallback.onProgressUpdate("Por favor, inicie sesión")
                                 }
-                                delay(2000)
+                                delay(1000)
                                 handleSyncResult(syncResult, isLoggedIn, callback)
                             }
                         }

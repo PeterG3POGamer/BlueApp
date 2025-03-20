@@ -137,6 +137,8 @@ class BluetoothConnectionService(
         private var buffer = ByteArray(1024)
         private var bufferPosition = 0
         private var ultimoValorCorrecto = "0.00"
+        private var valorCorrectoNumero = "0.00"
+        private var ultimaConfig = ""
 
         override fun run() {
             try {
@@ -186,10 +188,21 @@ class BluetoothConnectionService(
             val _CadenaClaveCierre = config._cadenaClaveCierre ?: ""
             val _Longitud = config._longitud ?: 0
             val _Decimales = config._formatoPeo ?: 2
+            val _bloque = config._bloque
+            val _idConfig = config._idCaptureDevice
+
+            if (ultimaConfig != _idConfig.toString()){
+                ultimoValorCorrecto = "0.00"
+                ultimaConfig = _idConfig.toString()
+            }
 
             val valores = extraerValores(datos, _CadenaClave, _CadenaClaveCierre)
             if (valores.isNotEmpty()) {
-                val ultimoValor = valores.last()
+                val ultimoValor = when (_bloque) {
+                    "1" -> valores.joinToString(separator = "") { it } // Concatenar todos los valores
+                    "2" -> valores.last() // Usar el último valor
+                    else -> valores.last() // Por defecto, usar el último valor
+                }
                 val valorProcesado = procesarValor(ultimoValor, _Longitud, _Decimales)
                 if (valorProcesado.isNotEmpty()) {
                     ultimoValorCorrecto = valorProcesado
@@ -222,7 +235,7 @@ class BluetoothConnectionService(
                 val valorFormateado = String.format("%.${decimales}f", valorNumerico)
                 val partes = valorFormateado.split(".")
                 val parteEntera = partes[0]
-                val parteDecimal = if (partes.size > 1) partes[1] else ""
+                val parteDecimal = if (partes.size > 1) partes[1] else  ""
 
                 return if (longitud > 0 && parteEntera.length > longitud) {
                     val parteEnteraTruncada = parteEntera.substring(parteEntera.length - longitud)
