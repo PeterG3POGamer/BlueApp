@@ -701,8 +701,8 @@
     <!-- ProgressBar centrado -->
     <ImageView
         android:id="@+id/loadingGif"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
         android:adjustViewBounds="true"
         android:scaleType="fitCenter"
         android:visibility="gone"

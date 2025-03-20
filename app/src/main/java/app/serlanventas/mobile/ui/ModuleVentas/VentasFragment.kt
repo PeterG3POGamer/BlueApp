@@ -1,5 +1,6 @@
 package app.serlanventas.mobile.ui.ModuleVentas
 
+import NetworkUtils.isNetworkAvailable
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DatePickerDialog
@@ -10,6 +11,8 @@ import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -18,8 +21,8 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.Filter
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -30,7 +33,11 @@ import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.ClienteEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
+import app.serlanventas.mobile.ui.Jabas.ManagerPost.showCustomToast
+import app.serlanventas.mobile.ui.Jabas.ManagerPost.subirVentasLocales
 import app.serlanventas.mobile.ui.Services.generateAndOpenPDF2
+import app.serlanventas.mobile.ui.Utilidades.Constants.getBaseUrl
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,6 +56,21 @@ class VentasFragment : Fragment() {
     private lateinit var ventasAdapter: VentasAdapter
     private var listaVentas: List<DataPesoPollosEntity> = emptyList()
     private var listaClientes: List<ClienteEntity> = emptyList()
+    private var isSyncInProgress = false
+
+    private val handler = Handler(Looper.getMainLooper())
+    private val checkInterval = 2000L
+
+    private val checkInternetRunnable = object : Runnable {
+        override fun run() {
+            if (isNetworkAvailable(requireContext())) {
+                binding.btnSincronizarAllVentas.visibility = View.VISIBLE
+            } else {
+                binding.btnSincronizarAllVentas.visibility = View.GONE
+                handler.postDelayed(this, checkInterval)
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -61,9 +83,174 @@ class VentasFragment : Fragment() {
         return root
     }
 
+    @SuppressLint("DefaultLocale")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         db = AppDatabase(requireContext())
+
+        val filterContainer = view.findViewById<LinearLayout>(R.id.filter_container)
+        val datesContainer = view.findViewById<LinearLayout>(R.id.dates_container)
+        val buttonsContainer = view.findViewById<LinearLayout>(R.id.buttons_container)
+        val searchButton = view.findViewById<MaterialButton>(R.id.searchButton)
+        val syncButton = view.findViewById<MaterialButton>(R.id.btn_sincronizar_all_ventas)
+        val clientContainer = view.findViewById<LinearLayout>(R.id.client_container)
+
+        val displayMetrics = resources.displayMetrics
+        val screenWidthDp = displayMetrics.widthPixels / displayMetrics.density
+
+        if (screenWidthDp < 600) {
+            // Teléfono - diseño vertical
+            filterContainer.orientation = LinearLayout.VERTICAL
+
+            // Restablecer márgenes y pesos para evitar superposiciones
+            val dateContainerParams = datesContainer.layoutParams as LinearLayout.LayoutParams
+            dateContainerParams.weight = 0f
+            dateContainerParams.width = LinearLayout.LayoutParams.MATCH_PARENT
+            dateContainerParams.rightMargin = 0
+            datesContainer.layoutParams = dateContainerParams
+
+            // Configurar el contenedor de botones para teléfonos
+            val buttonContainerParams = buttonsContainer.layoutParams as LinearLayout.LayoutParams
+            buttonContainerParams.width = LinearLayout.LayoutParams.MATCH_PARENT
+            buttonContainerParams.gravity = Gravity.CENTER
+            buttonsContainer.layoutParams = buttonContainerParams
+
+            if (screenWidthDp < 360) {
+                // Dispositivos muy pequeños - hacer el botón de búsqueda más compacto
+                datesContainer.orientation = LinearLayout.VERTICAL
+
+                // Ajustar el peso para que ocupen todo el ancho cuando están en vertical
+                for (i in 0 until datesContainer.childCount) {
+                    val child = datesContainer.getChildAt(i)
+                    if (child is LinearLayout) {
+                        val params = child.layoutParams as LinearLayout.LayoutParams
+                        params.width = LinearLayout.LayoutParams.MATCH_PARENT
+                        params.weight = 0f
+                        child.layoutParams = params
+                    }
+                }
+
+                // Hacer el botón de búsqueda más compacto
+                searchButton.layoutParams = (searchButton.layoutParams as LinearLayout.LayoutParams).apply {
+                    width = 0
+                    weight = 1f
+                    rightMargin = (4 * displayMetrics.density).toInt() // Reducir el margen
+                }
+
+                // Texto más corto para el botón en pantallas muy pequeñas
+                searchButton.text = "Buscar"
+                searchButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f) // Texto más pequeño
+                searchButton.setPadding(
+                    (8 * displayMetrics.density).toInt(),
+                    searchButton.paddingTop,
+                    (8 * displayMetrics.density).toInt(),
+                    searchButton.paddingBottom
+                )
+
+                // Ajustar el botón de sincronizar
+                syncButton.layoutParams = (syncButton.layoutParams as LinearLayout.LayoutParams).apply {
+                    width = (50 * displayMetrics.density).toInt() // Reducir el ancho
+                    weight = 0f
+                    leftMargin = (4 * displayMetrics.density).toInt() // Reducir el margen
+                }
+
+            } else {
+                // Teléfonos normales
+                datesContainer.orientation = LinearLayout.HORIZONTAL
+
+                // Restablecer los pesos para las fechas en horizontal
+                for (i in 0 until datesContainer.childCount) {
+                    val child = datesContainer.getChildAt(i)
+                    if (child is LinearLayout) {
+                        val params = child.layoutParams as LinearLayout.LayoutParams
+                        params.width = 0
+                        params.weight = 1f
+                        child.layoutParams = params
+                    }
+                }
+
+                // Configurar los botones para teléfonos normales
+                searchButton.layoutParams = (searchButton.layoutParams as LinearLayout.LayoutParams).apply {
+                    width = 0
+                    weight = 1f
+                    rightMargin = (8 * displayMetrics.density).toInt()
+                }
+
+                // Restablecer el texto normal
+                searchButton.text = requireContext().getString(R.string.search)
+                searchButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f) // Tamaño normal
+
+                syncButton.layoutParams = (syncButton.layoutParams as LinearLayout.LayoutParams).apply {
+                    width = (65 * displayMetrics.density).toInt()
+                    weight = 0f
+                    leftMargin = (8 * displayMetrics.density).toInt()
+                }
+            }
+
+            // Asegurar que el contenedor de cliente esté visible
+            clientContainer.visibility = View.VISIBLE
+
+        } else {
+            // Tablet - diseño horizontal con ajustes mejorados
+            filterContainer.orientation = LinearLayout.HORIZONTAL
+
+            // Asegurar que las fechas estén en horizontal
+            datesContainer.orientation = LinearLayout.HORIZONTAL
+
+            // Ajustar las fechas para que ocupen el espacio adecuado
+            val dateContainerParams = datesContainer.layoutParams as LinearLayout.LayoutParams
+            dateContainerParams.weight = 3f  // Aumentado para usar más espacio
+            dateContainerParams.width = 0
+            dateContainerParams.rightMargin = (16 * displayMetrics.density).toInt()
+            datesContainer.layoutParams = dateContainerParams
+
+            // Restablecer los pesos para las fechas
+            for (i in 0 until datesContainer.childCount) {
+                val child = datesContainer.getChildAt(i)
+                if (child is LinearLayout) {
+                    val params = child.layoutParams as LinearLayout.LayoutParams
+                    params.width = 0
+                    params.weight = 1f
+                    child.layoutParams = params
+                }
+            }
+
+            // Ajustar el contenedor de botones para que use el espacio necesario
+            val buttonContainerParams = buttonsContainer.layoutParams as LinearLayout.LayoutParams
+            buttonContainerParams.weight = 0f  // Sin peso para que solo use el espacio necesario
+            buttonContainerParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
+            buttonContainerParams.bottomMargin = 0
+            buttonsContainer.layoutParams = buttonContainerParams
+
+            // Mantener la orientación horizontal para los botones
+            buttonsContainer.orientation = LinearLayout.HORIZONTAL
+            buttonsContainer.gravity = Gravity.END or Gravity.CENTER_VERTICAL
+
+            // Restablecer el texto normal
+            searchButton.text = requireContext().getString(R.string.search)
+            searchButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f) // Tamaño normal
+
+            // Configurar el botón de búsqueda para tablets - tamaño adecuado
+            searchButton.layoutParams = (searchButton.layoutParams as LinearLayout.LayoutParams).apply {
+                width = LinearLayout.LayoutParams.WRAP_CONTENT
+                height = LinearLayout.LayoutParams.WRAP_CONTENT
+                weight = 0f
+                rightMargin = (8 * displayMetrics.density).toInt()
+            }
+            // Establecer el ancho mínimo directamente en el botón
+            searchButton.setMinimumWidth((100 * displayMetrics.density).toInt())
+
+            // Configurar el botón de sincronizar para tablets
+            syncButton.layoutParams = (syncButton.layoutParams as LinearLayout.LayoutParams).apply {
+                width = (65 * displayMetrics.density).toInt()
+                height = LinearLayout.LayoutParams.WRAP_CONTENT
+                weight = 0f
+                leftMargin = 0
+            }
+
+            // Asegurar que el contenedor de cliente esté visible
+            clientContainer.visibility = View.VISIBLE
+        }
 
         // Definir las funciones para manejar los clics
         val onMostrarClick: (DataPesoPollosEntity) -> Unit = { venta ->
@@ -140,8 +327,12 @@ class VentasFragment : Fragment() {
         }
 
         val onSyncClick: (DataPesoPollosEntity) -> Unit = { venta ->
-           Log.d("Sync", "Sync clicked for venta ID: ${venta.id}")
-            Toast.makeText(requireContext(), "Proximamente...", Toast.LENGTH_SHORT).show()
+            if (isSyncInProgress) {
+                showCustomToast(requireContext(), "Ya hay una sincronización en curso", "warning")
+            }
+
+            isSyncInProgress = true
+            procesarVentaSync(venta)
         }
 
         // Crear la instancia del adaptador con las funciones definidas
@@ -157,13 +348,80 @@ class VentasFragment : Fragment() {
         cargarVentas()
     }
 
+    fun procesarVentaSync(venta: DataPesoPollosEntity) {
+        try {
+            val baseUrl = getBaseUrl()
+            val ventaNotSync = db.obtenerPesoPollosPorId(venta.id)
+
+            if (ventaNotSync == null) {
+                showCustomToast(
+                    requireContext(),
+                    "La venta no existe, por favor actualice la lista",
+                    "warning"
+                )
+                return
+            }
+
+            if (ventaNotSync.idEstado == "0") {
+                if (isNetworkAvailable(requireContext())) {
+                    subirVentasLocales(baseUrl, venta, requireContext(), venta.id) { success ->
+                        if (success) {
+                            Log.d("ManagerPost", "Venta local subida correctamente")
+                            showCustomToast(
+                                requireContext(),
+                                "Venta local subida correctamente",
+                                "warning"
+                            )
+                            realizarBusquedaVentas()
+                        } else {
+                            Log.e("ManagerPost", "Error al subir venta local")
+                            showCustomToast(
+                                requireContext(),
+                                "No se pudo subir la venta local, por favor intente de nuevo",
+                                "error"
+                            )
+                        }
+                    }
+                } else {
+                    showCustomToast(
+                        requireContext(),
+                        "No hay conexión a internet, por favor conéctese e intente nuevamente para realizar esta acción",
+                        "error"
+                    )
+                }
+            } else {
+                showCustomToast(
+                    requireContext(),
+                    "La venta ya se encuentra sincronizada",
+                    "warning"
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("SyncError", "Error durante la sincronización: ${e.message}")
+            showCustomToast(requireContext(), "Ocurrió un error durante la sincronización", "error")
+        } finally {
+            isSyncInProgress = false
+        }
+    }
+
 
     // Método para cargar los datos de ventas en el RecyclerView
     private fun cargarVentas() {
+        val startDate = binding.startDateFilterInput.text.toString()
+        val endDate = binding.endDateFilterInput.text.toString()
         var serie = db.getSerieDevice()
         if (serie != null) {
-            listaVentas = db.getAllDataPesoPollosForDevice(serie.codigo)
-            ventasAdapter.setVentas(listaVentas)
+            lifecycleScope.launch {
+                listaVentas = withContext(Dispatchers.IO) {
+                    try {
+                        db.getDataPesoPollosByDate(serie.codigo, startDate, endDate)
+                    } catch (e: Exception) {
+                        // Manejar errores de carga de datos
+                        emptyList()
+                    }
+                }
+                ventasAdapter.setVentas(listaVentas)
+            }
         }
     }
 
@@ -315,7 +573,8 @@ class VentasFragment : Fragment() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DetalleViewHolder {
             val itemView =
-                LayoutInflater.from(parent.context).inflate(R.layout.list_detalle_pesos, parent, false)
+                LayoutInflater.from(parent.context)
+                    .inflate(R.layout.list_detalle_pesos, parent, false)
             return DetalleViewHolder(itemView)
         }
 
@@ -469,7 +728,8 @@ class VentasFragment : Fragment() {
             listaVentas = withContext(Dispatchers.IO) {
                 val serie = db.getSerieDevice()
                 if (cliente != null && serie != null) {
-                    db.getDataPesoPollosByClienteAndDate(serie.codigo,
+                    db.getDataPesoPollosByClienteAndDate(
+                        serie.codigo,
                         cliente.numeroDocCliente,
                         startDate,
                         endDate
@@ -491,25 +751,70 @@ class VentasFragment : Fragment() {
 
     private fun setupSearchButton() {
         binding.searchButton.setOnClickListener {
-            val selectedClientText = binding.clientFilterInput.text.toString().trim()
-            val startDate = binding.startDateFilterInput.text.toString().trim()
-            val endDate = binding.endDateFilterInput.text.toString().trim()
-
-            // Buscar por cliente y fecha
-            val selectedClient = findClienteByDisplayName(selectedClientText)
-            filtrarVentasPorClienteYFecha(selectedClient)
+            realizarBusquedaVentas()
         }
+    }
+
+    private fun realizarBusquedaVentas() {
+        val selectedClientText = binding.clientFilterInput.text.toString().trim()
+        val startDate = binding.startDateFilterInput.text.toString().trim()
+        val endDate = binding.endDateFilterInput.text.toString().trim()
+
+        if (startDate.isEmpty() || endDate.isEmpty()) {
+            showCustomToast(requireContext(), "Por favor seleccione un rango de fecha", "info")
+        }
+
+        // Buscar por cliente y fecha
+        val selectedClient = findClienteByDisplayName(selectedClientText)
+        filtrarVentasPorClienteYFecha(selectedClient)
     }
 
     private fun setupSynAllVentasButton() {
         binding.btnSincronizarAllVentas.setOnClickListener {
             Log.d("Sync", "Sync clicked All")
-            Toast.makeText(requireContext(), "Proximamente...", Toast.LENGTH_SHORT).show()
-//            var baseUrl = Constants.getBaseUrl()
-//            val ventasNotSync = db.getAllDataPesoPollosNotSync()
-//            subirVentasLocales(baseUrl, ventasNotSync, requireContext(), null)
+
+            val baseUrl = getBaseUrl()
+            val ventasNotSync = db.getAllDataPesoPollosNotSync()
+
+            if (ventasNotSync.isNotEmpty()) {
+                ventasNotSync.forEach { venta ->
+                    if (isNetworkAvailable(requireContext())) {
+                        subirVentasLocales(baseUrl, venta, requireContext(), venta.id) { success ->
+                            if (success) {
+                                Log.d(
+                                    "ManagerPost",
+                                    "Venta local subida correctamente: ${venta.id}"
+                                )
+                            } else {
+                                Log.e("ManagerPost", "Error al subir venta local: ${venta.id}")
+                                showCustomToast(
+                                    requireContext(),
+                                    "Error al subir venta local: ${venta.serie}-${venta.numero}",
+                                    "error"
+                                )
+                                return@subirVentasLocales
+                            }
+                            isSyncInProgress = true
+                        }
+                    } else {
+                        showCustomToast(
+                            requireContext(),
+                            "¡No hay conexión a internet!\nPor favor conéctese e intente nuevamente.",
+                            "error"
+                        )
+                    }
+                }
+                showCustomToast(
+                    requireContext(),
+                    "¡Se sincronizaron todas las ventas locales correctamente!",
+                    "success"
+                )
+            } else {
+                showCustomToast(requireContext(), "¡No hay ventas para sincronizar!", "info")
+            }
         }
     }
+
 
     // First, create a Client adapter class
     class ClienteAdapter(context: Context, private val clientes: List<ClienteEntity>) :
@@ -580,25 +885,28 @@ class VentasFragment : Fragment() {
     private fun setupDateFilters() {
         val startDateInput = binding.startDateFilterInput
         val endDateInput = binding.endDateFilterInput
+        showDatePickerDialog(startDateInput)
+        showDatePickerDialog(endDateInput)
 
         // Configurar el OnClickListener para el campo de fecha de inicio
         startDateInput.setOnClickListener {
-            showDatePickerDialog(startDateInput)
+            showDatePickerDialog(startDateInput, true)
         }
 
         // Configurar el OnClickListener para el campo de fecha de fin
         endDateInput.setOnClickListener {
-            showDatePickerDialog(endDateInput)
+            showDatePickerDialog(endDateInput, true)
         }
     }
 
-    private fun showDatePickerDialog(editText: TextInputEditText) {
+    private fun showDatePickerDialog(editText: TextInputEditText, isCLick: Boolean = false) {
         val calendar = Calendar.getInstance()
         val year = calendar.get(Calendar.YEAR)
         val month = calendar.get(Calendar.MONTH)
         val day = calendar.get(Calendar.DAY_OF_MONTH)
 
         // Crear el DatePickerDialog
+
         val datePickerDialog =
             DatePickerDialog(requireContext(), { _, selectedYear, selectedMonth, selectedDay ->
                 val selectedDate = Calendar.getInstance()
@@ -614,12 +922,27 @@ class VentasFragment : Fragment() {
         }
 
         // Mostrar el DatePickerDialog
-        datePickerDialog.show()
+        if (isCLick) {
+            datePickerDialog.show()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        handler.post(checkInternetRunnable)
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        handler.removeCallbacks(checkInternetRunnable)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        db.close()
     }
 }
 

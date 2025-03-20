@@ -44,7 +44,6 @@ import app.serlanventas.mobile.ui.Services.generateAndOpenPDF2
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice.getDeviceId
 import app.serlanventas.mobile.ui.Services.showNotification
-import app.serlanventas.mobile.ui.Services.showSuccessNotification
 import app.serlanventas.mobile.ui.Utilidades.Constants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -122,7 +121,7 @@ object ManagerPost {
                         )
                     }
                     var baseUrl = Constants.getBaseUrl()
-                    if (NetworkUtils.isNetworkAvailable(context)) {
+                    if (isNetworkAvailable(context)) {
                         subirVentasLocales(baseUrl, dataPesoPollos, context, idPesoPollo.toInt()){ success ->
                             if (success) {
                                 Log.d("ManagerPost", "Ventas locales subidas correctamente")

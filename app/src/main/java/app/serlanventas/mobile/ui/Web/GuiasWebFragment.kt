@@ -1,5 +1,6 @@
 package app.serlanventas.mobile.ui.Web
 
+import NetworkUtils
 import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.content.BroadcastReceiver
@@ -21,6 +22,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
@@ -52,6 +54,8 @@ class GuiasWebFragment : Fragment() {
     private var webViewStateRestored = false
     private var downloadID: Long = 0
     private lateinit var progressBar: ImageView
+    private lateinit var noInternetTextView: TextView
+    private lateinit var noInternetGif: ImageView
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreateView(
@@ -63,6 +67,8 @@ class GuiasWebFragment : Fragment() {
         webView = binding.webView
         swipeRefreshLayout = binding.swipeRefreshLayout
         progressBar = binding.loadingGif
+        noInternetTextView = binding.noInternetTextView
+        noInternetGif = binding.noInternetGif
         val overlay = binding.overlay.findViewById<View>(R.id.overlay)
         val loadingGif = binding.loadingGif.findViewById<ImageView>(R.id.loadingGif)
 
@@ -77,6 +83,11 @@ class GuiasWebFragment : Fragment() {
             .asGif()
             .load(R.drawable.icon_loader)
             .into(loadingGif)
+
+        Glide.with(this)
+            .asGif()
+            .load(R.drawable.icon_not_wifi)
+            .into(noInternetGif)
 
         if (!webViewStateRestored && viewModel.webViewState != null) {
             Log.d(TAG, "Restoring WebView state...")
@@ -171,8 +182,12 @@ class GuiasWebFragment : Fragment() {
                     binding.loadingGif.visibility = View.VISIBLE
                     iniciarSesion()
                 } else if (url == guiaUrl) {
-                    // Mostrar WebView y ocultar ProgressBar
-                    webView.visibility = View.VISIBLE
+                    if (NetworkUtils.isNetworkAvailable(requireContext())) {
+                        webView.visibility = View.VISIBLE
+
+                    }else{
+                        webView.visibility = View.GONE
+                    }
                     binding.overlay.visibility = View.GONE
                     binding.loadingGif.visibility = View.GONE
                     Log.d(TAG, "Página WEB_URL_GUIA cargada correctamente.")
@@ -190,10 +205,12 @@ class GuiasWebFragment : Fragment() {
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
                 super.onReceivedError(view, request, error)
                 Log.e(TAG, "onReceivedError: ${error?.description}")
-                // Mostrar WebView y ocultar ProgressBar en caso de error
-                webView.visibility = View.VISIBLE
-                binding.overlay.visibility = View.GONE
+                // Mostrar mensaje de "Sin conexión a internet" con GIF
+                webView.visibility = View.GONE
+                binding.overlay.visibility = View.VISIBLE
                 binding.loadingGif.visibility = View.GONE
+                noInternetGif.visibility = View.VISIBLE
+                noInternetTextView.visibility = View.VISIBLE
                 // Detener la animación de recarga
                 swipeRefreshLayout.isRefreshing = false
             }
@@ -255,20 +272,24 @@ class GuiasWebFragment : Fragment() {
                 } else {
                     Log.e(TAG, "HTTP Error: $responseCode, $responseMessage")
                     withContext(Dispatchers.Main) {
-                        // Mostrar WebView y ocultar ProgressBar en caso de error
-                        webView.visibility = View.VISIBLE
-                        binding.overlay.visibility = View.GONE
+                        // Mostrar mensaje de "Sin conexión a internet" con GIF
+                        webView.visibility = View.GONE
+                        binding.overlay.visibility = View.VISIBLE
                         binding.loadingGif.visibility = View.GONE
+                        noInternetGif.visibility = View.VISIBLE
+                        noInternetTextView.visibility = View.VISIBLE
                     }
                 }
                 conn.disconnect()
             } catch (e: Exception) {
                 Log.e(TAG, "Error fetching data: ${e.message}")
                 withContext(Dispatchers.Main) {
-                    // Mostrar WebView y ocultar ProgressBar en caso de error
-                    webView.visibility = View.VISIBLE
-                    binding.overlay.visibility = View.GONE
+                    // Mostrar mensaje de "Sin conexión a internet" con GIF
+                    webView.visibility = View.GONE
+                    binding.overlay.visibility = View.VISIBLE
                     binding.loadingGif.visibility = View.GONE
+                    noInternetGif.visibility = View.VISIBLE
+                    noInternetTextView.visibility = View.VISIBLE
                 }
             }
         }
@@ -291,19 +312,23 @@ class GuiasWebFragment : Fragment() {
                     }
                     else -> {
                         Log.d(TAG, "Estado no exitoso: $status")
-                        // Mostrar WebView y ocultar ProgressBar en caso de error
-                        webView.visibility = View.VISIBLE
-                        binding.overlay.visibility = View.GONE
+                        // Mostrar mensaje de "Sin conexión a internet" con GIF
+                        webView.visibility = View.GONE
+                        binding.overlay.visibility = View.VISIBLE
                         binding.loadingGif.visibility = View.GONE
+                        noInternetGif.visibility = View.VISIBLE
+                        noInternetTextView.visibility = View.VISIBLE
                         redirectToLoginActivity()
                     }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error parsing JSON: ${e.message}")
-                // Mostrar WebView y ocultar ProgressBar en caso de error
-                webView.visibility = View.VISIBLE
-                binding.overlay.visibility = View.GONE
+                // Mostrar mensaje de "Sin conexión a internet" con GIF
+                webView.visibility = View.GONE
+                binding.overlay.visibility = View.VISIBLE
                 binding.loadingGif.visibility = View.GONE
+                noInternetGif.visibility = View.VISIBLE
+                noInternetTextView.visibility = View.VISIBLE
             }
         }
     }

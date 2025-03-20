@@ -1,11 +1,12 @@
 {
   "version_code": 3,
-  "version_name": "1.18.4",
+  "version_name": "1.18.5",
   "download_url2": "https://github.com/PeterG3POGamer/BlueApp/tree/master/app/build/outputs/apk/debug/app-debug.apk",
   "download_url": "https://github.com/PeterG3POGamer/BlueApp/releases/download/v.0.1-beta/app-debug.apk",
   "changes": [
     {"type": "Nuevo", "description": "¡Ahora se puede trabajar Offline!"},
     {"type": "Nuevo", "description": "Nuevos filtros para el modulo de ventas"},
+    {"type": "Nuevo", "description": "Sincronización de venta manuales"},
     {"type": "Arreglado", "description": "Ventas sincronizadas dos veces."},
     {"type": "Actualizado", "description": "Mejor sincronización de datos."}
   ],
