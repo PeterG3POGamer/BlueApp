@@ -162,26 +162,25 @@ class DataSyncManager(private val context: Context) {
                                 updateProgressGif(context, progressGif, R.drawable.icon_employee)
                                 animateProgressMessage(progressCallback, "Verificando sesión")
                                 delay(1000)
+                                updateProgressGif(
+                                    context,
+                                    progressGif,
+                                    R.drawable.icon_scan_user
+                                )
+                                animateProgressMessage(progressCallback, "Autenticando")
                                 if (isLoggedIn) {
-                                    updateProgressGif(
-                                        context,
-                                        progressGif,
-                                        R.drawable.icon_identify_cara
-                                    )
-                                    animateProgressMessage(progressCallback, "Autenticando")
                                     delay(1000)
                                     updateProgressGif(
                                         context,
                                         progressGif,
-                                        R.drawable.icon_success
+                                        R.drawable.icon_login_success
                                     )
                                     progressCallback.onProgressUpdate("¡Sesión exitosa!")
-                                    delay(2000)
+                                    delay(1000)
                                     animateProgressMessage(progressCallback, "Redirigiendo")
                                 } else {
+                                    delay(1000)
                                     progressCallback.onProgressUpdate("¡Sesión cerrada!")
-                                    delay(2000)
-                                    animateProgressMessage(progressCallback, "Un momento por favor")
                                     delay(1000)
                                     progressCallback.onProgressUpdate("Por favor, inicie sesión")
                                 }
@@ -605,7 +604,7 @@ class DataSyncManager(private val context: Context) {
     fun updateProgressGif(context: Context, progressGif: ImageView, gifResId: Int) {
         if (context is Activity && !context.isDestroyed) {
             context.runOnUiThread {
-                Glide.with(context).asGif().load(gifResId).into(progressGif)
+                Glide.with(context).asGif().load(gifResId).override(100, 100).into(progressGif)
             }
         }
     }

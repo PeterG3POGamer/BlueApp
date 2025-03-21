@@ -1328,7 +1328,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     connectedDeviceAddress = null
                     sharedViewModel.updateConnectedDeviceAddress("")
                     binding.deviceConnected.text = "NO CONECTADO"
-                    binding.deviceConnected.background = ContextCompat.getDrawable(
+                    binding.deviceConnectedLayout.background = ContextCompat.getDrawable(
                         requireContext(),
                         R.drawable.button_background_inactive
                     )

@@ -234,11 +234,23 @@ class BluetoothFragment : DialogFragment() {
 
             @SuppressLint("MissingPermission")
             override fun onDeviceFound(device: BluetoothDevice) {
+                // Obtener el nombre del dispositivo o asignar un nombre predeterminado
+                val deviceName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    device.name ?: device.alias ?: "Desconocido"
+                } else {
+                    device.name ?: "Desconocido"
+                }
+
+                // Verificar si el dispositivo ya está en la lista
                 if (bluetoothDevices.none { it?.address == device.address }) {
                     bluetoothDevices.add(device)
-                    devicesAdapter!!.notifyDataSetChanged()
-                    Log.d(TAG, "Device found: ${device.name} (${device.address})")
-                    logger.log("setDiscoveryCallback: Device found: ${device.name} (${device.address})")
+
+                    // Notificar al adaptador sobre el cambio en los datos
+                    devicesAdapter?.notifyDataSetChanged()
+
+                    // Logs para depuración
+                    Log.d(TAG, "Device found: $deviceName (${device.address})")
+                    logger.log("setDiscoveryCallback: Device found: $deviceName (${device.address})")
                 }
             }
 
@@ -425,17 +437,22 @@ class BluetoothFragment : DialogFragment() {
 
     @SuppressLint("MissingPermission", "NotifyDataSetChanged")
     private fun startDiscovery() {
-        bluetoothDevices.clear()
-        devicesAdapter?.notifyDataSetChanged()
+        if (::bluetoothAdapter.isInitialized) {
+            bluetoothDevices.clear()
+            devicesAdapter?.notifyDataSetChanged()
 
-        // Mostrar ProgressBar
-        binding.progressBar.visibility = View.VISIBLE
+            // Mostrar ProgressBar
+            binding.progressBar.visibility = View.VISIBLE
 
-        if (bluetoothAdapter.isDiscovering) {
-            bluetoothAdapter.cancelDiscovery()
+            if (bluetoothAdapter.isDiscovering) {
+                bluetoothAdapter.cancelDiscovery()
+            }
+            bluetoothAdapter.startDiscovery()
+            showToast("Buscando dispositivos Bluetooth...")
+        }else {
+            // Maneja el caso cuando el adaptador no está inicializado
+            Log.e("BluetoothFragment", "Bluetooth adapter not initialized")
         }
-        bluetoothAdapter.startDiscovery()
-        showToast("Buscando dispositivos Bluetooth...")
     }
 
     @SuppressLint("MissingPermission")
@@ -629,33 +646,60 @@ class BluetoothFragment : DialogFragment() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+
+        // Verificar si el diálogo está mostrándose
+        val fragmentManager = parentFragmentManager
+        val existingDialog = fragmentManager.findFragmentByTag("BluetoothFragment")
+        if (existingDialog != null) {
+            // Cerrar el diálogo si está mostrándose
+            (existingDialog as? DialogFragment)?.dismiss()
+            Log.d("DialogFragment", "Dialog was closed")
+        } else {
+            Log.d("DialogFragment", "No dialog to close")
+        }
+    }
+
+
     override fun onStart() {
         super.onStart()
         checkGPSStatus()
-        // Usamos un Handler para agregar un retraso
-        val dialog = dialog
-        if (dialog != null) {
-            val displayMetrics = DisplayMetrics()
-            dialog.window?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
-            val heightInDp = 600
-            val heightInPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, heightInDp.toFloat(), displayMetrics).toInt()
 
-            val layoutParams = dialog.window?.attributes
-            layoutParams?.width = ViewGroup.LayoutParams.WRAP_CONTENT
-            layoutParams?.height = heightInPx
-            dialog.window?.attributes = layoutParams
+        // Verificar si el diálogo ya está mostrándose
+        val fragmentManager = parentFragmentManager
+        val existingDialog = fragmentManager.findFragmentByTag("BluetoothFragment")
+        if (existingDialog == null) {
+            // Crear y mostrar el diálogo solo si no existe
+            val dialog = dialog
+            if (dialog != null) {
+                val displayMetrics = DisplayMetrics()
+                dialog.window?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+                val heightInDp = 600
+                val heightInPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, heightInDp.toFloat(), displayMetrics).toInt()
 
-            // Mostrar el diálogo después de ajustar sus atributos y verificar permisos
-            Handler(Looper.getMainLooper()).postDelayed({
-                if (hasBluetoothPermissions()) {
-                    dialog.show()
-                }
-            }, 2000) // Retraso de 2 segundos (2000 ms)
-        }
+                val layoutParams = dialog.window?.attributes
+                layoutParams?.width = ViewGroup.LayoutParams.WRAP_CONTENT
+                layoutParams?.height = heightInPx
+                dialog.window?.attributes = layoutParams
 
-        val closeButton: ImageButton? = view?.findViewById(R.id.btn_close_modal)
-        closeButton?.setOnClickListener {
-            dialog?.dismiss() // Cierra el diálogo
+                // Mostrar el diálogo después de ajustar sus atributos y verificar permisos
+                Handler(Looper.getMainLooper()).postDelayed({
+                    if (hasBluetoothPermissions()) {
+                        // En lugar de dialog.show(), usa el método show() del DialogFragment con el tag
+                        if (!isAdded) {
+                            show(parentFragmentManager, "BluetoothFragment")
+                        }
+                    }
+                }, 2000) // Retraso de 2 segundos (2000 ms)
+            }
+
+            val closeButton: ImageButton? = view?.findViewById(R.id.btn_close_modal)
+            closeButton?.setOnClickListener {
+                dismiss()
+            }
+        } else {
+            Log.d("DialogFragment", "Dialog is already showing")
         }
     }
 }

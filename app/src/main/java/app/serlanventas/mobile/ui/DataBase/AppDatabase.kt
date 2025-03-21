@@ -934,6 +934,113 @@ class AppDatabase(context: Context) :
         return ultimoNumero
     }
 
+    fun getTemPesosByClienteAndDate(numDoc: String, fechaInicio: String, fechaFin: String): List<PesosEntity> {
+        val dataList = mutableListOf<PesosEntity>()
+        val db = this.readableDatabase
+
+        // Ajustar la fecha final para incluir todo el día
+        val fechaInicioConHora = "$fechaInicio 00:00:00"
+        val fechaFinConHora = "$fechaFin 23:59:59"
+
+        Log.d("FechaDebug", "Fecha Inicio: $fechaInicioConHora, Fecha Fin: $fechaFinConHora")
+
+        val selectQuery = """
+        SELECT * FROM $TABLE_PESOS
+        WHERE $KEY_NUMERO_DOC_CLIENTE = ?
+        AND $KEY_FECHA_REGISTRO BETWEEN ? AND ?
+    """
+        val cursor = db.rawQuery(selectQuery, arrayOf(numDoc, fechaInicioConHora, fechaFinConHora))
+
+        if (cursor.moveToFirst()) {
+            do {
+                val data = PesosEntity(
+                    id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME))
+                        ?: "",
+                    idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
+                    idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
+                    numeroDocCliente = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NUMERO_DOC_CLIENTE
+                        )
+                    ) ?: "",
+                    nombreCompleto = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NOMBRE_COMPLETO
+                        )
+                    ) ?: "",
+                    dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON))
+                        ?: "",
+                    dataDetaPesoJson = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_DATA_DETAPESO_JSON
+                        )
+                    ) ?: "",
+                    idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)) ?: "0",
+                    isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC)),
+                    serieDevice = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE_DEVICE)),
+                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
+                        ?: ""
+                )
+                dataList.add(data)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return dataList
+    }
+
+    fun getTempPesoByDate(fechaInicio: String, fechaFin: String): List<PesosEntity> {
+        val dataList = mutableListOf<PesosEntity>()
+        val db = this.readableDatabase
+
+        val fechaInicioConHora = "$fechaInicio 00:00:00"
+        val fechaFinConHora = "$fechaFin 23:59:59"
+
+        Log.d("FechaDebug2", "Fecha Inicio: $fechaInicioConHora, Fecha Fin: $fechaFinConHora")
+
+        val selectQuery = """
+        SELECT * FROM $TABLE_PESOS
+        WHERE $KEY_FECHA_REGISTRO BETWEEN ? AND ?
+    """
+        val cursor = db.rawQuery(selectQuery, arrayOf(fechaInicioConHora, fechaFinConHora))
+
+        if (cursor.moveToFirst()) {
+            do {
+                val data = PesosEntity(
+                    id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)),
+                    devicedName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DEVICE_NAME))
+                        ?: "",
+                    idNucleo = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_NUCLEO)),
+                    idGalpon = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID_GALPON)),
+                    numeroDocCliente = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NUMERO_DOC_CLIENTE
+                        )
+                    ) ?: "",
+                    nombreCompleto = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_NOMBRE_COMPLETO
+                        )
+                    ) ?: "",
+                    dataPesoJson = cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATA_PESO_JSON))
+                        ?: "",
+                    dataDetaPesoJson = cursor.getString(
+                        cursor.getColumnIndexOrThrow(
+                            KEY_DATA_DETAPESO_JSON
+                        )
+                    ) ?: "",
+                    idEstado = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ID_ESTADO)) ?: "0",
+                    isSync = cursor.getString(cursor.getColumnIndexOrThrow(KEY_ISSYNC)),
+                    serieDevice = cursor.getString(cursor.getColumnIndexOrThrow(KEY_SERIE_DEVICE)),
+                    fechaRegistro = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FECHA_REGISTRO))
+                        ?: ""
+                )
+                dataList.add(data)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return dataList
+    }
 
     // =========================================================
     // MODULE VENTAS
