@@ -177,7 +177,7 @@ class DataSyncManager(private val context: Context) {
                                     )
                                     progressCallback.onProgressUpdate("¡Sesión exitosa!")
                                     delay(1000)
-                                    animateProgressMessage(progressCallback, "Redirigiendo")
+                                    progressCallback.onProgressUpdate("Redirigiendo")
                                 } else {
                                     delay(1000)
                                     progressCallback.onProgressUpdate("¡Sesión cerrada!")

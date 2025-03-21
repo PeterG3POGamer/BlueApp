@@ -108,7 +108,7 @@ class VentasFragment : Fragment() {
                 val (dataNucleo, dataGalpon) = nucleoGalpon
 
                 pollosData?.let { it ->
-                    val nombreComprobante = "Nota de Venta"
+                    val nombreComprobante = "NOTA DE VENTA"
                     val idEmpresa = "RUC: ${dataNucleo?.idEmpresa}"
                     val rsEmpresa = "MULTIGRANJAS SERLAN S.A.C."
                     val correlativo = "${it.serie}-${it.numero}"
@@ -893,38 +893,46 @@ class VentasFragment : Fragment() {
         }
     }
 
+    private var isDatePickerShowing = false
+
     private fun setupDateFilters() {
         val startDateInput = binding.startDateFilterInput
         val endDateInput = binding.endDateFilterInput
         showDatePickerDialog(startDateInput)
         showDatePickerDialog(endDateInput)
 
-        // Configurar el OnClickListener para el campo de fecha de inicio
         startDateInput.setOnClickListener {
-            showDatePickerDialog(startDateInput, true)
+            if (!isDatePickerShowing) {
+                showDatePickerDialog(startDateInput, true)
+            }
         }
 
-        // Configurar el OnClickListener para el campo de fecha de fin
         endDateInput.setOnClickListener {
-            showDatePickerDialog(endDateInput, true)
+            if (!isDatePickerShowing) {
+                showDatePickerDialog(endDateInput, true)
+            }
         }
     }
 
-    private fun showDatePickerDialog(editText: TextInputEditText, isCLick: Boolean = false) {
+    private fun showDatePickerDialog(editText: TextInputEditText, isClick: Boolean = false) {
         val calendar = Calendar.getInstance()
         val year = calendar.get(Calendar.YEAR)
         val month = calendar.get(Calendar.MONTH)
         val day = calendar.get(Calendar.DAY_OF_MONTH)
 
         // Crear el DatePickerDialog
-
         val datePickerDialog =
             DatePickerDialog(requireContext(), { _, selectedYear, selectedMonth, selectedDay ->
                 val selectedDate = Calendar.getInstance()
                 selectedDate.set(selectedYear, selectedMonth, selectedDay)
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                 editText.setText(dateFormat.format(selectedDate.time))
+                isDatePickerShowing = false
             }, year, month, day)
+
+        datePickerDialog.setOnDismissListener {
+            isDatePickerShowing = false
+        }
 
         // Prellenar el campo con la fecha actual si está vacío
         if (editText.text.isNullOrEmpty()) {
@@ -933,7 +941,8 @@ class VentasFragment : Fragment() {
         }
 
         // Mostrar el DatePickerDialog
-        if (isCLick) {
+        if (isClick && !isDatePickerShowing) {
+            isDatePickerShowing = true
             datePickerDialog.show()
         }
     }

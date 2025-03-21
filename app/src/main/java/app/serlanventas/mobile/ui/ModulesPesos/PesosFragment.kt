@@ -16,24 +16,32 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import app.serlanventas.mobile.R
 import app.serlanventas.mobile.databinding.FragmentModulePesosBinding
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
 import app.serlanventas.mobile.ui.DataBase.Entities.ClienteEntity
+import app.serlanventas.mobile.ui.DataBase.Entities.DataDetaPesoPollosEntity
+import app.serlanventas.mobile.ui.DataBase.Entities.DataPesoPollosEntity
 import app.serlanventas.mobile.ui.DataBase.Entities.PesosEntity
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.obtenerPesosServer
 import app.serlanventas.mobile.ui.Jabas.ManagerPost.showCustomToast
 import app.serlanventas.mobile.ui.ModuleVentas.VentasFragment.ClienteAdapter
+import app.serlanventas.mobile.ui.preliminar.FragmentPreliminar.TotalesData
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -63,9 +71,6 @@ class PesosFragment : Fragment() {
         db = AppDatabase(requireContext())
 
         setupConfigResponsiveFilter(view)
-
-
-
 
         binding.btnSincronizarPesos.setOnClickListener {
             binding.btnSincronizarPesos.isEnabled = false
@@ -282,15 +287,176 @@ class PesosFragment : Fragment() {
     }
 
     // Sección de manejo de clic en "Mostrar"
+    @SuppressLint("DefaultLocale")
     private fun onMostrarClick(peso: PesosEntity) {
         val pesoDetalles = db.getPesoPorId(peso.id)
+        if (pesoDetalles != null) {
+            // Convertir JSON a objetos
+            val dataPesoObjeto = parseDataPesoJson(pesoDetalles.dataPesoJson)
+            val dataDetaPesoList = parseDataDetaPesoJson(pesoDetalles.dataDetaPesoJson)
+            val dataNucleo = db.obtenerNucleoPorId(dataPesoObjeto.idNucleo)
+            val dataGalpon = db.obtenerGalponPorId(dataPesoObjeto.idGalpon)
 
-        pesoDetalles?.let {
-            Log.d("PesosFragment", "Detalles del peso: $it")
-        } ?: run {
-            Log.d("PesosFragment", "No se encontraron detalles para el peso con ID: ${peso.id}")
+            val (totalJ, totalP, totalPesoPollos, totalPesoJ, neto) = calcularTotales(
+                dataDetaPesoList
+            )
+
+            val nombreComprobante = "DETALLE DE PESO"
+            val idEmpresa = "RUC: ${dataNucleo?.idEmpresa}"
+            val rsEmpresa = "MULTIGRANJAS SERLAN S.A.C."
+            val correlativo = "${dataPesoObjeto.serie}-${dataPesoObjeto.numero}"
+            val fechaParts = pesoDetalles.fechaRegistro.split(" ")
+            val fecha = if (fechaParts.size > 0) "FECHA: ${fechaParts[0]}" else "FECHA: N/A"
+            val hora = if (fechaParts.size > 1) "HORA: ${fechaParts[1]}" else "HORA: N/A"
+            val nombreCliente = "CLIENTE: ${dataPesoObjeto.nombreCompleto ?: "N/A"}"
+            val idCliente = "N° DOC: ${dataPesoObjeto.numeroDocCliente}"
+            val totalJabas = "C. DE JABAS: $totalJ"
+            val totalPollos = "C. DE POLLO: $totalP"
+            val totalPesoJabas = "TARA: $totalPesoJ"
+            val totalPeso = "PESO BRUTO: $totalPesoPollos"
+            val totalNeto = "NETO: $neto"
+            val pkPollo = "PRECIO X KG: ${dataPesoObjeto.PKPollo}"
+            val totalPagar = "T. A PAGAR: ${dataPesoObjeto.TotalPagar.coerceAtLeast("0.0")}"
+            val psPromedio = if (totalP > 0) {
+                "PESO PROMEDIO: ${
+                    String.format(
+                        "%.2f",
+                        neto / totalP
+                    )
+                }"
+            } else {
+                "PESO PROMEDIO: 0.00"
+            }
+            val mensaje = "¡GRACIAS POR SU COMPRA!"
+            val sede = "SEDE: ${dataNucleo?.nombre} - ${dataGalpon?.nombre}"
+
+
+            showModal(
+                dataPesoObjeto.id,
+                nombreComprobante,
+                idEmpresa,
+                rsEmpresa,
+                correlativo,
+                fecha,
+                hora,
+                nombreCliente,
+                idCliente,
+                totalJabas,
+                totalPollos,
+                totalPesoJabas,
+                totalPeso,
+                totalNeto,
+                pkPollo,
+                totalPagar,
+                mensaje,
+                sede,
+                dataDetaPesoList,
+                psPromedio
+            )
+
         }
     }
+
+    private fun calcularTotales(dataDetaPesoPollos: List<DataDetaPesoPollosEntity>): TotalesData {
+        var totalJabas = 0
+        var totalPollos = 0
+        var totalPesoPollos = 0.0
+        var totalPesoJabas = 0.0
+
+        dataDetaPesoPollos.forEach { detaPesoPollo ->
+            if (detaPesoPollo.tipo == "JABAS CON POLLOS") {
+                totalPollos += detaPesoPollo.cantJabas * detaPesoPollo.cantPollos
+                totalPesoPollos += detaPesoPollo.peso.toDouble()
+            } else {
+                totalJabas += detaPesoPollo.cantJabas.toInt()
+                totalPesoJabas += detaPesoPollo.peso.toDouble()
+            }
+        }
+
+        if(totalPollos == 0){
+            totalPesoPollos = totalPesoJabas
+        }
+
+        val neto = (totalPesoPollos - totalPesoJabas).coerceAtLeast(0.0)
+
+        return TotalesData(totalJabas, totalPollos, totalPesoPollos, totalPesoJabas, neto)
+    }
+
+    private var currentDialog: android.app.AlertDialog? = null
+    private fun showModal(
+        ventaId: Int,
+        nombreComprobante: String, idEmpresa: String, rsEmpresa: String, correlativo: String,
+        fecha: String, hora: String, nombreCliente: String, idCliente: String,
+        totalJabas: String, totalPollos: String, totalPesoJabas: String, totalPeso: String,
+        totalNeto: String, pkPollo: String, totalPagar: String, mensaje: String, sede: String,
+        detallesPesoPollos: List<DataDetaPesoPollosEntity>, psPromedio: String
+    ) {
+        // Verificar si el diálogo ya está mostrándose
+        if (currentDialog?.isShowing == true) {
+            Log.d("Dialog", "Dialog is already showing")
+            return
+        }
+
+        // Inflamos el layout del modal
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.fragment_detalle_temp_pesos, null)
+
+        // Mapa de TextView y sus valores
+        val textViews = mapOf(
+            R.id.tvNombreComprobante to nombreComprobante,
+            R.id.tviDEmpresa to idEmpresa,
+            R.id.tvRSEmpresa to rsEmpresa, -
+            R.id.tvCorrelativo to correlativo,
+            R.id.tvFecha to fecha,
+            R.id.tvHora to hora,
+            R.id.tvNombreCliente to nombreCliente,
+            R.id.tvIdCliente to idCliente,
+            R.id.tvTotalJabas to totalJabas,
+            R.id.tvTotalPollos to totalPollos,
+            R.id.tvTotalPesoJabas to totalPesoJabas,
+            R.id.tvTotalPeso to totalPeso,
+            R.id.tvTotalNeto to totalNeto,
+            R.id.tvPKPollo to pkPollo,
+            R.id.tvTotalPagar to totalPagar,
+            R.id.tvPesoPromedio to psPromedio,
+            R.id.tvMensaje to mensaje,
+            R.id.tvSede to sede
+        )
+
+        // Asignamos los valores a los TextView
+        textViews.forEach { (id, value) ->
+            dialogView.findViewById<TextView>(id)?.text = value
+        }
+
+        // Configurar el RecyclerView para mostrar los detalles de pesos
+        val recyclerViewDetalles =
+            dialogView.findViewById<RecyclerView>(R.id.recyclerViewDetallesPesos)
+        recyclerViewDetalles.setHasFixedSize(true)
+        recyclerViewDetalles.layoutManager = LinearLayoutManager(context)
+
+        // Creamos el diálogo con dos botones: Imprimir y Cerrar
+        currentDialog = android.app.AlertDialog.Builder(context)
+            .setView(dialogView)
+            .setPositiveButton("Cerrar") { dialog, _ -> dialog.dismiss() }
+//            .setNeutralButton("Imprimir") { dialog, _ ->
+//                lifecycleScope.launch {
+//                    imprimirDetalleVenta(ventaId)
+//                }
+//                dialog.dismiss()
+//            }
+            .create()
+
+        // Crear un adaptador para los detalles de pesos
+        val detalleAdapter = DetallesTempPesosDialogAdapter(detallesPesoPollos)
+        recyclerViewDetalles.adapter = detalleAdapter
+
+        // Mostramos el diálogo
+        currentDialog?.show()
+
+        // Logs adicionales para depuración
+        Log.d("Dialog", "Dialog shown successfully")
+    }
+
 
     private fun onEliminarClick(peso: PesosEntity) {
         val builder = AlertDialog.Builder(requireContext())
@@ -407,38 +573,46 @@ class PesosFragment : Fragment() {
         imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
     }
 
+    private var isDatePickerShowing = false
+
     private fun setupDateFilters() {
         val startDateInput = binding.startDateFilterInput
         val endDateInput = binding.endDateFilterInput
         showDatePickerDialog(startDateInput)
         showDatePickerDialog(endDateInput)
 
-        // Configurar el OnClickListener para el campo de fecha de inicio
         startDateInput.setOnClickListener {
-            showDatePickerDialog(startDateInput, true)
+            if (!isDatePickerShowing) {
+                showDatePickerDialog(startDateInput, true)
+            }
         }
 
-        // Configurar el OnClickListener para el campo de fecha de fin
         endDateInput.setOnClickListener {
-            showDatePickerDialog(endDateInput, true)
+            if (!isDatePickerShowing) {
+                showDatePickerDialog(endDateInput, true)
+            }
         }
     }
 
-    private fun showDatePickerDialog(editText: TextInputEditText, isCLick: Boolean = false) {
+    private fun showDatePickerDialog(editText: TextInputEditText, isClick: Boolean = false) {
         val calendar = Calendar.getInstance()
         val year = calendar.get(Calendar.YEAR)
         val month = calendar.get(Calendar.MONTH)
         val day = calendar.get(Calendar.DAY_OF_MONTH)
 
         // Crear el DatePickerDialog
-
         val datePickerDialog =
             DatePickerDialog(requireContext(), { _, selectedYear, selectedMonth, selectedDay ->
                 val selectedDate = Calendar.getInstance()
                 selectedDate.set(selectedYear, selectedMonth, selectedDay)
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                 editText.setText(dateFormat.format(selectedDate.time))
+                isDatePickerShowing = false
             }, year, month, day)
+
+        datePickerDialog.setOnDismissListener {
+            isDatePickerShowing = false
+        }
 
         // Prellenar el campo con la fecha actual si está vacío
         if (editText.text.isNullOrEmpty()) {
@@ -447,7 +621,8 @@ class PesosFragment : Fragment() {
         }
 
         // Mostrar el DatePickerDialog
-        if (isCLick) {
+        if (isClick && !isDatePickerShowing) {
+            isDatePickerShowing = true
             datePickerDialog.show()
         }
     }
@@ -499,8 +674,121 @@ class PesosFragment : Fragment() {
         filtrarPesoPorClienteYFecha(selectedClient)
     }
 
+    /*
+        Procesar datos JSON a entidades
+    */
+    fun parseDataPesoJson(dataPesoJson: String): DataPesoPollosEntity {
+        val dataPesoJsonObject = JSONObject(dataPesoJson)
+        return DataPesoPollosEntity(
+            id = dataPesoJsonObject.getInt("_PP_id"),
+            serie = dataPesoJsonObject.getString("_PP_serie"),
+            numero = dataPesoJsonObject.getString("_PP_numero"),
+            fecha = dataPesoJsonObject.getString("_PP_fecha"),
+            totalJabas = dataPesoJsonObject.getString("_PP_totalJabas"),
+            totalPollos = dataPesoJsonObject.getString("_PP_totalPollos"),
+            totalPeso = dataPesoJsonObject.getString("_PP_totalPeso"),
+            tipo = dataPesoJsonObject.getString("_PP_tipo"),
+            numeroDocCliente = dataPesoJsonObject.getString("_PP_docCliente"),
+            nombreCompleto = dataPesoJsonObject.getString("_PP_nombreCompleto"),
+            idGalpon = dataPesoJsonObject.getString("_PP_IdGalpon"),
+            idNucleo = dataPesoJsonObject.getString("_PP_idNucleo"),
+            PKPollo = dataPesoJsonObject.getString("_PP_PKPollo"),
+            totalPesoJabas = dataPesoJsonObject.getString("_PP_totalPesoJabas"),
+            totalNeto = dataPesoJsonObject.getString("_PP_totalNeto"),
+            TotalPagar = dataPesoJsonObject.getString("_PP_TotalPagar"),
+            idUsuario = dataPesoJsonObject.getString("_PP_idUsuario"),
+            idEstado = dataPesoJsonObject.getString("_PP_idEstado")
+        )
+    }
+
+    fun parseDataDetaPesoJson(dataDetaPesoJson: String): List<DataDetaPesoPollosEntity> {
+        val dataDetaPesoArray = JSONArray(dataDetaPesoJson)
+        val dataDetaPesoList = mutableListOf<DataDetaPesoPollosEntity>()
+        for (i in 0 until dataDetaPesoArray.length()) {
+            val detalleJsonObject = dataDetaPesoArray.getJSONObject(i)
+            val dataDetaPesoObjeto = DataDetaPesoPollosEntity(
+                idDetaPP = detalleJsonObject.getInt("_DPP_id"),
+                cantJabas = detalleJsonObject.getInt("_DPP_cantJabas"),
+                cantPollos = detalleJsonObject.getInt("_DPP_cantPolllos"),
+                peso = detalleJsonObject.getDouble("_DPP_peso"),
+                tipo = detalleJsonObject.getString("_DPP_tipo"),
+                idPesoPollo = detalleJsonObject.getString("_DPP_idPesoPollo"),
+                fechaPeso = detalleJsonObject.getString("_DPP_fechaPeso")
+            )
+            dataDetaPesoList.add(dataDetaPesoObjeto)
+        }
+        return dataDetaPesoList
+    }
+
+    inner class DetallesTempPesosDialogAdapter(
+        private val detalles: List<DataDetaPesoPollosEntity>
+    ) : RecyclerView.Adapter<DetallesTempPesosDialogAdapter.DetalleViewHolder>() {
+
+        inner class DetalleViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+            val idJabas: TextView = itemView.findViewById(R.id.id_jabas)
+            val numeroJabas: TextView = itemView.findViewById(R.id.numero_jabas)
+            val numeroPollos: TextView = itemView.findViewById(R.id.numero_pollos)
+            val pesoKg: TextView = itemView.findViewById(R.id.peso_kg)
+            val conPollos: TextView = itemView.findViewById(R.id.con_pollos)
+            val estadoIcon: ImageView = itemView.findViewById(R.id.estado_icon)
+            val fechaPeso: TextView = itemView.findViewById(R.id.fecha_peso)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DetalleViewHolder {
+            val itemView =
+                LayoutInflater.from(parent.context)
+                    .inflate(R.layout.list_detalle_pesos, parent, false)
+            return DetalleViewHolder(itemView)
+        }
+
+        override fun onBindViewHolder(holder: DetalleViewHolder, position: Int) {
+            val detalle = detalles[position]
+
+            // Asignar los datos a las vistas
+            holder.idJabas.text = "#${position + 1}"
+            holder.numeroJabas.text = "${detalle.cantJabas}"
+            holder.numeroPollos.text = "${detalle.cantPollos}"
+            holder.pesoKg.text = "${detalle.peso} kg"
+
+            val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+
+            try {
+                // Parsear la cadena a un objeto Date
+                val fechaPesoDate = inputFormat.parse(detalle.fechaPeso)
+
+                // Formatear la fecha
+                val dateFormat = SimpleDateFormat("MMM dd, yyyy")
+                val date = dateFormat.format(fechaPesoDate)
+
+                // Formatear la hora
+                val timeFormat = SimpleDateFormat("HH:mm:ss")
+                val time = timeFormat.format(fechaPesoDate)
+
+                // Establecer el texto con la fecha y la hora
+                holder.fechaPeso.text = "$date\n$time"
+            } catch (e: Exception) {
+                // Manejar el caso donde el formato de la fecha no es el esperado
+                holder.fechaPeso.text = "Fecha no válida"
+            }
+
+
+            // Configurar el estado y el ícono según el tipo
+            holder.conPollos.visibility = View.VISIBLE
+            if (detalle.tipo.contains("CON POLLOS", ignoreCase = true)) {
+                holder.conPollos.text = "CON POLLOS"
+                holder.estadoIcon.setImageResource(R.drawable.cabezapollo)
+            } else {
+                holder.conPollos.text = "SIN POLLOS"
+                holder.estadoIcon.setImageResource(R.drawable.jabadepollo)
+            }
+        }
+
+        override fun getItemCount(): Int = detalles.size
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
 }
+
