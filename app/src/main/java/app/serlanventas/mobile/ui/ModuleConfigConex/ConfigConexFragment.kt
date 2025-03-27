@@ -248,7 +248,6 @@ class ConfigConexFragment : Fragment() {
     private fun cargarDatosEnFormulario(registro: CaptureDeviceEntity) {
         binding.btnActualizar.visibility = View.VISIBLE
         binding.btnGuardar.visibility = View.GONE
-        binding.edtCadenaClave.setText(registro._cadenaClave ?: "")
         binding.edtLongitud.setText(registro._longitud?.toString() ?: "")
         binding.edtFormatoPeso.setText(registro._formatoPeo?.toString() ?: "")
         binding.edtCadenaClaveCierre.setText(registro._cadenaClaveCierre ?: "")

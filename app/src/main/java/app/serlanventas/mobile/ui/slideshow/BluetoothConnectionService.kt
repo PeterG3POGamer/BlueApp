@@ -184,10 +184,10 @@ class BluetoothConnectionService(
         }
 
         private fun procesarDatosSegunConfiguracion(datos: String, config: CaptureDeviceEntity): String {
-            val _CadenaClave = config._cadenaClave ?: ""
-            val _CadenaClaveCierre = config._cadenaClaveCierre ?: ""
-            val _Longitud = config._longitud ?: 0
-            val _Decimales = config._formatoPeo ?: 2
+            val _CadenaClave = config._cadenaClave ?: "" // ST,G
+            val _CadenaClaveCierre = config._cadenaClaveCierre ?: "" // Kg
+            val _Longitud = config._longitud ?: 10 // Cantidad de numeros enteros
+            val _Decimales = config._formatoPeo ?: 2 // Cantidad de numeros decimales
             val _bloque = config._bloque
             val _idConfig = config._idCaptureDevice
 
@@ -196,14 +196,14 @@ class BluetoothConnectionService(
                 ultimaConfig = _idConfig.toString()
             }
 
-            val valores = extraerValores(datos, _CadenaClave, _CadenaClaveCierre)
+            val valores = extraerValores(datos, _CadenaClaveCierre)
             if (valores.isNotEmpty()) {
                 val ultimoValor = when (_bloque) {
                     "1" -> valores.joinToString(separator = "") { it } // Concatenar todos los valores
                     "2" -> valores.last() // Usar el último valor
                     else -> valores.last() // Por defecto, usar el último valor
                 }
-                val valorProcesado = procesarValor(ultimoValor, _Longitud, _Decimales)
+                val valorProcesado = procesarValor(ultimoValor, _Decimales)
                 if (valorProcesado.isNotEmpty()) {
                     ultimoValorCorrecto = valorProcesado
                     return valorProcesado
@@ -213,12 +213,12 @@ class BluetoothConnectionService(
             return ultimoValorCorrecto
         }
 
-        private fun extraerValores(datos: String, cadenaClave: String, cadenaClaveCierre: String): List<String> {
+        private fun extraerValores(datos: String, cadenaClaveCierre: String): List<String> {
             val patron = when {
-                cadenaClave.isNotEmpty() && cadenaClaveCierre.isNotEmpty() ->
-                    "${Regex.escape(cadenaClave)}\\s*(\\d+(?:\\.\\d+)?)\\s*${Regex.escape(cadenaClaveCierre)}"
-                cadenaClave.isNotEmpty() ->
-                    "${Regex.escape(cadenaClave)}\\s*(\\d+(?:\\.\\d+)?)"
+//                cadenaClave.isNotEmpty() && cadenaClaveCierre.isNotEmpty() ->
+//                    "${Regex.escape(cadenaClave)}\\s*(\\d+(?:\\.\\d+)?)\\s*${Regex.escape(cadenaClaveCierre)}"
+//                cadenaClave.isNotEmpty() ->
+//                    "${Regex.escape(cadenaClave)}\\s*(\\d+(?:\\.\\d+)?)"
                 cadenaClaveCierre.isNotEmpty() ->
                     "(\\d+(?:\\.\\d+)?)\\s*${Regex.escape(cadenaClaveCierre)}"
                 else ->
@@ -229,20 +229,11 @@ class BluetoothConnectionService(
             return regex.findAll(datos).map { it.groupValues[1] }.toList()
         }
 
-        private fun procesarValor(valor: String, longitud: Int, decimales: Int): String {
+        private fun procesarValor(valor: String, decimales: Int): String {
             try {
                 val valorNumerico = valor.toDouble()
                 val valorFormateado = String.format("%.${decimales}f", valorNumerico)
-                val partes = valorFormateado.split(".")
-                val parteEntera = partes[0]
-                val parteDecimal = if (partes.size > 1) partes[1] else  ""
-
-                return if (longitud > 0 && parteEntera.length > longitud) {
-                    val parteEnteraTruncada = parteEntera.substring(parteEntera.length - longitud)
-                    "$parteEnteraTruncada.$parteDecimal"
-                } else {
-                    valorFormateado
-                }
+                return valorFormateado
             } catch (e: Exception) {
                 Log.d(TAG, "$dividename -> Error al convertir valor: $valor, ignorando")
                 return ""
