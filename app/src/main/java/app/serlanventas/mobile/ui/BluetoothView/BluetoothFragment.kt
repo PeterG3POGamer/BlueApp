@@ -18,18 +18,19 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.DisplayMetrics
 import android.util.Log
-import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.ListView
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
@@ -60,8 +61,9 @@ import me.aflak.bluetooth.interfaces.DeviceCallback
 import me.aflak.bluetooth.interfaces.DiscoveryCallback
 
 @Suppress("DEPRECATION")
-class BluetoothFragment : DialogFragment() {
+class BluetoothFragment : Fragment() {
 
+    private var bluetoothDialog: AlertDialog? = null
     private var _binding: FragmentBluetoothBinding? = null
     private val REQUEST_ENABLE_BT = 1
 
@@ -119,10 +121,12 @@ class BluetoothFragment : DialogFragment() {
                             devicesAdapter?.notifyDataSetChanged()
                         }
                     }
-                    binding.progressBar.visibility = View.GONE
+                    // Actualizar ProgressBar del diálogo
+                    bluetoothDialog?.findViewById<ProgressBar>(R.id.progress_bar)?.visibility = View.GONE
                 }
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
-                    binding.progressBar.visibility = View.GONE
+                    // Actualizar ProgressBar del diálogo
+                    bluetoothDialog?.findViewById<ProgressBar>(R.id.progress_bar)?.visibility = View.GONE
                     showToast("Búsqueda de dispositivos finalizada")
                 }
                 BluetoothAdapter.ACTION_STATE_CHANGED -> {
@@ -181,23 +185,6 @@ class BluetoothFragment : DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
-        bluetooth = Bluetooth(requireContext())
-        bluetooth?.onStart()
-
-        checkProgressBarRunnable = object : Runnable {
-            override fun run() {
-                if (isAdded && view != null && binding.progressBar.visibility == View.VISIBLE) {
-                    checkBluetoothPermissions()
-                }
-            }
-        }
-
-        binding.progressBar.visibility = View.VISIBLE
-
-        setupRecyclerView()
-        setupBluetoothCallbacks()
-        setupUI()
     }
 
     private fun setupBluetoothCallbacks() {
@@ -224,31 +211,26 @@ class BluetoothFragment : DialogFragment() {
 
         bluetooth!!.setDiscoveryCallback(object : DiscoveryCallback {
             override fun onDiscoveryStarted() {
-                binding.progressBar.visibility = View.VISIBLE
+                bluetoothDialog?.findViewById<ProgressBar>(R.id.progress_bar)?.visibility = View.VISIBLE
             }
 
             override fun onDiscoveryFinished() {
-                binding.progressBar.visibility = View.GONE
+                bluetoothDialog?.findViewById<ProgressBar>(R.id.progress_bar)?.visibility = View.GONE
                 handler.removeCallbacks(checkProgressBarRunnable)
             }
 
             @SuppressLint("MissingPermission")
             override fun onDeviceFound(device: BluetoothDevice) {
-                // Obtener el nombre del dispositivo o asignar un nombre predeterminado
                 val deviceName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     device.name ?: device.alias ?: "Desconocido"
                 } else {
                     device.name ?: "Desconocido"
                 }
 
-                // Verificar si el dispositivo ya está en la lista
                 if (bluetoothDevices.none { it?.address == device.address }) {
                     bluetoothDevices.add(device)
-
-                    // Notificar al adaptador sobre el cambio en los datos
                     devicesAdapter?.notifyDataSetChanged()
 
-                    // Logs para depuración
                     Log.d(TAG, "Device found: $deviceName (${device.address})")
                     logger.log("setDiscoveryCallback: Device found: $deviceName (${device.address})")
                 }
@@ -269,7 +251,7 @@ class BluetoothFragment : DialogFragment() {
                 showToast("Error: $errorCode")
                 Log.e(TAG, "Discovery error: $errorCode")
                 logger.log("setDiscoveryCallback: Discovery error: $errorCode")
-                dialog?.dismiss()
+                bluetoothDialog?.dismiss()
                 handler.removeCallbacks(checkProgressBarRunnable)
             }
         })
@@ -280,6 +262,11 @@ class BluetoothFragment : DialogFragment() {
                 showToast("Conectado a ${device.name}")
                 Log.d(TAG, "Device connected: ${device.name}")
                 logger.log("setDeviceCallback: Device connected: ${device.name}")
+
+                // Actualizar nombre del dispositivo en el diálogo
+                bluetoothDialog?.findViewById<TextView>(R.id.device_name)?.text =
+                    "Conectado a: ${device.name}"
+
                 updateUIForBluetoothOn()
             }
 
@@ -288,6 +275,11 @@ class BluetoothFragment : DialogFragment() {
                 showToast("Desconectado de ${device.name}")
                 Log.d(TAG, "Device disconnected: ${device.name}. Message: $message")
                 logger.log("setDeviceCallback: Device disconnected: ${device.name}. Message: $message")
+
+                // Actualizar nombre del dispositivo en el diálogo
+                bluetoothDialog?.findViewById<TextView>(R.id.device_name)?.text =
+                    "No conectado"
+
                 updateUIForBluetoothOff()
             }
 
@@ -296,14 +288,14 @@ class BluetoothFragment : DialogFragment() {
                 showToast("Mensaje recibido: $receivedMessage")
                 Log.d(TAG, "Message received: $receivedMessage")
                 logger.log("setDeviceCallback: Message received: $receivedMessage")
-                dialog?.dismiss()
+                bluetoothDialog?.dismiss()
             }
 
             override fun onError(errorCode: Int) {
                 showToast("Error: $errorCode")
                 Log.e(TAG, "Device error: $errorCode")
                 logger.log("setDeviceCallback: Device error: $errorCode")
-                dialog?.dismiss()
+                bluetoothDialog?.dismiss()
             }
 
             @SuppressLint("MissingPermission")
@@ -311,7 +303,7 @@ class BluetoothFragment : DialogFragment() {
                 showToast("Error de conexión: $message")
                 Log.e(TAG, "Connection error with ${device.name}: $message")
                 logger.log("setDeviceCallback: Connection error with ${device.name}: $message")
-                dialog?.dismiss()
+                bluetoothDialog?.dismiss()
             }
         })
     }
@@ -420,14 +412,12 @@ class BluetoothFragment : DialogFragment() {
         }
     }
 
-    private fun setupRecyclerView() {
-        // Configura el adaptador para el ListView
+    private fun setupRecyclerView(view: View) {
+        val listDevices = view.findViewById<ListView>(R.id.list_devices)
         devicesAdapter = DeviceListAdapter(requireContext(), bluetoothDevices)
-        binding.listDevices.adapter = devicesAdapter
-        handler.postDelayed(checkProgressBarRunnable, 3000)
+        listDevices.adapter = devicesAdapter
 
-        // Configura la acción de clic en un dispositivo
-        binding.listDevices.setOnItemClickListener { _, _, position, _ ->
+        listDevices.setOnItemClickListener { _, _, position, _ ->
             val selectedDevice = bluetoothDevices[position]
             selectedDevice?.let { device ->
                 pairAndConnectDevice(device)
@@ -468,7 +458,7 @@ class BluetoothFragment : DialogFragment() {
                 e.printStackTrace()
                 showToast("No se pudo emparejar con ${device.name}")
                 logger.log("pairAndConnectDevice: No se pudo emparejar con ${device.name}, $e")
-                dialog?.dismiss()
+                bluetoothDialog?.dismiss()
             }
         }
     }
@@ -487,7 +477,7 @@ class BluetoothFragment : DialogFragment() {
                     sharedViewModel.updateConnectedDeviceAddress(device.address.toString())
                     showToast("Conectado a ${device.name}")
 
-                    dialog?.hide()
+                    bluetoothDialog?.hide()
                     // Redirigir al tab 1 solo si la conexión fue exitosa
                     findNavController().navigate(R.id.nav_initReportePeso)
 //                    tabViewModel.setNavigateToTab(1)
@@ -498,7 +488,7 @@ class BluetoothFragment : DialogFragment() {
                     logger.log("connectToDevice: Error al conectar: ${e.message}", e)
                     binding.deviceName.text = "Error de conexión"
                     showToast("Error al conectar: ${e.message}")
-                    dialog?.dismiss()
+                    bluetoothDialog?.dismiss()
                 }
             }
         }
@@ -595,18 +585,22 @@ class BluetoothFragment : DialogFragment() {
 
 
     private fun updateUIForBluetoothOn() {
-        if (isAdded) {
-            binding.btnToggleBluetooth.background = ContextCompat.getDrawable(requireContext(), R.drawable.button_background_active)
-            binding.btnScan.background = ContextCompat.getDrawable(requireContext(), R.drawable.button_background_active_reload)
-            binding.btnScan.isEnabled = true
+        bluetoothDialog?.let { dialog ->
+            dialog.findViewById<ImageButton>(R.id.btn_toggle_bluetooth)?.background =
+                ContextCompat.getDrawable(requireContext(), R.drawable.button_background_active)
+            dialog.findViewById<ImageButton>(R.id.btn_scan)?.background =
+                ContextCompat.getDrawable(requireContext(), R.drawable.button_background_active_reload)
+            dialog.findViewById<ImageButton>(R.id.btn_scan)?.isEnabled = true
         }
     }
 
     private fun updateUIForBluetoothOff() {
-        if (isAdded) {
-            binding.btnToggleBluetooth.background = ContextCompat.getDrawable(requireContext(), R.drawable.button_background_inactive)
-            binding.btnScan.background = ContextCompat.getDrawable(requireContext(), R.drawable.button_background_inactive_reload)
-            binding.btnScan.isEnabled = false
+        bluetoothDialog?.let { dialog ->
+            dialog.findViewById<ImageButton>(R.id.btn_toggle_bluetooth)?.background =
+                ContextCompat.getDrawable(requireContext(), R.drawable.button_background_inactive)
+            dialog.findViewById<ImageButton>(R.id.btn_scan)?.background =
+                ContextCompat.getDrawable(requireContext(), R.drawable.button_background_inactive_reload)
+            dialog.findViewById<ImageButton>(R.id.btn_scan)?.isEnabled = false
             bluetoothDevices.clear()
             devicesAdapter?.notifyDataSetChanged()
         }
@@ -646,60 +640,151 @@ class BluetoothFragment : DialogFragment() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
+    fun showBluetoothDialog(context: Context) {
+        if (isAdded) {
+            if (bluetoothDialog == null) {
+                val dialogView = LayoutInflater.from(context).inflate(R.layout.fragment_bluetooth, null)
+                val builder = AlertDialog.Builder(context)
+                builder.setView(dialogView)
 
-        // Verificar si el diálogo está mostrándose
-        val fragmentManager = parentFragmentManager
-        val existingDialog = fragmentManager.findFragmentByTag("BluetoothFragment")
-        if (existingDialog != null) {
-            // Cerrar el diálogo si está mostrándose
-            (existingDialog as? DialogFragment)?.dismiss()
-            Log.d("DialogFragment", "Dialog was closed")
+                bluetoothDialog = builder.create()
+                bluetoothDialog?.setOnCancelListener {
+                    // Handle dialog cancellation if needed
+                }
+
+                // Initialize all Bluetooth components here
+                initializeBluetoothComponents(dialogView)
+            }
+
+            bluetoothDialog?.show()
         } else {
-            Log.d("DialogFragment", "No dialog to close")
+            Log.e("BluetoothFragment", "Fragment not attached to FragmentManager")
         }
     }
 
+    private fun initializeBluetoothComponents(dialogView: View) {
+        // Initialize location client
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
 
-    override fun onStart() {
-        super.onStart()
-        checkGPSStatus()
+        // Initialize Bluetooth
+        bluetooth = Bluetooth(requireContext())
+        bluetooth?.onStart()
 
-        // Verificar si el diálogo ya está mostrándose
-        val fragmentManager = parentFragmentManager
-        val existingDialog = fragmentManager.findFragmentByTag("BluetoothFragment")
-        if (existingDialog == null) {
-            // Crear y mostrar el diálogo solo si no existe
-            val dialog = dialog
-            if (dialog != null) {
-                val displayMetrics = DisplayMetrics()
-                dialog.window?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
-                val heightInDp = 600
-                val heightInPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, heightInDp.toFloat(), displayMetrics).toInt()
-
-                val layoutParams = dialog.window?.attributes
-                layoutParams?.width = ViewGroup.LayoutParams.WRAP_CONTENT
-                layoutParams?.height = heightInPx
-                dialog.window?.attributes = layoutParams
-
-                // Mostrar el diálogo después de ajustar sus atributos y verificar permisos
-                Handler(Looper.getMainLooper()).postDelayed({
-                    if (hasBluetoothPermissions()) {
-                        // En lugar de dialog.show(), usa el método show() del DialogFragment con el tag
-                        if (!isAdded) {
-                            show(parentFragmentManager, "BluetoothFragment")
-                        }
-                    }
-                }, 2000) // Retraso de 2 segundos (2000 ms)
+        // Setup progress bar runnable
+        checkProgressBarRunnable = object : Runnable {
+            override fun run() {
+                if (isAdded && dialogView != null &&
+                    dialogView.findViewById<ProgressBar>(R.id.progress_bar).visibility == View.VISIBLE) {
+                    checkBluetoothPermissions()
+                }
             }
-
-            val closeButton: ImageButton? = view?.findViewById(R.id.btn_close_modal)
-            closeButton?.setOnClickListener {
-                dismiss()
-            }
-        } else {
-            Log.d("DialogFragment", "Dialog is already showing")
         }
+
+        // Set initial progress bar visibility
+        dialogView.findViewById<ProgressBar>(R.id.progress_bar).visibility = View.VISIBLE
+
+        // Setup UI components
+        setupDialogUI(dialogView)
+
+        // Setup Bluetooth callbacks
+        setupBluetoothCallbacks()
+
+        // Check permissions
+        checkBluetoothPermissions()
     }
+
+    private fun setupDialogUI(view: View) {
+        val btnToggleBluetooth = view.findViewById<ImageButton>(R.id.btn_toggle_bluetooth)
+        val btnScan = view.findViewById<ImageButton>(R.id.btn_scan)
+        val btnCloseModal = view.findViewById<ImageButton>(R.id.btn_close_modal)
+        val listDevices = view.findViewById<ListView>(R.id.list_devices)
+        val deviceName = view.findViewById<TextView>(R.id.device_name)
+
+        // Initialize devices adapter
+        devicesAdapter = DeviceListAdapter(requireContext(), bluetoothDevices)
+        listDevices.adapter = devicesAdapter
+
+        listDevices.setOnItemClickListener { _, _, position, _ ->
+            val selectedDevice = bluetoothDevices[position]
+            selectedDevice?.let { device ->
+                pairAndConnectDevice(device)
+            }
+        }
+
+        btnToggleBluetooth.setOnClickListener {
+            toggleBluetooth()
+        }
+
+        btnScan.setOnClickListener {
+            checkBluetoothPermissions()
+        }
+
+        btnCloseModal.setOnClickListener {
+            handler.removeCallbacks(checkProgressBarRunnable)
+            bluetoothDialog?.dismiss()
+        }
+
+        handler.postDelayed(checkProgressBarRunnable, 3000)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        bluetoothDialog?.dismiss()
+    }
+
+
+//    override fun onStop() {
+//        super.onStop()
+//
+//        val fragmentManager = parentFragmentManager
+//        val existingDialog = fragmentManager.findFragmentByTag("BluetoothFragment")
+//        if (existingDialog != null) {
+//            // Cerrar el diálogo si está mostrándose
+//            (existingDialog as? DialogFragment)?.dismiss()
+//            Log.d("DialogFragment", "Dialog was closed")
+//        } else {
+//            Log.d("DialogFragment", "No dialog to close")
+//        }
+//    }
+//
+//    override fun onStart() {
+//        super.onStart()
+//        checkGPSStatus()
+//
+//        // Verificar si el diálogo ya está mostrándose
+//        val fragmentManager = parentFragmentManager
+//        val existingDialog = fragmentManager.findFragmentByTag("BluetoothFragment")
+//        if (existingDialog == null) {
+//            // Crear y mostrar el diálogo solo si no existe
+//            val dialog = dialog
+//            if (dialog != null) {
+//                val displayMetrics = DisplayMetrics()
+//                dialog.window?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+//                val heightInDp = 600
+//                val heightInPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, heightInDp.toFloat(), displayMetrics).toInt()
+//
+//                val layoutParams = dialog.window?.attributes
+//                layoutParams?.width = ViewGroup.LayoutParams.WRAP_CONTENT
+//                layoutParams?.height = heightInPx
+//                dialog.window?.attributes = layoutParams
+//
+//                // Mostrar el diálogo después de ajustar sus atributos y verificar permisos
+//                Handler(Looper.getMainLooper()).postDelayed({
+//                    if (hasBluetoothPermissions()) {
+//                        // En lugar de dialog.show(), usa el método show() del DialogFragment con el tag
+//                        if (!isAdded) {
+//                            show(parentFragmentManager, "BluetoothFragment")
+//                        }
+//                    }
+//                }, 2000) // Retraso de 2 segundos (2000 ms)
+//            }
+//
+//
+//            binding.btnCloseModal.setOnClickListener {
+//                dialog?.dismiss()
+//            }
+//        } else {
+//            Log.d("DialogFragment", "Dialog is already showing")
+//        }
+//    }
 }

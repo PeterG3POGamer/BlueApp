@@ -136,6 +136,7 @@ class BluetoothConnectionService(
         private val outputStream: OutputStream = socket.outputStream
         private var buffer = ByteArray(1024)
         private var bufferPosition = 0
+        
         private var ultimoValorCorrecto = "0.00"
         private var valorCorrectoNumero = "0.00"
         private var ultimaConfig = ""

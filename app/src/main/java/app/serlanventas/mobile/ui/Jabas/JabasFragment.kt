@@ -1345,9 +1345,16 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
     private fun showModalBluetoothFragment() {
         checkBluetoothPermissions { permissionsGranted ->
             if (permissionsGranted) {
-                // Si los permisos están concedidos, muestra el fragmento
-                val dialogFragment = BluetoothFragment()
-                dialogFragment.show(requireActivity().supportFragmentManager, "BluetoothFragment")
+                // Añadir BluetoothFragment a la actividad
+                val bluetoothFragment = BluetoothFragment()
+                val fragmentManager = requireActivity().supportFragmentManager
+                val transaction = fragmentManager.beginTransaction()
+                transaction.add(R.id.fragment_container_bluetooth, bluetoothFragment, "BluetoothFragment")
+                transaction.commit()
+
+                // Mostrar el diálogo después de añadir el fragmento
+                fragmentManager.executePendingTransactions()
+                bluetoothFragment.showBluetoothDialog(requireContext())
             } else {
                 // Si los permisos no están concedidos, no muestres el fragmento
             }
