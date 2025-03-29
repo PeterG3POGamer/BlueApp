@@ -17,6 +17,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import app.serlanventas.mobile.VersionControl.UpdateChecker
+import app.serlanventas.mobile.VersionControl.UpdateManager
 import app.serlanventas.mobile.ui.DataSyncManager.DataSyncManager
 import app.serlanventas.mobile.ui.Interfaces.ProgressCallback
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice.getDeviceModel
@@ -74,28 +75,95 @@ class LoginActivity : AppCompatActivity(), ProgressCallback {
 
         // Primero, verificar si es necesario sincronizar los datos
         networkChangeReceiver = NetworkChangeReceiver { isConnected ->
+            if (isFinishing || isDestroyed) return@NetworkChangeReceiver
+
             if (isConnected) {
                 dataSyncManager.checkSincronizarData(baseUrl, isLoggedIn, this) { success ->
-                    if (success) {
+                    if (!isFinishing && !isDestroyed && success) {
                         navigateBasedOnLoginState(isLoggedIn)
                     }
                 }
-            }else{
-                navigateBasedOnLoginState(isLoggedIn)
+            } else {
+                if (!isFinishing && !isDestroyed) {
+                    navigateBasedOnLoginState(isLoggedIn)
+                }
             }
         }
     }
 
     private fun navigateBasedOnLoginState(isLoggedIn: Boolean) {
-        if (isLoggedIn) {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-            finish()
-        } else {
-            findViewById<View>(R.id.fragment_container).visibility = View.VISIBLE
-            if (supportFragmentManager.findFragmentById(R.id.fragment_container) == null) {
-                showLoginFragment()
+        if (isFinishing || isDestroyed) {
+            Log.d("LoginActivity", "Actividad destruida, ignorando navegación")
+            return
+        }
+
+        runOnUiThread {
+            // Doble verificación por si cambió el estado mientras se programaba en el UI thread
+            if (isFinishing || isDestroyed) return@runOnUiThread
+
+            if (isLoggedIn) {
+                val intent = Intent(this, MainActivity::class.java)
+                startActivity(intent)
+                finish()
+            } else {
+                findViewById<View>(R.id.fragment_container).visibility = View.VISIBLE
+                if (supportFragmentManager.findFragmentById(R.id.fragment_container) == null) {
+                    showLoginFragment()
+                }
             }
+        }
+    }
+
+    fun showLoginFragment() {
+        try {
+            if (!isFinishing && !isDestroyed) {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, LoginFragment())
+                    .commitAllowingStateLoss() // Usamos commitAllowingStateLoss
+            }
+        } catch (e: IllegalStateException) {
+            Log.e("LoginActivity", "Error al mostrar fragmento", e)
+        }
+    }
+
+    private fun forceCrash() {
+        throw RuntimeException("¡Esto es un crasheo de prueba!")
+    }
+
+    private fun setupExceptionHandler() {
+        val defaultExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            try {
+                Log.e("CrashHandler", "Excepción no controlada", throwable)
+                val stackTrace = StringWriter()
+                throwable.printStackTrace(PrintWriter(stackTrace))
+
+                val idDevice = getDeviceModel()
+                val timestamp =
+                    SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                val filename = "${idDevice}_crash_$timestamp.txt"
+
+                val file = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    File(getExternalFilesDir(null), filename)
+                } else {
+                    @Suppress("DEPRECATION")
+                    (File(
+                        Environment.getExternalStorageDirectory(),
+                        "files/crashLogs/$filename"
+                    ))
+                }
+
+                try {
+                    file.parentFile?.mkdirs()
+                    file.writeText("Timestamp: $timestamp\n\n$stackTrace")
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            defaultExceptionHandler?.uncaughtException(thread, throwable)
         }
     }
 
@@ -129,61 +197,8 @@ class LoginActivity : AppCompatActivity(), ProgressCallback {
 
     private fun downloadUpdate() {
         lifecycleScope.launch {
+            UpdateManager.setCurrentActivity(this@LoginActivity)
             updateChecker.checkAndDownloadUpdate()
-        }
-    }
-
-    fun showLoginFragment() {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, LoginFragment())
-            .commit()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
-        this@LoginActivity.registerReceiver(networkChangeReceiver, filter)
-
-        checkAndRequestInstallPermission()
-    }
-
-    private fun forceCrash() {
-        throw RuntimeException("¡Esto es un crasheo de prueba!")
-    }
-
-    private fun setupExceptionHandler() {
-        val defaultExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            try {
-                Log.e("CrashHandler", "Excepción no controlada", throwable)
-                val stackTrace = StringWriter()
-                throwable.printStackTrace(PrintWriter(stackTrace))
-
-                val idDevice = getDeviceModel()
-                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-                val filename = "${idDevice}_crash_$timestamp.txt"
-
-                val file = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    File(getExternalFilesDir(null), filename)
-                } else {
-                    @Suppress("DEPRECATION")
-                    (File(
-                        Environment.getExternalStorageDirectory(),
-                        "files/crashLogs/$filename"
-                    ))
-                }
-
-                try {
-                    file.parentFile?.mkdirs()
-                    file.writeText("Timestamp: $timestamp\n\n$stackTrace")
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
-            defaultExceptionHandler?.uncaughtException(thread, throwable)
         }
     }
 
@@ -191,6 +206,24 @@ class LoginActivity : AppCompatActivity(), ProgressCallback {
         super.onPause()
         this@LoginActivity.unregisterReceiver(networkChangeReceiver)
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        this@LoginActivity.registerReceiver(networkChangeReceiver, filter)
+
+        // Solo verificar actualización si no hay descarga en curso
+        if (!UpdateManager.isDownloading()) {
+            checkAndRequestInstallPermission()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (!isChangingConfigurations) {
+            UpdateManager.cleanup(applicationContext)
+        }
     }
 
     override fun onProgressUpdate(message: String) {

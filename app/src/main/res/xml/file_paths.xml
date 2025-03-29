@@ -3,5 +3,5 @@
 <!--    // PDFs/-->
     <external-files-path name="pdfs" path="PDFs/" />
     <external-path name="external_files" path="." />
-    <external-files-path name="update" path="Update/" />
+    <external-files-path name="updates" path="Updates/" />
 </paths>

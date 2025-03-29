@@ -22,7 +22,7 @@
         android:layout_height="wrap_content"
         android:text="¡Nueva actualización disponible!"
         android:textSize="20sp"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:gravity="center"
         app:layout_constraintTop_toBottomOf="@id/app_icon"
         app:layout_constraintStart_toStartOf="parent"
@@ -37,7 +37,7 @@
         android:layout_height="wrap_content"
         android:textSize="16sp"
         android:gravity="center"
-        android:textColor="#333333"
+        android:textColor="#FFFF"
         app:layout_constraintTop_toBottomOf="@id/title"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -50,7 +50,7 @@
         android:text="Contenido:"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:textColor="#333333"
+        android:textColor="@color/white"
         app:layout_constraintTop_toBottomOf="@id/update_info"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -68,7 +68,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="16dp"
-        android:background="@drawable/changes_background"/>
+        android:background="@drawable/dialog_download_background"/>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_cancel"

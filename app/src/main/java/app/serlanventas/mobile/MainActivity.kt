@@ -34,6 +34,7 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import app.serlanventas.mobile.VersionControl.UpdateChecker
+import app.serlanventas.mobile.VersionControl.UpdateManager
 import app.serlanventas.mobile.databinding.ActivityMainBinding
 import app.serlanventas.mobile.ui.Jabas.ManagerPost
 import app.serlanventas.mobile.ui.Services.getAddressMacDivice
@@ -218,7 +219,7 @@ class MainActivity : AppCompatActivity() {
 
         // Actualiza el ítem de la versión en el menú del NavigationView
         updateAppVersion(navView)
-        checkAndRequestInstallPermission()
+//        checkAndRequestInstallPermission()
 
         // Actualiza los datos del usuario en el nav_header
         updateUserHeader(navView)
@@ -337,41 +338,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkAndRequestInstallPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Si el permiso aún no está habilitado
-            if (!this.packageManager.canRequestPackageInstalls()) {
-                // Mostrar un diálogo que el usuario no puede cancelar
-                AlertDialog.Builder(this)
-                    .setTitle("Permiso requerido")
-                    .setMessage("Para descargar e instalar actualizaciones, necesitamos que habilites la opción de 'Instalar aplicaciones de fuentes desconocidas'.")
-                    .setCancelable(false) // Impide que el diálogo sea cancelado
-                    .setPositiveButton("Habilitar") { dialog, _ ->
-                        // Redirigir a la configuración para habilitar el permiso
-                        val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
-                            data = Uri.parse("package:$packageName")
-                        }
-                        startActivity(intent)
-                        dialog.dismiss()
-                    }
-                    .show()
-            } else {
-                downloadUpdate()
-            }
-        } else {
-            // Para versiones anteriores a Android 8.0, llevar al usuario a la configuración de seguridad
-            val intent = Intent(Settings.ACTION_SECURITY_SETTINGS)
-            startActivity(intent)
-        }
-    }
-
-    private fun downloadUpdate() {
-        lifecycleScope.launch {
-            updateChecker.checkAndDownloadUpdate()
-        }
-    }
-
-    private fun logRemainingTime() {
+   private fun logRemainingTime() {
         val currentTime = System.currentTimeMillis()
         val remainingTime = logoutTime - currentTime
 
@@ -392,7 +359,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 
     @SuppressLint("ObsoleteSdkInt")
     private fun performLogout() {
@@ -632,6 +598,66 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    private fun checkAndRequestInstallPermission() {
+        if (UpdateManager.isDownloading()) {
+            UpdateManager.showProgressDialog(this)
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Si el permiso aún no está habilitado
+            if (!this.packageManager.canRequestPackageInstalls()) {
+                // Mostrar un diálogo que el usuario no puede cancelar
+                AlertDialog.Builder(this)
+                    .setTitle("Permiso requerido")
+                    .setMessage("Para descargar e instalar actualizaciones, necesitamos que habilites la opción de 'Instalar aplicaciones de fuentes desconocidas'.")
+                    .setCancelable(false) // Impide que el diálogo sea cancelado
+                    .setPositiveButton("Habilitar") { dialog, _ ->
+                        // Redirigir a la configuración para habilitar el permiso
+                        val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                            data = Uri.parse("package:$packageName")
+                        }
+                        startActivity(intent)
+                        dialog.dismiss()
+                    }
+                    .show()
+            } else {
+                downloadUpdate()
+            }
+        } else {
+            // Para versiones anteriores a Android 8.0, llevar al usuario a la configuración de seguridad
+            val intent = Intent(Settings.ACTION_SECURITY_SETTINGS)
+            startActivity(intent)
+        }
+    }
+
+    private fun downloadUpdate() {
+        if (!UpdateManager.isDownloading()) {
+            lifecycleScope.launch {
+                updateChecker.checkAndDownloadUpdate()
+            }
+        } else {
+            UpdateManager.showProgressDialog(this)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        UpdateManager.setCurrentActivity(this)
+
+        if (UpdateManager.isDownloading()) {
+            UpdateManager.showProgressDialog(this)
+            return
+        }
+        checkAndRequestInstallPermission()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (!isChangingConfigurations) {
+            UpdateManager.cleanup(applicationContext, force = true)
+        }
     }
 
 
