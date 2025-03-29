@@ -1,5 +1,0 @@
-<!-- res/anim/slide_out_left.xml -->
-<translate xmlns:android="http://schemas.android.com/apk/res/android"
-    android:duration="700"
-    android:fromXDelta="0%"
-    android:toXDelta="-100%" />
