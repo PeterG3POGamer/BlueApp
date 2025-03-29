@@ -1,0 +1,163 @@
+<!-- fragment_reportes.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".ui.Reportes.ReportesFragment">
+
+    <!-- Sección 1: Búsqueda -->
+    <LinearLayout
+        android:id="@+id/searchLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp">
+
+        <!-- EditText para Búsqueda por Texto -->
+        <EditText
+            android:id="@+id/editTextSearch"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Buscar por texto"
+            android:inputType="text"
+            android:layout_marginEnd="8dp" />
+
+        <!-- EditText para Fecha Desde -->
+        <EditText
+            android:id="@+id/editTextDateFrom"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Fecha desde"
+            android:inputType="date"
+            android:layout_marginEnd="8dp" />
+
+        <!-- EditText para Fecha Hasta -->
+        <EditText
+            android:id="@+id/editTextDateTo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Fecha hasta"
+            android:inputType="date"
+            android:layout_marginEnd="8dp" />
+
+        <!-- Botón de Búsqueda -->
+        <ImageButton
+            android:id="@+id/buttonSearch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:elevation="8dp"
+            android:padding="12dp"
+            app:backgroundTint="@color/your_greed"
+            app:srcCompat="@drawable/baseline_youtube_searched_for_24" />
+
+    </LinearLayout>
+
+    <!-- Sección 2: Botones de Acción -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp"
+        android:gravity="end">
+
+        <!-- Botón de Recarga -->
+        <ImageButton
+            android:id="@+id/boton_ReCarga"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:elevation="8dp"
+            android:padding="12dp"
+            app:backgroundTint="@color/purple_500"
+            app:srcCompat="@drawable/outline_directory_sync_24"
+            android:layout_marginEnd="16dp" />
+
+        <!-- Botón de Insertar -->
+        <ImageButton
+            android:id="@+id/boton_Insert"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:elevation="8dp"
+            android:padding="12dp"
+            app:backgroundTint="@color/your_blue"
+            app:srcCompat="@drawable/baseline_cloud_24" />
+
+    </LinearLayout>
+
+    <!-- Sección 3: Encabezados del RecyclerView -->
+    <LinearLayout
+        android:id="@+id/headerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/textViewId"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.6"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="ID"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textViewSerie"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.7"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Serie"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textViewFecha"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.7"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Fecha"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textViewTipo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Tipo"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textViewDocCliente"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Doc Cliente"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- RecyclerView para mostrar reportes -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewReportes"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:padding="5dp" />
+
+</LinearLayout>

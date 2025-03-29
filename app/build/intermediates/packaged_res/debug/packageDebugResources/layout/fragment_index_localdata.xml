@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white">
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Datos Locales"
+        android:textSize="24sp"
+        android:textColor="@color/black"
+        android:textStyle="bold"
+        android:paddingBottom="16dp"
+        tools:ignore="HardcodedText" />
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:rowCount="2"
+        android:alignmentMode="alignBounds"
+        android:columnOrderPreserved="false"
+        android:padding="8dp">
+
+        <!-- Card for Clientes -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardClientesContainer"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:layout_margin="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/color_gray_low">
+
+            <LinearLayout
+                android:id="@+id/cardClientes"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/imgClientes"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/icon_clientes"
+                    android:contentDescription="Clientes"/>
+
+                <TextView
+                    android:id="@+id/tvClientes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Clientes"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:paddingTop="8dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Card for Nucleos -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardNucleosContainer"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:layout_margin="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/color_gray_low">
+
+            <LinearLayout
+                android:id="@+id/cardNucleos"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/imgNucleos"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/icon_nucleo"
+                    android:contentDescription="Nucleos"/>
+
+                <TextView
+                    android:id="@+id/tvNucleos"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nucleos"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:paddingTop="8dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Card for Galpones -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardGalponesContainer"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:layout_margin="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/color_gray_low">
+
+            <LinearLayout
+                android:id="@+id/cardGalpones"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/imgGalpones"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/icon_galpones"
+                    android:contentDescription="Galpones"/>
+
+                <TextView
+                    android:id="@+id/tvGalpones"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Galpones"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:paddingTop="8dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Card for Usuarios -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardUsuariosContainer"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:layout_margin="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/color_gray_low">
+
+            <LinearLayout
+                android:id="@+id/cardUsuarios"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/imgUsuarios"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/icon_usuarios"
+                    android:contentDescription="Usuarios"/>
+
+                <TextView
+                    android:id="@+id/tvUsuarios"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Usuarios"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:paddingTop="8dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Card for Ventas Locales -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardVentasLocalesContainer"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:layout_margin="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/color_gray_low">
+
+            <LinearLayout
+                android:id="@+id/cardVentasLocales"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/imgVentasLocales"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/icon_ventas"
+                    android:contentDescription="Ventas Locales"/>
+
+                <TextView
+                    android:id="@+id/tvVentasLocales"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ventas Locales"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:paddingTop="8dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Card for Pesos Locales -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardPesosLocalesContainer"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:layout_margin="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/color_gray_low">
+
+            <LinearLayout
+                android:id="@+id/cardPesosLocales"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/imgPesosLocales"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:contentDescription="Icono de balanza"
+                    android:src="@drawable/balanza"/>
+
+                <TextView
+                    android:id="@+id/tvPesosLocales"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pesos Locales"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:paddingTop="8dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Card for Impresora -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardImpresoraContainer"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:layout_margin="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/color_gray_low">
+
+            <LinearLayout
+                android:id="@+id/cardImpresora"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/imgImpresora"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/icon_impresora"
+                    android:contentDescription="Impresora"/>
+
+                <TextView
+                    android:id="@+id/tvImpresora"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Impresora"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:paddingTop="8dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Card for Config Bal -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardConfigBalContainer"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:layout_margin="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/color_gray_low">
+
+            <LinearLayout
+                android:id="@+id/cardConfigBal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/imgConfigBal"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/ic_bluetooth"
+                    android:contentDescription="Confi"/>
+
+                <TextView
+                    android:id="@+id/tvConfig"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Conexión y Configuración"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:paddingTop="8dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </GridLayout>
+</LinearLayout>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group
+        android:id="@+id/nav_group_bluetooth"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_bluetooth_section"
+            android:icon="@drawable/ic_info"
+            android:title="@string/pesajes">
+            <menu>
+                <item
+                    android:id="@+id/nav_initReportePeso"
+                    android:icon="@drawable/ic_cabezapollo3"
+                    android:title="@string/menu_pesos" />
+            </menu>
+        </item>
+    </group>
+
+    <group
+        android:id="@+id/nav_group_reportes"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_report_section"
+            android:icon="@drawable/ic_info"
+            android:title="@string/reportes">
+            <menu>
+                <item
+                    android:id="@+id/nav_initReporteGuias"
+                    android:icon="@drawable/baseline_add_home_work_24"
+                    android:title="@string/menu_NucleoGalponWeb"
+                    android:visible="true"/>
+                <item
+                    android:id="@+id/nav_initReporteVentasApp"
+                    android:icon="@drawable/baseline_diamond_24"
+                    android:title="@string/menu_VentasAppWeb" />
+                <item
+                    android:id="@+id/nav_initNucleoGalpon"
+                    android:icon="@drawable/baseline_travel_explore_24"
+                    android:title="@string/menu_NucleoGalponWeb"
+                    android:visible="false"/>
+            </menu>
+        </item>
+    </group>
+
+    <group
+        android:id="@+id/nav_group_datalocal"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_localdata_section"
+            android:icon="@drawable/ic_info"
+            android:title="@string/localdata">
+            <menu>
+                <item
+                    android:id="@+id/nav_initLocalData"
+                    android:icon="@drawable/ic_download"
+                    android:title="@string/localdata" />
+            </menu>
+        </item>
+    </group>
+</menu>

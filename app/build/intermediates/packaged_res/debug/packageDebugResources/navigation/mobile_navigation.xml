@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@id/nav_initReportePeso">
+
+    <fragment
+        android:id="@+id/nav_initReportePeso"
+        android:name="app.serlanventas.mobile.ui.Jabas.JabasFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_pesos" />
+
+    <fragment
+        android:id="@+id/nav_initBluetooth"
+        android:name="app.serlanventas.mobile.ui.BluetoothView.BluetoothFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_bluetooth" />
+
+    <fragment
+        android:id="@+id/nav_initReporteGuias"
+        android:name="app.serlanventas.mobile.ui.Web.GuiasWebFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_guias_web" />
+
+    <fragment
+        android:id="@+id/nav_initReporteVentasApp"
+        android:name="app.serlanventas.mobile.ui.Web.VentasWebFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_ventas_web" />
+
+    <fragment
+        android:id="@+id/nav_initPreliminar"
+        android:name="app.serlanventas.mobile.ui.preliminar.FragmentPreliminar"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_peso_preliminar" />
+
+    <fragment
+        android:id="@+id/nav_initLocalData"
+        android:name="app.serlanventas.mobile.ui.indexDataLocal.indexDataLocal"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_index_localdata" />
+
+    <fragment
+        android:id="@+id/nav_initClientes"
+        android:name="app.serlanventas.mobile.ui.ModuleClientes.ClientesFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_module_clientes" />
+
+    <fragment
+        android:id="@+id/nav_initConfConex"
+        android:name="app.serlanventas.mobile.ui.ModuleConfigConex.ConfigConexFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_conex_config" />
+
+    <fragment
+        android:id="@+id/nav_initNucleos"
+        android:name="app.serlanventas.mobile.ui.ModuleNucleos.NucleosFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_module_nucleos" />
+
+    <fragment
+        android:id="@+id/nav_initGalpones"
+        android:name="app.serlanventas.mobile.ui.ModuleGalpones.GalponesFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_module_galpones" />
+
+<!--==================================================-->
+    <fragment
+        android:id="@+id/nav_initVentas"
+        android:name="app.serlanventas.mobile.ui.ModuleVentas.VentasFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_module_ventas" />
+
+    <fragment
+        android:id="@+id/nav_initPesos"
+        android:name="app.serlanventas.mobile.ui.ModulesPesos.PesosFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_module_pesos" />
+
+    <fragment
+        android:id="@+id/nav_initUsuarios"
+        android:name="app.serlanventas.mobile.ui.ModuleUsuarios.UsuariosFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_module_usuarios" />
+<!--==================================================-->
+
+    <fragment
+        android:id="@+id/nav_impresoraConfig"
+        android:name="app.serlanventas.mobile.ui.ImpresoraSettings.ImpresoraSettingsFragment"
+        android:label="@string/menu_bt_balanza"
+        tools:layout="@layout/fragment_impresora_settings" />
+
+
+    <!-- Acciones de navegación -->
+    <action
+        android:id="@+id/action_nav_initPreliminar_to_nav_initReportePeso"
+        app:destination="@id/nav_initReportePeso"
+        app:popUpTo="@id/nav_initPreliminar"
+        app:popUpToInclusive="true"/>
+</navigation>

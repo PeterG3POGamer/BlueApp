@@ -1,0 +1,327 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="app.serlanventas.mobile"
+4    android:versionCode="3"
+5    android:versionName="1.18.9" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="34" />
+10    <!-- Aquí irían todos los permisos que mencionaste en tu ejemplo anterior -->
+11
+12
+13    <!-- PARA EL BLUETOOTH -->
+14    <uses-permission android:name="android.permission.BLUETOOTH" />
+14-->C:\BlueApp\app\src\main\AndroidManifest.xml:7:5-68
+14-->C:\BlueApp\app\src\main\AndroidManifest.xml:7:22-65
+15    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+15-->C:\BlueApp\app\src\main\AndroidManifest.xml:8:5-74
+15-->C:\BlueApp\app\src\main\AndroidManifest.xml:8:22-71
+16    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+16-->C:\BlueApp\app\src\main\AndroidManifest.xml:9:5-76
+16-->C:\BlueApp\app\src\main\AndroidManifest.xml:9:22-73
+17    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+17-->C:\BlueApp\app\src\main\AndroidManifest.xml:10:5-73
+17-->C:\BlueApp\app\src\main\AndroidManifest.xml:10:22-70
+18    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+18-->C:\BlueApp\app\src\main\AndroidManifest.xml:11:5-78
+18-->C:\BlueApp\app\src\main\AndroidManifest.xml:11:22-75
+19    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+19-->C:\BlueApp\app\src\main\AndroidManifest.xml:13:5-79
+19-->C:\BlueApp\app\src\main\AndroidManifest.xml:13:22-76
+20    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+20-->C:\BlueApp\app\src\main\AndroidManifest.xml:14:5-81
+20-->C:\BlueApp\app\src\main\AndroidManifest.xml:14:22-78
+21    <uses-permission android:name="android.permission.INTERNET" />
+21-->C:\BlueApp\app\src\main\AndroidManifest.xml:15:5-67
+21-->C:\BlueApp\app\src\main\AndroidManifest.xml:15:22-64
+22    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+22-->C:\BlueApp\app\src\main\AndroidManifest.xml:16:5-79
+22-->C:\BlueApp\app\src\main\AndroidManifest.xml:16:22-76
+23    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+23-->C:\BlueApp\app\src\main\AndroidManifest.xml:17:5-77
+23-->C:\BlueApp\app\src\main\AndroidManifest.xml:17:22-74
+24    <uses-permission android:name="android.permission.VIBRATE" />
+24-->C:\BlueApp\app\src\main\AndroidManifest.xml:18:5-66
+24-->C:\BlueApp\app\src\main\AndroidManifest.xml:18:22-63
+25    <uses-permission android:name="android.permission.WAKE_LOCK" />
+25-->C:\BlueApp\app\src\main\AndroidManifest.xml:19:5-68
+25-->C:\BlueApp\app\src\main\AndroidManifest.xml:19:22-65
+26    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+26-->C:\BlueApp\app\src\main\AndroidManifest.xml:20:5-85
+26-->C:\BlueApp\app\src\main\AndroidManifest.xml:20:22-82
+27    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+27-->C:\BlueApp\app\src\main\AndroidManifest.xml:21:5-80
+27-->C:\BlueApp\app\src\main\AndroidManifest.xml:21:22-77
+28    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+28-->C:\BlueApp\app\src\main\AndroidManifest.xml:22:5-81
+28-->C:\BlueApp\app\src\main\AndroidManifest.xml:22:22-78
+29    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+29-->C:\BlueApp\app\src\main\AndroidManifest.xml:23:5-76
+29-->C:\BlueApp\app\src\main\AndroidManifest.xml:23:22-73
+30    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+30-->C:\BlueApp\app\src\main\AndroidManifest.xml:24:5-75
+30-->C:\BlueApp\app\src\main\AndroidManifest.xml:24:22-72
+31    <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
+31-->C:\BlueApp\app\src\main\AndroidManifest.xml:25:5-88
+31-->C:\BlueApp\app\src\main\AndroidManifest.xml:25:22-85
+32    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+32-->C:\BlueApp\app\src\main\AndroidManifest.xml:26:5-83
+32-->C:\BlueApp\app\src\main\AndroidManifest.xml:26:22-80
+33    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+33-->C:\BlueApp\app\src\main\AndroidManifest.xml:27:5-79
+33-->C:\BlueApp\app\src\main\AndroidManifest.xml:27:22-76
+34    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+34-->C:\BlueApp\app\src\main\AndroidManifest.xml:28:5-74
+34-->C:\BlueApp\app\src\main\AndroidManifest.xml:28:22-71
+35
+36    <permission
+36-->[androidx.core:core:1.13.1] C:\Users\user1\.gradle\caches\8.9\transforms\edb966288a93e255c8daef7138f58689\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
+37        android:name="app.serlanventas.mobile.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+37-->[androidx.core:core:1.13.1] C:\Users\user1\.gradle\caches\8.9\transforms\edb966288a93e255c8daef7138f58689\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
+38        android:protectionLevel="signature" />
+38-->[androidx.core:core:1.13.1] C:\Users\user1\.gradle\caches\8.9\transforms\edb966288a93e255c8daef7138f58689\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
+39
+40    <uses-permission android:name="app.serlanventas.mobile.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+40-->[androidx.core:core:1.13.1] C:\Users\user1\.gradle\caches\8.9\transforms\edb966288a93e255c8daef7138f58689\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
+40-->[androidx.core:core:1.13.1] C:\Users\user1\.gradle\caches\8.9\transforms\edb966288a93e255c8daef7138f58689\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
+41
+42    <application
+42-->C:\BlueApp\app\src\main\AndroidManifest.xml:31:5-90:19
+43        android:allowBackup="true"
+43-->C:\BlueApp\app\src\main\AndroidManifest.xml:32:9-35
+44        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+44-->[androidx.core:core:1.13.1] C:\Users\user1\.gradle\caches\8.9\transforms\edb966288a93e255c8daef7138f58689\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
+45        android:dataExtractionRules="@xml/data_extraction_rules"
+45-->C:\BlueApp\app\src\main\AndroidManifest.xml:33:9-65
+46        android:debuggable="true"
+47        android:extractNativeLibs="false"
+48        android:fullBackupContent="@xml/backup_rules"
+48-->C:\BlueApp\app\src\main\AndroidManifest.xml:34:9-54
+49        android:icon="@mipmap/ic_serlanventasapp"
+49-->C:\BlueApp\app\src\main\AndroidManifest.xml:35:9-50
+50        android:label="@string/app_name"
+50-->C:\BlueApp\app\src\main\AndroidManifest.xml:36:9-41
+51        android:networkSecurityConfig="@xml/network_security_config"
+51-->C:\BlueApp\app\src\main\AndroidManifest.xml:37:9-69
+52        android:roundIcon="@mipmap/ic_serlanventasapp_round"
+52-->C:\BlueApp\app\src\main\AndroidManifest.xml:38:9-61
+53        android:supportsRtl="true"
+53-->C:\BlueApp\app\src\main\AndroidManifest.xml:39:9-35
+54        android:theme="@style/Theme.BlueApp"
+54-->C:\BlueApp\app\src\main\AndroidManifest.xml:40:9-45
+55        android:usesCleartextTraffic="true" >
+55-->C:\BlueApp\app\src\main\AndroidManifest.xml:41:9-44
+56        <activity
+56-->C:\BlueApp\app\src\main\AndroidManifest.xml:44:9-54:20
+57            android:name="app.serlanventas.mobile.SplashActivity"
+57-->C:\BlueApp\app\src\main\AndroidManifest.xml:45:13-43
+58            android:configChanges="orientation|screenSize"
+58-->C:\BlueApp\app\src\main\AndroidManifest.xml:46:13-59
+59            android:exported="true"
+59-->C:\BlueApp\app\src\main\AndroidManifest.xml:47:13-36
+60            android:screenOrientation="sensorPortrait"
+60-->C:\BlueApp\app\src\main\AndroidManifest.xml:48:13-55
+61            android:theme="@style/Theme.BlueApp.NoActionBar" >
+61-->C:\BlueApp\app\src\main\AndroidManifest.xml:49:13-61
+62            <intent-filter>
+62-->C:\BlueApp\app\src\main\AndroidManifest.xml:50:13-53:29
+63                <action android:name="android.intent.action.MAIN" />
+63-->C:\BlueApp\app\src\main\AndroidManifest.xml:51:17-69
+63-->C:\BlueApp\app\src\main\AndroidManifest.xml:51:25-66
+64
+65                <category android:name="android.intent.category.LAUNCHER" />
+65-->C:\BlueApp\app\src\main\AndroidManifest.xml:52:17-77
+65-->C:\BlueApp\app\src\main\AndroidManifest.xml:52:27-74
+66            </intent-filter>
+67        </activity>
+68
+69        <!-- Login Activity (ahora es la actividad principal) -->
+70        <activity
+70-->C:\BlueApp\app\src\main\AndroidManifest.xml:57:9-65:20
+71            android:name="app.serlanventas.mobile.LoginActivity"
+71-->C:\BlueApp\app\src\main\AndroidManifest.xml:58:13-42
+72            android:configChanges="orientation|screenSize"
+72-->C:\BlueApp\app\src\main\AndroidManifest.xml:59:13-59
+73            android:exported="false"
+73-->C:\BlueApp\app\src\main\AndroidManifest.xml:60:13-37
+74            android:label="@string/app_name"
+74-->C:\BlueApp\app\src\main\AndroidManifest.xml:61:13-45
+75            android:screenOrientation="sensorPortrait"
+75-->C:\BlueApp\app\src\main\AndroidManifest.xml:62:13-55
+76            android:theme="@style/Theme.BlueApp.NoActionBar" >
+76-->C:\BlueApp\app\src\main\AndroidManifest.xml:63:13-61
+77        </activity>
+78        <activity
+78-->C:\BlueApp\app\src\main\AndroidManifest.xml:67:9-75:20
+79            android:name="app.serlanventas.mobile.MainActivity"
+79-->C:\BlueApp\app\src\main\AndroidManifest.xml:68:13-41
+80            android:configChanges="orientation|screenSize"
+80-->C:\BlueApp\app\src\main\AndroidManifest.xml:69:13-59
+81            android:exported="false"
+81-->C:\BlueApp\app\src\main\AndroidManifest.xml:70:13-37
+82            android:label="@string/app_name"
+82-->C:\BlueApp\app\src\main\AndroidManifest.xml:71:13-45
+83            android:screenOrientation="sensorPortrait"
+83-->C:\BlueApp\app\src\main\AndroidManifest.xml:72:13-55
+84            android:theme="@style/Theme.BlueApp.NoActionBar"
+84-->C:\BlueApp\app\src\main\AndroidManifest.xml:73:13-61
+85            android:windowSoftInputMode="adjustNothing" >
+85-->C:\BlueApp\app\src\main\AndroidManifest.xml:74:13-56
+86        </activity>
+87
+88        <provider
+89            android:name="androidx.core.content.FileProvider"
+89-->C:\BlueApp\app\src\main\AndroidManifest.xml:78:13-62
+90            android:authorities="app.serlanventas.mobile.fileprovider"
+90-->C:\BlueApp\app\src\main\AndroidManifest.xml:79:13-64
+91            android:exported="false"
+91-->C:\BlueApp\app\src\main\AndroidManifest.xml:80:13-37
+92            android:grantUriPermissions="true" >
+92-->C:\BlueApp\app\src\main\AndroidManifest.xml:81:13-47
+93            <meta-data
+93-->C:\BlueApp\app\src\main\AndroidManifest.xml:82:13-84:54
+94                android:name="android.support.FILE_PROVIDER_PATHS"
+94-->C:\BlueApp\app\src\main\AndroidManifest.xml:83:17-67
+95                android:resource="@xml/file_paths" />
+95-->C:\BlueApp\app\src\main\AndroidManifest.xml:84:17-51
+96        </provider>
+97
+98        <receiver android:name="app.serlanventas.mobile.ui.login.LogoutReceiver" >
+98-->C:\BlueApp\app\src\main\AndroidManifest.xml:87:9-89:20
+98-->C:\BlueApp\app\src\main\AndroidManifest.xml:88:13-52
+99        </receiver>
+100
+101        <service
+101-->[androidx.room:room-runtime-android:2.7.0-alpha04] C:\Users\user1\.gradle\caches\8.9\transforms\8a19426dddfd2075c24be97dd6bf6008\transformed\room-runtime-release\AndroidManifest.xml:24:9-28:63
+102            android:name="androidx.room.MultiInstanceInvalidationService"
+102-->[androidx.room:room-runtime-android:2.7.0-alpha04] C:\Users\user1\.gradle\caches\8.9\transforms\8a19426dddfd2075c24be97dd6bf6008\transformed\room-runtime-release\AndroidManifest.xml:25:13-74
+103            android:directBootAware="true"
+103-->[androidx.room:room-runtime-android:2.7.0-alpha04] C:\Users\user1\.gradle\caches\8.9\transforms\8a19426dddfd2075c24be97dd6bf6008\transformed\room-runtime-release\AndroidManifest.xml:26:13-43
+104            android:exported="false" />
+104-->[androidx.room:room-runtime-android:2.7.0-alpha04] C:\Users\user1\.gradle\caches\8.9\transforms\8a19426dddfd2075c24be97dd6bf6008\transformed\room-runtime-release\AndroidManifest.xml:27:13-37
+105
+106        <uses-library
+106-->[androidx.xr.scenecore:scenecore:1.0.0-alpha03] C:\Users\user1\.gradle\caches\8.9\transforms\0895ce11aaa598747084b06a9b536405\transformed\scenecore-1.0.0-alpha03\AndroidManifest.xml:23:9-25:40
+107            android:name="com.android.extensions.xr"
+107-->[androidx.xr.scenecore:scenecore:1.0.0-alpha03] C:\Users\user1\.gradle\caches\8.9\transforms\0895ce11aaa598747084b06a9b536405\transformed\scenecore-1.0.0-alpha03\AndroidManifest.xml:24:13-53
+108            android:required="false" />
+108-->[androidx.xr.scenecore:scenecore:1.0.0-alpha03] C:\Users\user1\.gradle\caches\8.9\transforms\0895ce11aaa598747084b06a9b536405\transformed\scenecore-1.0.0-alpha03\AndroidManifest.xml:25:13-37
+109
+110        <activity
+110-->[com.google.android.gms:play-services-base:18.5.0] C:\Users\user1\.gradle\caches\8.9\transforms\bc58824d2ba047ca69153a69864df2cd\transformed\play-services-base-18.5.0\AndroidManifest.xml:5:9-173
+111            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+111-->[com.google.android.gms:play-services-base:18.5.0] C:\Users\user1\.gradle\caches\8.9\transforms\bc58824d2ba047ca69153a69864df2cd\transformed\play-services-base-18.5.0\AndroidManifest.xml:5:19-85
+112            android:exported="false"
+112-->[com.google.android.gms:play-services-base:18.5.0] C:\Users\user1\.gradle\caches\8.9\transforms\bc58824d2ba047ca69153a69864df2cd\transformed\play-services-base-18.5.0\AndroidManifest.xml:5:146-170
+113            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+113-->[com.google.android.gms:play-services-base:18.5.0] C:\Users\user1\.gradle\caches\8.9\transforms\bc58824d2ba047ca69153a69864df2cd\transformed\play-services-base-18.5.0\AndroidManifest.xml:5:86-145
+114
+115        <meta-data
+115-->[com.google.android.gms:play-services-basement:18.4.0] C:\Users\user1\.gradle\caches\8.9\transforms\0ad99045d7d55b64b6048d81f1a0718e\transformed\play-services-basement-18.4.0\AndroidManifest.xml:6:9-122
+116            android:name="com.google.android.gms.version"
+116-->[com.google.android.gms:play-services-basement:18.4.0] C:\Users\user1\.gradle\caches\8.9\transforms\0ad99045d7d55b64b6048d81f1a0718e\transformed\play-services-basement-18.4.0\AndroidManifest.xml:6:20-65
+117            android:value="@integer/google_play_services_version" />
+117-->[com.google.android.gms:play-services-basement:18.4.0] C:\Users\user1\.gradle\caches\8.9\transforms\0ad99045d7d55b64b6048d81f1a0718e\transformed\play-services-basement-18.4.0\AndroidManifest.xml:6:66-119
+118
+119        <activity
+119-->[androidx.compose.ui:ui-test-manifest:1.7.5] C:\Users\user1\.gradle\caches\8.9\transforms\5bd80c94da59af2bdc7c12560b700408\transformed\ui-test-manifest-1.7.5\AndroidManifest.xml:23:9-25:39
+120            android:name="androidx.activity.ComponentActivity"
+120-->[androidx.compose.ui:ui-test-manifest:1.7.5] C:\Users\user1\.gradle\caches\8.9\transforms\5bd80c94da59af2bdc7c12560b700408\transformed\ui-test-manifest-1.7.5\AndroidManifest.xml:24:13-63
+121            android:exported="true" />
+121-->[androidx.compose.ui:ui-test-manifest:1.7.5] C:\Users\user1\.gradle\caches\8.9\transforms\5bd80c94da59af2bdc7c12560b700408\transformed\ui-test-manifest-1.7.5\AndroidManifest.xml:25:13-36
+122        <activity
+122-->[androidx.compose.ui:ui-tooling-android:1.7.5] C:\Users\user1\.gradle\caches\8.9\transforms\1d9655139d3530abda71cdd6165fa1ed\transformed\ui-tooling-release\AndroidManifest.xml:23:9-25:39
+123            android:name="androidx.compose.ui.tooling.PreviewActivity"
+123-->[androidx.compose.ui:ui-tooling-android:1.7.5] C:\Users\user1\.gradle\caches\8.9\transforms\1d9655139d3530abda71cdd6165fa1ed\transformed\ui-tooling-release\AndroidManifest.xml:24:13-71
+124            android:exported="true" />
+124-->[androidx.compose.ui:ui-tooling-android:1.7.5] C:\Users\user1\.gradle\caches\8.9\transforms\1d9655139d3530abda71cdd6165fa1ed\transformed\ui-tooling-release\AndroidManifest.xml:25:13-36
+125
+126        <provider
+126-->[androidx.emoji2:emoji2:1.3.0] C:\Users\user1\.gradle\caches\8.9\transforms\f137ccdeb9547a48a8aab2144e30c646\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
+127            android:name="androidx.startup.InitializationProvider"
+127-->[androidx.emoji2:emoji2:1.3.0] C:\Users\user1\.gradle\caches\8.9\transforms\f137ccdeb9547a48a8aab2144e30c646\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
+128            android:authorities="app.serlanventas.mobile.androidx-startup"
+128-->[androidx.emoji2:emoji2:1.3.0] C:\Users\user1\.gradle\caches\8.9\transforms\f137ccdeb9547a48a8aab2144e30c646\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
+129            android:exported="false" >
+129-->[androidx.emoji2:emoji2:1.3.0] C:\Users\user1\.gradle\caches\8.9\transforms\f137ccdeb9547a48a8aab2144e30c646\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37
+130            <meta-data
+130-->[androidx.emoji2:emoji2:1.3.0] C:\Users\user1\.gradle\caches\8.9\transforms\f137ccdeb9547a48a8aab2144e30c646\transformed\emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
+131                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+131-->[androidx.emoji2:emoji2:1.3.0] C:\Users\user1\.gradle\caches\8.9\transforms\f137ccdeb9547a48a8aab2144e30c646\transformed\emoji2-1.3.0\AndroidManifest.xml:30:17-75
+132                android:value="androidx.startup" />
+132-->[androidx.emoji2:emoji2:1.3.0] C:\Users\user1\.gradle\caches\8.9\transforms\f137ccdeb9547a48a8aab2144e30c646\transformed\emoji2-1.3.0\AndroidManifest.xml:31:17-49
+133            <meta-data
+133-->[androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\user1\.gradle\caches\8.9\transforms\2df3d90c5921b83ba24819508b7c8f67\transformed\lifecycle-process-2.8.7\AndroidManifest.xml:29:13-31:52
+134                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+134-->[androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\user1\.gradle\caches\8.9\transforms\2df3d90c5921b83ba24819508b7c8f67\transformed\lifecycle-process-2.8.7\AndroidManifest.xml:30:17-78
+135                android:value="androidx.startup" />
+135-->[androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\user1\.gradle\caches\8.9\transforms\2df3d90c5921b83ba24819508b7c8f67\transformed\lifecycle-process-2.8.7\AndroidManifest.xml:31:17-49
+136            <meta-data
+136-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
+137                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+137-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
+138                android:value="androidx.startup" />
+138-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
+139        </provider>
+140
+141        <uses-native-library
+141-->[androidx.xr.runtime:runtime-openxr:1.0.0-alpha03] C:\Users\user1\.gradle\caches\8.9\transforms\f4712ad4b0fbc0f938beb5509a2e9949\transformed\runtime-openxr-1.0.0-alpha03\AndroidManifest.xml:24:9-26:40
+142            android:name="libopenxr.google.so"
+142-->[androidx.xr.runtime:runtime-openxr:1.0.0-alpha03] C:\Users\user1\.gradle\caches\8.9\transforms\f4712ad4b0fbc0f938beb5509a2e9949\transformed\runtime-openxr-1.0.0-alpha03\AndroidManifest.xml:25:13-47
+143            android:required="false" />
+143-->[androidx.xr.runtime:runtime-openxr:1.0.0-alpha03] C:\Users\user1\.gradle\caches\8.9\transforms\f4712ad4b0fbc0f938beb5509a2e9949\transformed\runtime-openxr-1.0.0-alpha03\AndroidManifest.xml:26:13-37
+144
+145        <uses-library
+145-->[androidx.window:window:1.0.0] C:\Users\user1\.gradle\caches\8.9\transforms\c2c9887e6668ce60e078418b98a2fab2\transformed\window-1.0.0\AndroidManifest.xml:25:9-27:40
+146            android:name="androidx.window.extensions"
+146-->[androidx.window:window:1.0.0] C:\Users\user1\.gradle\caches\8.9\transforms\c2c9887e6668ce60e078418b98a2fab2\transformed\window-1.0.0\AndroidManifest.xml:26:13-54
+147            android:required="false" />
+147-->[androidx.window:window:1.0.0] C:\Users\user1\.gradle\caches\8.9\transforms\c2c9887e6668ce60e078418b98a2fab2\transformed\window-1.0.0\AndroidManifest.xml:27:13-37
+148        <uses-library
+148-->[androidx.window:window:1.0.0] C:\Users\user1\.gradle\caches\8.9\transforms\c2c9887e6668ce60e078418b98a2fab2\transformed\window-1.0.0\AndroidManifest.xml:28:9-30:40
+149            android:name="androidx.window.sidecar"
+149-->[androidx.window:window:1.0.0] C:\Users\user1\.gradle\caches\8.9\transforms\c2c9887e6668ce60e078418b98a2fab2\transformed\window-1.0.0\AndroidManifest.xml:29:13-51
+150            android:required="false" />
+150-->[androidx.window:window:1.0.0] C:\Users\user1\.gradle\caches\8.9\transforms\c2c9887e6668ce60e078418b98a2fab2\transformed\window-1.0.0\AndroidManifest.xml:30:13-37
+151
+152        <receiver
+152-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
+153            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+153-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
+154            android:directBootAware="false"
+154-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
+155            android:enabled="true"
+155-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
+156            android:exported="true"
+156-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
+157            android:permission="android.permission.DUMP" >
+157-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
+158            <intent-filter>
+158-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
+159                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+159-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
+159-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
+160            </intent-filter>
+161            <intent-filter>
+161-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
+162                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+162-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
+162-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
+163            </intent-filter>
+164            <intent-filter>
+164-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
+165                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+165-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
+165-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
+166            </intent-filter>
+167            <intent-filter>
+167-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
+168                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+168-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
+168-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\user1\.gradle\caches\8.9\transforms\01e9ddef92b90ec770b010bd1d44463a\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:25-92
+169            </intent-filter>
+170        </receiver>
+171    </application>
+172
+173</manifest>

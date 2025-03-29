@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "app.serlanventas.mobile.app-mergeDebugResources-2:/values-v18/values-v18.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\user1\\.gradle\\caches\\8.9\\transforms\\ecb61a3d91700b44446258139b2be563\\transformed\\appcompat-1.6.1\\res\\values-v18\\values-v18.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "48",
+                        "endOffsets": "99"
+                    }
+                }
+            ]
+        }
+    ]
+}

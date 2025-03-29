@@ -1,0 +1,202 @@
+[
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/dialog_info_bloques.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/dialog_info_bloques.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_ventas_web.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_ventas_web.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/app_bar_main.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/app_bar_main.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_pesos.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_pesos.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_impresora_settings.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_impresora_settings.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/item_galpon.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/item_galpon.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/item_detapp.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/item_detapp.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/item_nucleo.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/item_nucleo.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_venta_detalle.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_venta_detalle.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/modal_galpon.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/modal_galpon.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/content_main.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/content_main.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/layout_barra_desplazable.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/layout_barra_desplazable.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/list_pesos.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/list_pesos.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/list_detalle_pesos.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/list_detalle_pesos.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/modal_nucleo.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/modal_nucleo.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_login.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_login.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_reportes.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_reportes.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/item_cliente.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/item_cliente.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_guias_web.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_guias_web.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/item_pesos.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/item_pesos.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/item_reporte.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/item_reporte.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/dialog_exit_confirmation.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/dialog_exit_confirmation.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_module_nucleos.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_module_nucleos.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_module_clientes.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_module_clientes.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_postpdf.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_postpdf.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/item_dispositivo.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/item_dispositivo.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/toast_custom.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/toast_custom.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/dialog_success.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/dialog_success.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_module_pesos.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_module_pesos.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/activity_login.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/activity_login.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_peso_preliminar.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_peso_preliminar.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/searchable_spinner_dialog.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/searchable_spinner_dialog.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/modal_cliente.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/modal_cliente.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/cuadro_conf_conec.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/cuadro_conf_conec.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/activity_splash.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/activity_splash.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/activity_main.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/activity_main.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_conex_config.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_conex_config.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_module_galpones.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_module_galpones.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/item_ventas.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/item_ventas.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/nav_header_main.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/nav_header_main.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/item_device.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/item_device.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_index_localdata.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_index_localdata.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/dialog_update_version.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/dialog_update_version.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/item_change.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/item_change.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/item_usuarios.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/item_usuarios.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_detalle_temp_pesos.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_detalle_temp_pesos.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_module_usuarios.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_module_usuarios.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_bluetooth.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_bluetooth.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/fragment_module_ventas.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/fragment_module_ventas.xml"
+    },
+    {
+        "merged": "app.serlanventas.mobile.app-mergeDebugResources-3:/layout/dialog_download_progress.xml",
+        "source": "app.serlanventas.mobile.app-main-6:/layout/dialog_download_progress.xml"
+    }
+]
