@@ -335,8 +335,9 @@
                                     android:background="@android:color/transparent"
                                     android:inputType="numberDecimal"
                                     android:textAlignment="center"
-                                    android:textColor="@color/red1"
+                                    android:textColor="@color/color_gree_low"
                                     android:textSize="25sp"
+                                    android:text="0.00"
                                     android:textStyle="bold" />
                             </com.google.android.material.textfield.TextInputLayout>
                         </LinearLayout>

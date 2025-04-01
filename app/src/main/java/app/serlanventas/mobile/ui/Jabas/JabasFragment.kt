@@ -248,7 +248,7 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                     val idGalpon =
                         galponIdMap.filterValues { it == galponNombreSeleccionado }.keys.firstOrNull()
                             ?: 0
-                    updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
+//                    updateSpinnerPesosIdGalpon(idNucleo, idGalpon)
                 }
             }
             false
@@ -268,6 +268,16 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                             // "Lista de Pesos" seleccionado
                             Log.d("JabasFragment", "Opción 'Lista de Pesos' seleccionada")
                             sharedViewModel.setIdListPesos(0)
+//                            dataDetaPesoPollosJson = sharedViewModel.getDataDetaPesoPollosJson()
+//                            dataPesoPollosJson = sharedViewModel.getDataPesoPollosJson()
+
+                            if (dataDetaPesoPollosJson.isNullOrBlank()) {
+                                limpiarClientes()
+                            }
+
+                            if (dataPesoPollosJson.isNullOrBlank()) {
+                                limpiarTablaJabas()
+                            }
                         }
 
                         else -> {
@@ -690,13 +700,13 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
 
         binding.checkboxConPollos.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
-                var nJabas = sharedViewModel.getContadorJabas()
+                var nJabas = sharedViewModel.getContadorJabas()?: 0
                 if (nJabas == 0) {
                     binding.botonGuardar.backgroundTintList =
                         ContextCompat.getColorStateList(requireContext(), R.color.gray)
                     binding.botonGuardar.isEnabled = false
                     showCustomToast(requireContext(), "No te quedan Jabas para usar", "warning")
-                } else if (nJabas!! < 0) {
+                } else if (nJabas < 0) {
                     binding.botonGuardar.backgroundTintList =
                         ContextCompat.getColorStateList(requireContext(), R.color.gray)
                     binding.botonGuardar.isEnabled = false
@@ -1349,7 +1359,11 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
                 val bluetoothFragment = BluetoothFragment()
                 val fragmentManager = requireActivity().supportFragmentManager
                 val transaction = fragmentManager.beginTransaction()
-                transaction.add(R.id.fragment_container_bluetooth, bluetoothFragment, "BluetoothFragment")
+                transaction.add(
+                    R.id.fragment_container_bluetooth,
+                    bluetoothFragment,
+                    "BluetoothFragment"
+                )
                 transaction.commit()
 
                 // Mostrar el diálogo después de añadir el fragmento
@@ -1587,6 +1601,8 @@ class JabasFragment : Fragment(), OnItemClickListener, ProgressCallback {
         jabasAdapter.notifyDataSetChanged()
         sharedViewModel.setContadorJabas(0)
         binding.contadorJabas.text = "= 0"
+        calcularTotalPagar()
+
     }
 
     private fun mostrarConfirmacionLimpiar() {

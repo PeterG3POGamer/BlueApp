@@ -11,21 +11,21 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 
 
-class DeviceListAdapter(context: Context?, devices: List<BluetoothDevice?>?) :
-    ArrayAdapter<BluetoothDevice?>(context!!, 0, devices!!) {
+class DeviceListAdapter(context: Context, devices: List<BluetoothDevice?>) :
+    ArrayAdapter<BluetoothDevice?>(context, 0, devices) {
     @SuppressLint("MissingPermission", "SetTextI18n")
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         var convertView = convertView
         if (convertView == null) {
-            convertView =
-                LayoutInflater.from(context).inflate(R.layout.simple_list_item_1, parent, false)
+            convertView = LayoutInflater.from(context)
+                .inflate(R.layout.simple_list_item_1, parent, false)
         }
 
-        val device = getItem(position)
+        val device = getItem(position) ?: return convertView!!
 
         val textView = convertView!!.findViewById<TextView>(R.id.text1)
         textView.text = """
-            ${device!!.name}
+            ${device.name ?: "Dispositivo desconocido"}
             ${device.address}
             """.trimIndent()
 

@@ -185,9 +185,6 @@ class BluetoothConnectionService(
         }
 
         private fun procesarDatosSegunConfiguracion(datos: String, config: CaptureDeviceEntity): String {
-            val _CadenaClave = config._cadenaClave ?: "" // ST,G
-            val _CadenaClaveCierre = config._cadenaClaveCierre ?: "" // Kg
-            val _Longitud = config._longitud ?: 10 // Cantidad de numeros enteros
             val _Decimales = config._formatoPeo ?: 2 // Cantidad de numeros decimales
             val _bloque = config._bloque
             val _idConfig = config._idCaptureDevice
@@ -197,10 +194,10 @@ class BluetoothConnectionService(
                 ultimaConfig = _idConfig.toString()
             }
 
-            val valores = extraerValores(datos, _CadenaClaveCierre)
+            val valores = extraerValores(datos)
             if (valores.isNotEmpty()) {
                 val ultimoValor = when (_bloque) {
-                    "1" -> valores.joinToString(separator = "") { it } // Concatenar todos los valores
+                    "1" -> valores.joinToString(separator = "\n") { it } // Concatenar todos los valores
                     "2" -> valores.last() // Usar el último valor
                     else -> valores.last() // Por defecto, usar el último valor
                 }
@@ -214,17 +211,9 @@ class BluetoothConnectionService(
             return ultimoValorCorrecto
         }
 
-        private fun extraerValores(datos: String, cadenaClaveCierre: String): List<String> {
-            val patron = when {
-//                cadenaClave.isNotEmpty() && cadenaClaveCierre.isNotEmpty() ->
-//                    "${Regex.escape(cadenaClave)}\\s*(\\d+(?:\\.\\d+)?)\\s*${Regex.escape(cadenaClaveCierre)}"
-//                cadenaClave.isNotEmpty() ->
-//                    "${Regex.escape(cadenaClave)}\\s*(\\d+(?:\\.\\d+)?)"
-                cadenaClaveCierre.isNotEmpty() ->
-                    "(\\d+(?:\\.\\d+)?)\\s*${Regex.escape(cadenaClaveCierre)}"
-                else ->
-                    "(\\d+(?:\\.\\d+)?)"
-            }
+        private fun extraerValores(datos: String): List<String> {
+            Log.d("BluetoothService", "$dividename -> ExtraerValores: Datos recibidos: $datos")
+            val patron = "(\\d+(?:\\.\\d+)?)"
 
             val regex = Regex(patron)
             return regex.findAll(datos).map { it.groupValues[1] }.toList()

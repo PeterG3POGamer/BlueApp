@@ -33,14 +33,12 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.distinctUntilChanged
 import androidx.navigation.fragment.findNavController
 import app.serlanventas.mobile.R
 import app.serlanventas.mobile.databinding.FragmentBluetoothBinding
 import app.serlanventas.mobile.ui.Services.Logger
 import app.serlanventas.mobile.ui.ViewModel.SharedViewModel
-import app.serlanventas.mobile.ui.ViewModel.TabViewModel
 import app.serlanventas.mobile.ui.slideshow.BluetoothConnectionService
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -158,7 +156,6 @@ class BluetoothFragment : Fragment() {
         }
     }
 
-    private lateinit var tabViewModel: TabViewModel
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var checkProgressBarRunnable: Runnable
 
@@ -172,7 +169,6 @@ class BluetoothFragment : Fragment() {
         val root: View = binding.root
 
         logger = Logger(requireContext())
-        tabViewModel = ViewModelProvider(requireActivity()).get(TabViewModel::class.java)
 
         sharedViewModel.pesoValue.distinctUntilChanged().observe(viewLifecycleOwner) { message ->
             handleReceivedMessage(message)
@@ -184,6 +180,8 @@ class BluetoothFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+
 
     }
 
@@ -308,22 +306,6 @@ class BluetoothFragment : Fragment() {
         })
     }
 
-    private fun setupUI() {
-        devicesAdapter = DeviceListAdapter(context, bluetoothDevices)
-        binding.listDevices.adapter = devicesAdapter
-
-        binding.btnScan.setOnClickListener {
-            checkBluetoothPermissions()
-        }
-
-        binding.btnToggleBluetooth.setOnClickListener {
-            toggleBluetooth()
-        }
-
-        // Verificar el estado del Bluetooth al configurar la UI
-        updateUIForBluetoothState()
-    }
-
     private fun checkBluetoothPermissions() {
         if (isAdded && context != null) {
             if (hasBluetoothPermissions()) {
@@ -432,7 +414,8 @@ class BluetoothFragment : Fragment() {
             devicesAdapter?.notifyDataSetChanged()
 
             // Mostrar ProgressBar
-            binding.progressBar.visibility = View.VISIBLE
+            bluetoothDialog?.findViewById<ProgressBar>(R.id.progress_bar)?.visibility =
+                View.VISIBLE
 
             if (bluetoothAdapter.isDiscovering) {
                 bluetoothAdapter.cancelDiscovery()
@@ -731,60 +714,4 @@ class BluetoothFragment : Fragment() {
         super.onPause()
         bluetoothDialog?.dismiss()
     }
-
-
-//    override fun onStop() {
-//        super.onStop()
-//
-//        val fragmentManager = parentFragmentManager
-//        val existingDialog = fragmentManager.findFragmentByTag("BluetoothFragment")
-//        if (existingDialog != null) {
-//            // Cerrar el diálogo si está mostrándose
-//            (existingDialog as? DialogFragment)?.dismiss()
-//            Log.d("DialogFragment", "Dialog was closed")
-//        } else {
-//            Log.d("DialogFragment", "No dialog to close")
-//        }
-//    }
-//
-//    override fun onStart() {
-//        super.onStart()
-//        checkGPSStatus()
-//
-//        // Verificar si el diálogo ya está mostrándose
-//        val fragmentManager = parentFragmentManager
-//        val existingDialog = fragmentManager.findFragmentByTag("BluetoothFragment")
-//        if (existingDialog == null) {
-//            // Crear y mostrar el diálogo solo si no existe
-//            val dialog = dialog
-//            if (dialog != null) {
-//                val displayMetrics = DisplayMetrics()
-//                dialog.window?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
-//                val heightInDp = 600
-//                val heightInPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, heightInDp.toFloat(), displayMetrics).toInt()
-//
-//                val layoutParams = dialog.window?.attributes
-//                layoutParams?.width = ViewGroup.LayoutParams.WRAP_CONTENT
-//                layoutParams?.height = heightInPx
-//                dialog.window?.attributes = layoutParams
-//
-//                // Mostrar el diálogo después de ajustar sus atributos y verificar permisos
-//                Handler(Looper.getMainLooper()).postDelayed({
-//                    if (hasBluetoothPermissions()) {
-//                        // En lugar de dialog.show(), usa el método show() del DialogFragment con el tag
-//                        if (!isAdded) {
-//                            show(parentFragmentManager, "BluetoothFragment")
-//                        }
-//                    }
-//                }, 2000) // Retraso de 2 segundos (2000 ms)
-//            }
-//
-//
-//            binding.btnCloseModal.setOnClickListener {
-//                dialog?.dismiss()
-//            }
-//        } else {
-//            Log.d("DialogFragment", "Dialog is already showing")
-//        }
-//    }
 }

@@ -17,12 +17,12 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.ImageButton
-import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import app.serlanventas.mobile.R
 import app.serlanventas.mobile.databinding.FragmentConexConfigBinding
 import app.serlanventas.mobile.ui.DataBase.AppDatabase
@@ -78,7 +78,7 @@ class ConfigConexFragment : Fragment() {
         cargarDispositivosVinculados()
         configurarBotones()
         cargarRegistros()
-        configurarListView()
+        configurarRecyclerView()
 
         // Iniciar verificación periódica
         handler.postDelayed(verificacionRunnable, verificacionInterval)
@@ -90,14 +90,12 @@ class ConfigConexFragment : Fragment() {
             }
         )
 
-
         sharedViewModel.pesoValue.observe(viewLifecycleOwner) { peso ->
             if (!peso.isNullOrBlank()) {
                 val pesoFormatted = peso.toDoubleOrNull()?.toString() ?: "0.00"
                 binding.etPesaje.setText(pesoFormatted)
             }
         }
-
 
         var accumulatedText = ""
 
@@ -115,7 +113,6 @@ class ConfigConexFragment : Fragment() {
             }
         }
 
-
         // Configura el acordeón
         binding.tvTitle.setOnClickListener {
             if (binding.accordionContent.visibility == View.VISIBLE) {
@@ -124,9 +121,48 @@ class ConfigConexFragment : Fragment() {
                 binding.accordionContent.visibility = View.VISIBLE
             }
         }
-
     }
 
+    private fun configurarRecyclerView() {
+        registrosAdapter = DispositivosAdapter(listaRegistros,
+            onItemClick = { dispositivo ->
+                cargarDatosEnFormulario(dispositivo)
+            },
+            onEstadoClick = { dispositivo ->
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Confirmar cambio de estado")
+                    .setMessage("¿Desea ${if (dispositivo._estado == 0) "activar" else "desactivar"} este dispositivo?")
+                    .setPositiveButton("Sí") { _, _ ->
+                        actualizarEstadoPorMac(dispositivo._macDispositivo)
+                    }
+                    .setNegativeButton("No", null)
+                    .show()
+            },
+            onEliminarClick = { dispositivo ->
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Eliminar configuración")
+                    .setMessage("¿Está seguro que desea eliminar la configuración de ${dispositivo._nombreDispositivo}?")
+                    .setPositiveButton("Sí") { _, _ ->
+                        val resultado = db.eliminarConfCapturePorMac(dispositivo._macDispositivo)
+                        if (resultado > 0) {
+                            Toast.makeText(context, "Configuración eliminada", Toast.LENGTH_SHORT).show()
+                            limpiarFormulario(false)
+                            cargarRegistros()
+                        } else {
+                            mostrarAlerta("Error", "No se pudo eliminar la configuración")
+                        }
+                    }
+                    .setNegativeButton("No", null)
+                    .show()
+            }
+        )
+
+        binding.recyclerViewRegistros.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = registrosAdapter
+            addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
+        }
+    }
 
     private fun configurarRadioButtons() {
         binding.rgTipoConexion.setOnCheckedChangeListener { _, checkedId ->
@@ -205,7 +241,6 @@ class ConfigConexFragment : Fragment() {
         dialog.show()
     }
 
-
     private fun cambiarBloque() {
         val currentText = binding.btnDataBloque.text.toString()
 
@@ -238,11 +273,6 @@ class ConfigConexFragment : Fragment() {
                 )
             )
         }
-    }
-
-    private fun configurarListView() {
-        binding.listViewRegistros.onItemClickListener = null
-        binding.listViewRegistros.setOnItemLongClickListener(null)
     }
 
     private fun cargarDatosEnFormulario(registro: CaptureDeviceEntity) {
@@ -303,11 +333,6 @@ class ConfigConexFragment : Fragment() {
                 )
             }
         }
-        val position = listaRegistros.indexOf(registro)
-        if (position != -1) {
-            // Actualizar la posición seleccionada en el adaptador
-            registrosAdapter?.setSelectedPosition(position)
-        }
     }
 
     private fun guardarConfiguracion() {
@@ -332,10 +357,9 @@ class ConfigConexFragment : Fragment() {
             if (resultado > 0) {
                 insertarConfigConexion(requireContext(), captureDevice) { success ->
                     if (success) {
-//
+                        //
                     }
                 }
-//                mostrarAlerta("Éxito", "Configuración guardada correctamente")
                 limpiarFormulario(false)
                 cargarRegistros()
             } else {
@@ -365,7 +389,7 @@ class ConfigConexFragment : Fragment() {
             if (resultado > 0) {
                 insertarConfigConexion(requireContext(), captureDevice) { success ->
                     if (success) {
-//
+                        //
                     }
                 }
                 mostrarAlerta("Éxito", "Configuración actualizada correctamente")
@@ -454,23 +478,25 @@ class ConfigConexFragment : Fragment() {
             binding.txtMacDispositivo.text = "MAC: N/A"
         }
         binding.btnDataBloque.text = "NO DETECTADO"
+        binding.btnDataBloque.setBackgroundColor(
+            ContextCompat.getColor(
+                binding.root.context,
+                R.color.black_4
+            )
+        )
         binding.btnDataBloque.setTextColor(
             ContextCompat.getColor(
                 binding.root.context,
-                R.color.black
+                R.color.white
             )
         )
+        registrosAdapter?.clearSelection()
     }
 
     private fun cargarRegistros() {
         try {
             listaRegistros = db.obtenerTodosLosDatosConfCapture()
-            if (registrosAdapter == null) {
-                registrosAdapter = DispositivosAdapter(requireContext(), listaRegistros)
-                binding.listViewRegistros.adapter = registrosAdapter
-            } else {
-                registrosAdapter?.updateData(listaRegistros)
-            }
+            registrosAdapter?.updateData(listaRegistros)
         } catch (e: Exception) {
             mostrarAlerta("Error", "Error al cargar registros: ${e.message}")
         }
@@ -569,6 +595,10 @@ class ConfigConexFragment : Fragment() {
     }
 
     private fun verificarDispositivoConectadoActual() {
+        if (!isAdded || isDetached || _binding == null) {
+            return
+        }
+
         if (!bluetoothAdapter.isEnabled) {
             actualizarUIBluetoothDesactivado()
             return
@@ -640,115 +670,8 @@ class ConfigConexFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        handler.removeCallbacks(verificacionRunnable)
         super.onDestroyView()
+        handler.removeCallbacksAndMessages(null)
         _binding = null
-    }
-
-    inner class DispositivosAdapter(
-        context: Context,
-        dispositivos: List<CaptureDeviceEntity>
-    ) : ArrayAdapter<CaptureDeviceEntity>(
-        context,
-        R.layout.item_dispositivo,
-        ArrayList(dispositivos)
-    ) {
-
-        private val items = ArrayList(dispositivos)
-        private var selectedPosition = -1
-
-        fun updateData(newData: List<CaptureDeviceEntity>) {
-            items.clear()
-            items.addAll(newData)
-            notifyDataSetChanged()
-        }
-
-        fun setSelectedPosition(position: Int) {
-            selectedPosition = position
-            notifyDataSetChanged()
-        }
-
-        override fun getCount(): Int = items.size
-
-        override fun getItem(position: Int): CaptureDeviceEntity? = items.getOrNull(position)
-
-        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-            val view = convertView ?: LayoutInflater.from(context)
-                .inflate(R.layout.item_dispositivo, parent, false)
-
-            val dispositivo = getItem(position) ?: return view
-
-            val txtDispositivo = view.findViewById<TextView>(R.id.txtDispositivo)
-            txtDispositivo.text =
-                "${dispositivo._nombreDispositivo} (${dispositivo._macDispositivo})"
-
-            val btnEstado = view.findViewById<ImageButton>(R.id.btnEstado)
-            val estadoDrawable = if (dispositivo._estado == 1) {
-                R.drawable.ic_success
-            } else {
-                R.drawable.ic_error
-            }
-            btnEstado.setImageResource(estadoDrawable)
-
-            val colorEstado = if (dispositivo._estado == 1) {
-                android.graphics.Color.parseColor("#4CAF50")
-            } else {
-                android.graphics.Color.parseColor("#F44336")
-            }
-            btnEstado.setColorFilter(colorEstado)
-
-            btnEstado.setOnClickListener {
-                AlertDialog.Builder(context)
-                    .setTitle("Confirmar cambio de estado")
-                    .setMessage("¿Desea ${if (dispositivo._estado == 0) "activar" else "desactivar"} este dispositivo?")
-                    .setPositiveButton("Sí") { _, _ ->
-                        actualizarEstadoPorMac(dispositivo._macDispositivo)
-                        setSelectedPosition(position)
-                    }
-                    .setNegativeButton("No", null)
-                    .show()
-            }
-
-            val btnMostrar = view.findViewById<ImageButton>(R.id.btnMostrar)
-            btnMostrar.setOnClickListener {
-                cargarDatosEnFormulario(dispositivo)
-                setSelectedPosition(position)
-//                Toast.makeText(context, "Configuración cargada", Toast.LENGTH_SHORT).show()
-            }
-
-            val btnEliminar = view.findViewById<ImageButton>(R.id.btnEliminar)
-            btnEliminar.setOnClickListener {
-                AlertDialog.Builder(context)
-                    .setTitle("Eliminar configuración")
-                    .setMessage("¿Está seguro que desea eliminar la configuración de ${dispositivo._nombreDispositivo}?")
-                    .setPositiveButton("Sí") { _, _ ->
-                        val resultado = db.eliminarConfCapturePorMac(dispositivo._macDispositivo)
-                        if (resultado > 0) {
-                            Toast.makeText(context, "Configuración eliminada", Toast.LENGTH_SHORT)
-                                .show()
-                            limpiarFormulario(false)
-                            cargarRegistros()
-                        } else {
-                            mostrarAlerta("Error", "No se pudo eliminar la configuración")
-                        }
-                    }
-                    .setNegativeButton("No", null)
-                    .show()
-            }
-
-            // Cambiar el fondo del elemento seleccionado
-            if (position == selectedPosition) {
-                view.setBackgroundColor(ContextCompat.getColor(context, R.color.color_gree_low))
-            } else {
-                view.setBackgroundColor(
-                    ContextCompat.getColor(
-                        context,
-                        android.R.color.transparent
-                    )
-                )
-            }
-
-            return view
-        }
     }
 }

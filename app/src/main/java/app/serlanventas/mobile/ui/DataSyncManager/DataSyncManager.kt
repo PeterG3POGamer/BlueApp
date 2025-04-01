@@ -184,7 +184,7 @@ class DataSyncManager(private val context: Context) {
                                     delay(1000)
                                     progressCallback.onProgressUpdate("Por favor, inicie sesión")
                                 }
-                                delay(1000)
+                                delay(700)
                                 handleSyncResult(syncResult, isLoggedIn, callback)
                             }
                         }
